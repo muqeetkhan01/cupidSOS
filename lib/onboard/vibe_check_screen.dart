@@ -55,7 +55,6 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
     '✈️ Travel',
     '🏠 Homebody',
     '📖 Reading',
-   
   ];
 
   final List<String> selected = [];
@@ -194,7 +193,7 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                     ),
                   ),
                   const TextWidget(
-                    text: 'Step 4 of 7',
+                    text: 'Step 3 of 10',
                     size: 14,
                     color: Colors.grey,
                   ),
@@ -218,7 +217,7 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                   TextWidget(
                     text: 'Select exactly 5 interests that define you',
                     size: 15,
-                    color: Color( 0xFF1E1E1E),
+                    color: Color(0xFF1E1E1E),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -281,9 +280,8 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                       : 'Select ${5 - selected.length} more',
                   height: 7,
                   radius: 36,
-                  variant: isValid
-                      ? ButtonVariant.gradient
-                      : ButtonVariant.solid,
+                  variant:
+                      isValid ? ButtonVariant.gradient : ButtonVariant.solid,
                   gradient: isValid
                       ? const [
                           Color(0xFFFF6F7D),
@@ -293,9 +291,8 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                           Color(0x00000000),
                           Color(0x00000000),
                         ],
-                  backgroundColor: isValid
-                      ? const Color(0xFFFF6F7D)
-                      : Colors.grey.shade300,
+                  backgroundColor:
+                      isValid ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
                   enableShadow: isValid,
                   onTap: isValid
                       ? () {

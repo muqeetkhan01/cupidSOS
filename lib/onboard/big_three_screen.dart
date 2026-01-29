@@ -218,7 +218,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 3 of 7',
+                      text: 'Step 2 of 10',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -336,7 +336,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                 size: 14,
                 color: const Color.fromARGB(255, 0, 0, 0),
               ),
-                SizedBox(height: 3.h),
+              SizedBox(height: 3.h),
             ],
           ),
         ),

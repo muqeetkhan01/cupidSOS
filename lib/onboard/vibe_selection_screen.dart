@@ -146,7 +146,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                           alignment: Alignment.center,
                           child: Text(
                             emoji,
-                            style: TextStyle(fontSize: 22.sp),
+                            style: TextStyle(fontSize: 26.sp),
                           ),
                         ),
                         SizedBox(width: 4.w),
@@ -230,7 +230,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 3 of 7',
+                      text: 'Step 1 of 10',
                       size: 14,
                       color: Colors.grey,
                     ),

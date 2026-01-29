@@ -87,7 +87,7 @@ class _SignupScreenState extends State<SignupScreen>
                       ),
                     ),
                     TextWidget(
-                      text: 'Step 1 of 7',
+                      text: 'Step 1 of 10',
                       size: 14,
                       color: Colors.grey,
                       textAlign: TextAlign.center,

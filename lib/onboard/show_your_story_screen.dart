@@ -172,7 +172,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 6 of 7',
+                      text: 'Step 10 of 10',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -191,7 +191,8 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                       child: TextWidget(
                         text:
                             'Choose or take a photo\nLet yor vibe shine\nAuthentic looks good on you!',
-                        size: 18,textAlign: TextAlign.center,
+                        size: 18,
+                        textAlign: TextAlign.center,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -320,9 +321,9 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                     SizedBox(width: 12),
                     Expanded(
                       child: TextWidget(
-  text: 'Get one free flirt signal for getting verified',
-  size: 15,
-),
+                        text: 'Get one free flirt signal for getting verified',
+                        size: 15,
+                      ),
                     ),
                   ],
                 ),

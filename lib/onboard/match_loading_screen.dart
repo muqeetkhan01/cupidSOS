@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:cupid_app/home/home.dart';
 import 'package:cupid_app/onboard/match_result_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';

@@ -32,8 +32,7 @@ const List<VoicePromptItem> voicePrompts = [
   VoicePromptItem(
     emoji: '💼',
     title: 'Stress Support',
-    question:
-        'When my dream job gets stressful, I need a partner who...',
+    question: 'When my dream job gets stressful, I need a partner who...',
   ),
   VoicePromptItem(
     emoji: '💛',
@@ -126,7 +125,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 6 of 7',
+                      text: 'Step 6 of 10',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -149,8 +148,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                     ),
                     SizedBox(height: 6),
                     TextWidget(
-                      text:
-                          'Choose one question and record your voice answer.',
+                      text: 'Choose one question and record your voice answer.',
                       size: 15,
                       color: Color(0xFF1E1E1E),
                       textAlign: TextAlign.center,
@@ -172,8 +170,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                     (i) => GestureDetector(
                       onTap: () => _goTo(i),
                       child: Container(
-                        margin:
-                            const EdgeInsets.symmetric(horizontal: 6),
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
                         padding: EdgeInsets.all(3.w),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
@@ -217,8 +214,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TextWidget(
-                        text:
-                            '${current.emoji} ${current.title}',
+                        text: '${current.emoji} ${current.title}',
                         size: 16,
                         weight: FontWeight.w600,
                       ),
@@ -241,14 +237,11 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                 to: 0.85,
                 child: Container(
                   width: double.infinity,
-                  padding:
-                      EdgeInsets.symmetric(vertical: 4.h),
+                  padding: EdgeInsets.symmetric(vertical: 4.h),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(28),
-                    border: Border.all(
-                        color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: Colors.grey.shade300),
                   ),
                   child: Column(
                     children: [
@@ -305,14 +298,12 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                     ),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_forward,
-                        color: Colors.white),
+                    icon: const Icon(Icons.arrow_forward, color: Colors.white),
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const ShowYourStoryScreen(),
+                          builder: (_) => const ShowYourStoryScreen(),
                         ),
                       );
                     },

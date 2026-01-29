@@ -17,16 +17,16 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
   late final AnimationController _controller;
   String? selected;
 
-  /// ✅ CORRECT ETHNICITY OPTIONS
-  final List<String> options = const [
-    'Asian',
-    'Black / African Descent',
-    'Hispanic / Latino',
-    'Middle Eastern',
-    'South Asian',
-    'White / Caucasian',
-    'Mixed / Multiracial',
-    'Prefer not to say',
+  final List<String> options = [
+    "East Asian",
+    "Southeast Asian",
+    "South Asian",
+    "White/Caucasian",
+    "Black/African Descent",
+    "Hispanic/Latino",
+    "Middle Eastern",
+    "Pacific Islander",
+    "American Indian"
   ];
 
   @override
@@ -67,13 +67,14 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  /// 🔝 TOP HEADER (PROGRESS CENTERED)
+  /// 🔝 PERFECT TOP HEADER (PROGRESS CENTERED)
   Widget _topHeader(BuildContext context) {
     return SizedBox(
       height: 7.h,
       child: Stack(
         alignment: Alignment.center,
         children: [
+          /// BACK BUTTON
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
@@ -81,6 +82,8 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
               onPressed: () => Navigator.pop(context),
             ),
           ),
+
+          /// CENTER PROGRESS
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -100,7 +103,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
               ),
               SizedBox(height: 0.8.h),
               const TextWidget(
-                text: '2/3',
+                text: '6 of 10',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -111,14 +114,13 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  /// OPTION TILE
   Widget _optionCard(String text) {
     final bool isSelected = selected == text;
 
     return GestureDetector(
       onTap: () => setState(() => selected = text),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 240),
+        duration: const Duration(milliseconds: 250),
         width: double.infinity,
         padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.2.h),
         margin: EdgeInsets.only(bottom: 2.h),
@@ -126,10 +128,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
           borderRadius: BorderRadius.circular(24),
           gradient: isSelected
               ? const LinearGradient(
-                  colors: [
-                    Color(0xFFFF6F7D),
-                    Color(0xFFD86BCF),
-                  ],
+                  colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 )
               : null,
           color: isSelected ? null : Colors.white,
@@ -167,11 +166,16 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 1.h),
+
+              /// 🔝 PROGRESS BAR
               _animated(_topHeader(context), 0, 0.15),
+
               SizedBox(height: 3.h),
+
+              /// LABEL
               _animated(
                 const TextWidget(
-                  text: 'ABOUT YOU',
+                  text: 'COMPATIBILITY QUIZ',
                   size: 13,
                   weight: FontWeight.w700,
                   color: Color(0xFFFF6F7D),
@@ -179,23 +183,32 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
                 0.15,
                 0.3,
               ),
+
               SizedBox(height: 1.2.h),
+
+              /// QUESTION
               _animated(
                 const TextWidget(
                   text: 'What is your ethnicity?',
                   size: 18,
-                  weight: FontWeight.w600,
                 ),
                 0.2,
                 0.4,
               ),
+
               SizedBox(height: 4.h),
+
+              /// OPTIONS
+
               Expanded(
                 child: ListView(
                   children: options.map(_optionCard).toList(),
                 ),
               ),
+
               SizedBox(height: 2.h),
+
+              /// CTA
               _animated(
                 ButtonWidget(
                   text: 'Continue',
@@ -224,6 +237,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
                 0.8,
                 1,
               ),
+
               SizedBox(height: 3.h),
             ],
           ),

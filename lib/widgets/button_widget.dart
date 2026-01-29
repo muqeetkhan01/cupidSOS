@@ -7,6 +7,7 @@ class ButtonWidget extends StatefulWidget {
   final String text;
   final VoidCallback onTap;
   final double height;
+  final double width;
   final double radius;
   final Color backgroundColor;
   final Color textColor;
@@ -26,6 +27,7 @@ class ButtonWidget extends StatefulWidget {
     required this.text,
     required this.onTap,
     this.height = 6.5,
+    this.width = 100,
     this.radius = 32,
     this.backgroundColor = Colors.black,
     this.textColor = Colors.white,
@@ -59,7 +61,7 @@ class _ButtonWidgetState extends State<ButtonWidget> {
         curve: Curves.easeOut,
         child: Container(
           height: widget.height.h,
-          width: 100.w,
+          width: widget.width.w,
           padding: widget.padding ?? EdgeInsets.symmetric(horizontal: 6.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.radius),

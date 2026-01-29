@@ -2,19 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
-import 'quirk_prompt_screen.dart';
 
-class PreferencesScreen extends StatefulWidget {
-  const PreferencesScreen({super.key});
+class FilterScreen extends StatefulWidget {
+  const FilterScreen({super.key});
 
   @override
-  State<PreferencesScreen> createState() => _PreferencesScreenState();
+  State<FilterScreen> createState() => _FilterScreenState();
 }
 
-class _PreferencesScreenState extends State<PreferencesScreen>
-    with TickerProviderStateMixin {
-  late final AnimationController _controller;
-
+class _FilterScreenState extends State<FilterScreen> {
   bool heightAny = false;
   bool distanceAny = false;
 
@@ -70,86 +66,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     "Odia"
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-
-    Future.delayed(const Duration(milliseconds: 120), () {
-      if (mounted) _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Widget _animated(Widget child, double from, double to) {
-    final anim = CurvedAnimation(
-      parent: _controller,
-      curve: Interval(from, to, curve: Curves.easeOutCubic),
-    );
-
-    return AnimatedBuilder(
-      animation: anim,
-      builder: (_, __) => Opacity(
-        opacity: anim.value,
-        child: Transform.translate(
-          offset: Offset(0, (1 - anim.value) * 28),
-          child: child,
-        ),
-      ),
-    );
-  }
-
-  /// 🔝 TOP PROGRESS HEADER (3 / 3)
-  Widget _topHeader(BuildContext context) {
-    return SizedBox(
-      height: 7.h,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 62.w,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: 1, // 3 / 3
-                    minHeight: 6,
-                    backgroundColor: const Color(0xFFFFD6DE),
-                    valueColor: const AlwaysStoppedAnimation(
-                      Color(0xFFFF3B7A),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: 0.8.h),
-              const TextWidget(
-                text: '7 10',
-                size: 12,
-                color: Colors.grey,
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  /// ================= HELPERS =================
 
   Widget _sectionHeader(
     String title, {
@@ -234,17 +151,33 @@ class _PreferencesScreenState extends State<PreferencesScreen>
         child: TextWidget(
           text: text,
           size: 14,
-          weight: FontWeight.w500,
+          weight: FontWeight.w600,
           color: selected ? Colors.white : Colors.black,
         ),
       ),
     );
   }
 
+  /// ================= UI =================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const TextWidget(
+          text: 'Filters',
+          size: 22,
+          weight: FontWeight.bold,
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -254,29 +187,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 1.h),
-                    _animated(_topHeader(context), 0, 0.15),
-                    SizedBox(height: 3.h),
-                    _animated(
-                      const TextWidget(
-                        text: 'Preferences',
-                        size: 22,
-                        weight: FontWeight.bold,
-                      ),
-                      0.15,
-                      0.3,
-                    ),
-                    SizedBox(height: 1.h),
-                    _animated(
-                      const TextWidget(
-                        text:
-                            'Set your search criteria to find the perfect connection.',
-                        color: Colors.grey,
-                      ),
-                      0.2,
-                      0.35,
-                    ),
-                    SizedBox(height: 4.h),
+                    SizedBox(height: 2.h),
                     _sectionHeader(
                       'Preferred Height *',
                       showToggle: true,
@@ -313,12 +224,6 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     ),
                     SizedBox(height: 4.h),
                     _sectionHeader('Preferred Languages *'),
-                    TextWidget(
-                      text:
-                          "Select the languages you’re comfortable using to chat, flirt, and connect.",
-                      size: 14,
-                      color: Colors.grey,
-                    ),
                     SizedBox(height: 2.h),
                     Wrap(
                       spacing: 3.w,
@@ -332,10 +237,12 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                 ),
               ),
             ),
+
+            /// APPLY BUTTON (SAME AS ONBOARDING)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.5.h),
               child: ButtonWidget(
-                text: 'Continue ✨',
+                text: 'Apply Filters',
                 height: 7,
                 radius: 36,
                 variant: ButtonVariant.gradient,
@@ -345,12 +252,14 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                 ],
                 enableShadow: true,
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CulturalVibeScreen(),
-                    ),
-                  );
+                  Navigator.pop(context, {
+                    "heightAny": heightAny,
+                    "heightValue": heightValue,
+                    "distanceAny": distanceAny,
+                    "distanceValue": distanceValue,
+                    "ethnicities": ethnicities.toList(),
+                    "languages": languages.toList(),
+                  });
                 },
               ),
             ),

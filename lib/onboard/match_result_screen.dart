@@ -1,5 +1,6 @@
 import 'package:cupid_app/home/home.dart';
 import 'package:cupid_app/onboard/match_loading_screen.dart';
+import 'package:cupid_app/widgets/bottomNav.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
@@ -231,8 +232,7 @@ class _MatchResultScreenState extends State<MatchResultScreen>
               /// 💬 TEXTS TITLE
               Row(
                 children: const [
-                  Icon(Icons.chat_bubble_outline,
-                      size: 18, color: Color(0xFFFF6F7D)),
+                  Icon(Icons.chat, size: 18, color: Color(0xFFFF6F7D)),
                   SizedBox(width: 8),
                   TextWidget(
                     text: 'Texts',
@@ -286,8 +286,9 @@ class _MatchResultScreenState extends State<MatchResultScreen>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const Home(),
-                    ),
+                        builder: (_) => const CustomCupidBottomNav(
+                              currentIndex: 0,
+                            )),
                   );
                 },
               ),

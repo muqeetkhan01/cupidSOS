@@ -1,3 +1,4 @@
+import 'package:cupid_app/onboard/height.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
@@ -93,7 +94,7 @@ class _BasicsScreenState extends State<BasicsScreen>
               ),
               SizedBox(height: 0.8.h),
               const TextWidget(
-                text: '1 of 3',
+                text: '5 of 10',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -118,18 +119,14 @@ class _BasicsScreenState extends State<BasicsScreen>
             borderRadius: BorderRadius.circular(999),
             color: selected ? const Color(0xFFFFECEF) : Colors.white,
             border: Border.all(
-              color: selected
-                  ? const Color(0xFFFF6F7D)
-                  : Colors.grey.shade300,
+              color: selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
               width: selected ? 1.5 : 1,
             ),
           ),
           child: TextWidget(
             text: label,
             weight: FontWeight.w600,
-            color: selected
-                ? const Color(0xFFFF6F7D)
-                : const Color(0xFF1E1E1E),
+            color: selected ? const Color(0xFFFF6F7D) : const Color(0xFF1E1E1E),
           ),
         ),
       ),
@@ -157,21 +154,67 @@ class _BasicsScreenState extends State<BasicsScreen>
     );
   }
 
-  Widget _birthdayField() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
-          TextWidget(text: '07 / 01 / 2026'),
-          Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-        ],
+  DateTime? selectedDob;
+
+  String get dobText {
+    if (selectedDob == null) return 'Select your birthday';
+    return "${selectedDob!.day.toString().padLeft(2, '0')} / "
+        "${selectedDob!.month.toString().padLeft(2, '0')} / "
+        "${selectedDob!.year}";
+  }
+
+  Widget _birthdayField(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        final now = DateTime.now();
+
+        final picked = await showDatePicker(
+          context: context,
+          initialDate: DateTime(now.year - 22),
+          firstDate: DateTime(1900),
+          lastDate: DateTime(now.year - 18),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: const ColorScheme.light(
+                  primary: Color(0xFFFF6F7D), // header & selection
+                  onPrimary: Colors.white,
+                  onSurface: Colors.black,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFFF6F7D),
+                  ),
+                ),
+                dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+              ),
+              child: child!,
+            );
+          },
+        );
+
+        if (picked != null) {
+          setState(() => selectedDob = picked);
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextWidget(
+              text: dobText,
+              color: selectedDob == null ? Colors.grey.shade400 : Colors.black,
+            ),
+            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
@@ -187,23 +230,18 @@ class _BasicsScreenState extends State<BasicsScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 1.h),
-
               _animated(_header(context), 0, 0.15),
-
               SizedBox(height: 2.h),
-
               _animated(
-                const TextWidget(
+                TextWidget(
                   text: 'The Basics',
-                  size: 22,
-                  weight: FontWeight.bold,
+                  size: 18.sp,
+                  weight: FontWeight.w500,
                 ),
                 0.15,
                 0.3,
               ),
-
               SizedBox(height: 0.6.h),
-
               _animated(
                 const TextWidget(
                   text: 'Just a few details to get started.',
@@ -213,9 +251,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                 0.2,
                 0.35,
               ),
-
               SizedBox(height: 4.h),
-
               _animated(
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,9 +269,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                 0.3,
                 0.5,
               ),
-
               SizedBox(height: 3.h),
-
               _animated(
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,15 +281,13 @@ class _BasicsScreenState extends State<BasicsScreen>
                       color: Colors.grey,
                     ),
                     SizedBox(height: 1.h),
-                    _birthdayField(),
+                    _birthdayField(context),
                   ],
                 ),
                 0.45,
                 0.65,
               ),
-
               SizedBox(height: 3.h),
-
               _animated(
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,9 +313,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                 0.6,
                 0.85,
               ),
-
               const Spacer(),
-
               _animated(
                 ButtonWidget(
                   text: 'Next Step',
@@ -302,8 +332,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  const EthnicityQuestionScreen(),
+                              builder: (_) => const HeightQuestionScreen(),
                             ),
                           );
                         }
@@ -312,7 +341,6 @@ class _BasicsScreenState extends State<BasicsScreen>
                 0.85,
                 1,
               ),
-
               SizedBox(height: 3.h),
             ],
           ),

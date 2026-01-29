@@ -155,7 +155,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 2 of 7',
+                      text: 'Step 2 10',
                       size: 14,
                       color: Colors.grey,
                       textAlign: TextAlign.center,

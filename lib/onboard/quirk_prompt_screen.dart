@@ -5,6 +5,246 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 
+class CulturalVibeScreen extends StatefulWidget {
+  const CulturalVibeScreen({super.key});
+
+  @override
+  State<CulturalVibeScreen> createState() => _CulturalVibeScreenState();
+}
+
+class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
+  int? selectedIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDF7F5),
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 6.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 2.h),
+              TextWidget(
+                text: "What’s your cultural vibe?",
+                size: 18.sp,
+                weight: FontWeight.w500,
+              ),
+              SizedBox(height: 1.h),
+              const TextWidget(
+                text:
+                    "Choose the label that defines “home” for you so matches know what you’re about.",
+                size: 15,
+                color: Colors.grey,
+              ),
+              SizedBox(height: 4.h),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: culturalVibes.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 1.6.h),
+                  itemBuilder: (_, index) {
+                    final vibe = culturalVibes[index];
+                    final selected = selectedIndex == index;
+
+                    return GestureDetector(
+                      onTap: () => setState(() => selectedIndex = index),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        padding: EdgeInsets.all(4.w),
+                        decoration: BoxDecoration(
+                          color:
+                              selected ? const Color(0xFFFFECEF) : Colors.white,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: selected
+                                ? const Color(0xFFFF6F7D)
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(vibe.emoji,
+                                style: const TextStyle(fontSize: 26)),
+                            SizedBox(width: 4.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  TextWidget(
+                                    text: vibe.title,
+                                    weight: FontWeight.w600,
+                                  ),
+                                  SizedBox(height: 4),
+                                  TextWidget(
+                                    text: vibe.description,
+                                    size: 13,
+                                    color: Colors.grey,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ShowYourStoryScreen(),
+                        ),
+                      );
+                    },
+                    child: const TextWidget(
+                      text: 'Skip',
+                      color: Color(0xFFFF6F7D),
+                    ),
+                  ),
+                  ButtonWidget(
+                    text: 'Continue',
+                    height: 4.5,
+                    width: 30,
+                    radius: 36,
+                    variant: selectedIndex != null
+                        ? ButtonVariant.gradient
+                        : ButtonVariant.solid,
+                    gradient: const [
+                      Color(0xFFFF6F7D),
+                      Color(0xFFD86BCF),
+                    ],
+                    backgroundColor: Colors.grey.shade300,
+                    enableShadow: selectedIndex != null,
+                    onTap: selectedIndex != null
+                        ? () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => QuirkPromptScreen(
+                                  prompts:
+                                      culturalVibes[selectedIndex!].prompts,
+                                ),
+                              ),
+                            );
+                          }
+                        : () {},
+                  ),
+                ],
+              ),
+              SizedBox(height: 2.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CulturalVibe {
+  final String title;
+  final String description;
+  final String emoji;
+  final List<QuirkItem> prompts;
+
+  const CulturalVibe({
+    required this.title,
+    required this.description,
+    required this.emoji,
+    required this.prompts,
+  });
+}
+
+final List<CulturalVibe> culturalVibes = [
+  CulturalVibe(
+    title: 'Local',
+    description: 'Born and raised here, regardless of parents’ origin.',
+    emoji: '🏠',
+    prompts: [
+      QuirkItem(
+          emoji: '🏡',
+          question: 'What makes this place feel like home to you?'),
+      QuirkItem(emoji: '🍜', question: 'A local food I’ll always defend is…'),
+      QuirkItem(
+          emoji: '🗺️',
+          question: 'My favorite spot only locals know about is…'),
+      QuirkItem(emoji: '🎉', question: 'A local tradition I actually love is…'),
+      QuirkItem(emoji: '💬', question: 'Growing up here taught me…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Studying Abroad',
+    description: 'Currently studying outside your home country.',
+    emoji: '🎓',
+    prompts: [
+      QuirkItem(emoji: '✈️', question: 'Moving abroad taught me…'),
+      QuirkItem(emoji: '📚', question: 'The biggest culture shock I had was…'),
+      QuirkItem(emoji: '☕', question: 'Studying abroad made me addicted to…'),
+      QuirkItem(emoji: '👀', question: 'Something I miss from home is…'),
+      QuirkItem(emoji: '💭', question: 'Living abroad changed how I see…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Living Abroad',
+    description: 'Living or working outside your home country.',
+    emoji: '🌍',
+    prompts: [
+      QuirkItem(emoji: '🏙️', question: 'Living abroad feels like…'),
+      QuirkItem(emoji: '🍽️', question: 'A food I learned to love abroad is…'),
+      QuirkItem(emoji: '🤝', question: 'The hardest part of living abroad is…'),
+      QuirkItem(emoji: '📞', question: 'Calling home usually means…'),
+      QuirkItem(
+          emoji: '✨', question: 'Living abroad taught me independence by…'),
+    ],
+  ),
+  CulturalVibe(
+    title: '1.5 Generation',
+    description: 'Immigrated as a child or teen.',
+    emoji: '🧳',
+    prompts: [
+      QuirkItem(
+          emoji: '👶', question: 'Growing up between cultures felt like…'),
+      QuirkItem(emoji: '🏫', question: 'School was different because…'),
+      QuirkItem(emoji: '🗣️', question: 'At home we spoke…'),
+      QuirkItem(emoji: '😅', question: 'Something people assume about me is…'),
+      QuirkItem(
+          emoji: '💡', question: 'Being 1.5 gen taught me adaptability by…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Second Generation',
+    description: 'Born and raised here, parents from another country.',
+    emoji: '🌱',
+    prompts: [
+      QuirkItem(emoji: '🏠', question: 'Home felt different because…'),
+      QuirkItem(emoji: '🍲', question: 'My comfort food growing up was…'),
+      QuirkItem(emoji: '🧠', question: 'Balancing cultures taught me…'),
+      QuirkItem(emoji: '🎭', question: 'Around family vs friends, I’m…'),
+      QuirkItem(emoji: '💬', question: 'I learned identity means…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Other / Prefer Not to Say',
+    description: 'None of the above fits.',
+    emoji: '✨',
+    prompts: [
+      QuirkItem(
+          emoji: '🪞',
+          question: 'Culture means something different to me because…'),
+      QuirkItem(emoji: '🧩', question: 'I don’t fit one box because…'),
+      QuirkItem(emoji: '🌈', question: 'My background is best described as…'),
+      QuirkItem(emoji: '💭', question: 'What shaped me most was…'),
+      QuirkItem(emoji: '🫶', question: 'I connect with people through…'),
+    ],
+  ),
+];
+
 enum QuirkMode { type, voice }
 
 class QuirkItem {
@@ -15,7 +255,8 @@ class QuirkItem {
 }
 
 class QuirkPromptScreen extends StatefulWidget {
-  const QuirkPromptScreen({super.key});
+  List<QuirkItem> prompts;
+  QuirkPromptScreen({super.key, required this.prompts});
 
   @override
   State<QuirkPromptScreen> createState() => _QuirkPromptScreenState();
@@ -32,44 +273,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
   bool _ctaAnimated = false;
   int activeEmoji = 0;
 
-  final List<QuirkItem> quirks = const [
-    QuirkItem(emoji: '🏠', question: 'My ideal Sunday looks like...'),
-    QuirkItem(emoji: '🥢', question: 'A food I could eat forever is...'),
-    QuirkItem(emoji: '👨‍👩‍👧', question: 'Family matters most when...'),
-    QuirkItem(emoji: '💭', question: 'I knew I was ready for love when...'),
-  ];
-
   bool get isValid => _textCtrl.text.trim().isNotEmpty;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _pageController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _ctaController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    );
-
-    Future.delayed(const Duration(milliseconds: 120), () {
-      if (mounted) _pageController.forward();
-    });
-
-    _textCtrl.addListener(() {
-      if (isValid && !_ctaAnimated) {
-        _ctaAnimated = true;
-        _ctaController.forward();
-      }
-      if (!isValid && _ctaAnimated) {
-        _ctaAnimated = false;
-        _ctaController.reverse();
-      }
-      setState(() {});
-    });
-  }
 
   @override
   void dispose() {
@@ -140,6 +344,41 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
     );
   }
 
+  late final List<QuirkItem> quirks;
+
+  @override
+  void initState() {
+    super.initState();
+
+    quirks = widget.prompts;
+
+    _pageController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _ctaController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) _pageController.forward();
+    });
+
+    _textCtrl.addListener(() {
+      if (isValid && !_ctaAnimated) {
+        _ctaAnimated = true;
+        _ctaController.forward();
+      }
+      if (!isValid && _ctaAnimated) {
+        _ctaAnimated = false;
+        _ctaController.reverse();
+      }
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final current = quirks[activeEmoji];
@@ -167,7 +406,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 5 of 7',
+                      text: 'Step 9 of 10',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -183,7 +422,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                 child: const Column(
                   children: [
                     TextWidget(
-                      text: 'Your Quirk Prompt 💬',
+                      text: 'Your Quik Prompt 💬',
                       size: 20,
                       weight: FontWeight.bold,
                     ),
@@ -401,7 +640,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                                     milliseconds: 500,
                                   ),
                                   pageBuilder: (_, __, ___) =>
-                                      const ShowYourStoryScreen(),
+                                      const VoicePromptScreen(),
                                   transitionsBuilder:
                                       (_, animation, __, child) {
                                     final tween = Tween(

@@ -5,7 +5,6 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 
-
 class CupidSplashScreen extends StatefulWidget {
   const CupidSplashScreen({super.key});
 
