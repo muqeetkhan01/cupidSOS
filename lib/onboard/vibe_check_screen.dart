@@ -259,6 +259,8 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                 child: SingleChildScrollView(
                   padding: EdgeInsets.symmetric(horizontal: 6.w),
                   child: Wrap(
+                    alignment: WrapAlignment.center,
+                    runAlignment: WrapAlignment.center,
                     spacing: 2.w,
                     runSpacing: 1.h,
                     children: vibes.map(_chip).toList(),

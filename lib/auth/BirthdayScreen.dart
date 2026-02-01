@@ -205,7 +205,8 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                 start: 0.45,
                 end: 0.6,
                 child: TextWidget(
-                  text: "We'll unlock your cosmic soul badges",
+                  text:
+                      "We’ll unlock your cosmic soul badges\nYour birthday is locked once you set it.",
                   size: 15,
                   color: Colors.grey.shade600,
                   textAlign: TextAlign.center,

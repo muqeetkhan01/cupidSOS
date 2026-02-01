@@ -16,9 +16,9 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
   late final AnimationController _controller;
 
   final FixedExtentScrollController _scrollController =
-      FixedExtentScrollController(initialItem: 69); // 5'9"
+      FixedExtentScrollController(initialItem: 33); // 5'9"
 
-  int selectedCm = 175;
+  int selectedCm = 173;
 
   @override
   void initState() {

@@ -195,29 +195,29 @@ class _CupidSplashScreenState extends State<CupidSplashScreen>
 
             SizedBox(height: 2.h),
 
-            TextWidget(
-              text: '✨ 4-minute setup • Find your match today',
-              size: 14,
-              color: Colors.white.withOpacity(0.85),
-            ),
+            // TextWidget(
+            //   text: '✨ 4-minute setup • Find your match today',
+            //   size: 14,
+            //   color: Colors.white.withOpacity(0.85),
+            // ),
 
             const Spacer(),
 
             // 🌍 Cultural Emojis
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('🥢', style: TextStyle(fontSize: 18.sp)),
-                SizedBox(width: 2.w),
-                Text('🧧', style: TextStyle(fontSize: 18.sp)),
-                SizedBox(width: 2.w),
-                Text('🏺', style: TextStyle(fontSize: 18.sp)),
-                SizedBox(width: 2.w),
-                Text('👩‍❤️‍👨', style: TextStyle(fontSize: 18.sp)),
-                SizedBox(width: 2.w),
-                Text('🧋', style: TextStyle(fontSize: 18.sp)),
-              ],
-            ),
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.center,
+            //   children: [
+            //     Text('🥢', style: TextStyle(fontSize: 18.sp)),
+            //     SizedBox(width: 2.w),
+            //     Text('🧧', style: TextStyle(fontSize: 18.sp)),
+            //     SizedBox(width: 2.w),
+            //     Text('🏺', style: TextStyle(fontSize: 18.sp)),
+            //     SizedBox(width: 2.w),
+            //     Text('👩‍❤️‍👨', style: TextStyle(fontSize: 18.sp)),
+            //     SizedBox(width: 2.w),
+            //     Text('🧋', style: TextStyle(fontSize: 18.sp)),
+            //   ],
+            // ),
 
             SizedBox(height: 2.h),
           ],

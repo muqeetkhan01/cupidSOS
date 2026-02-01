@@ -4,25 +4,19 @@ import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 import 'preferences_screen.dart';
 
-enum EthnicityFlowStep { ethnicity, datingGoal, sexuality }
-
-class EthnicityQuestionScreen extends StatefulWidget {
-  const EthnicityQuestionScreen({super.key});
+class MeetQuestionScreen extends StatefulWidget {
+  const MeetQuestionScreen({super.key});
 
   @override
-  State<EthnicityQuestionScreen> createState() =>
-      _EthnicityQuestionScreenState();
+  State<MeetQuestionScreen> createState() => _MeetQuestionScreenState();
 }
 
-class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
+class _MeetQuestionScreenState extends State<MeetQuestionScreen>
     with TickerProviderStateMixin {
   late final AnimationController _controller;
-
-  EthnicityFlowStep step = EthnicityFlowStep.ethnicity;
   String? selected;
 
-  /// OPTIONS
-  final ethnicityOptions = [
+  final List<String> options = [
     "East Asian",
     "Southeast Asian",
     "South Asian",
@@ -31,32 +25,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     "Hispanic/Latino",
     "Middle Eastern",
     "Pacific Islander",
-    "American Indian",
-    "Other",
-  ];
-
-  final datingGoalOptions = [
-    "Long-term",
-    "Casual",
-    "Friends",
-    "Prefer not to say",
-  ];
-  final texts = [
-    "Long-term",
-    "Casual",
-    "Friends",
-    "Prefer not to say",
-  ];
-
-  final sexualityOptions = [
-    "Straight",
-    "Bisexual",
-    "Asexual",
-    "Demisexual",
-    "Queer",
-    "Gay",
-    "Lesbian",
-    "Prefer not to say",
+    "American Indian"
   ];
 
   @override
@@ -78,7 +47,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     super.dispose();
   }
 
-  /// 🔥 Animation helper
+  /// 🔥 Entrance animation
   Widget _animated(Widget child, double from, double to) {
     final anim = CurvedAnimation(
       parent: _controller,
@@ -97,19 +66,14 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  /// 🔝 Header
+  /// 🔝 PERFECT TOP HEADER (PROGRESS CENTERED)
   Widget _topHeader(BuildContext context) {
-    int stepIndex = step == EthnicityFlowStep.ethnicity
-        ? 6
-        : step == EthnicityFlowStep.datingGoal
-            ? 7
-            : 8;
-
     return SizedBox(
       height: 7.h,
       child: Stack(
         alignment: Alignment.center,
         children: [
+          /// BACK BUTTON
           Align(
             alignment: Alignment.centerLeft,
             child: IconButton(
@@ -117,6 +81,8 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
               onPressed: () => Navigator.pop(context),
             ),
           ),
+
+          /// CENTER PROGRESS
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -125,7 +91,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: stepIndex / 10,
+                    value: 12 / 18,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
                     valueColor: const AlwaysStoppedAnimation(
@@ -135,8 +101,8 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
                 ),
               ),
               SizedBox(height: 0.8.h),
-              TextWidget(
-                text: '$stepIndex of 10',
+              const TextWidget(
+                text: '6 of 10',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -147,31 +113,8 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  /// 🧠 Dynamic question
-  String get questionText {
-    switch (step) {
-      case EthnicityFlowStep.ethnicity:
-        return "What is your ethnicity?";
-      case EthnicityFlowStep.datingGoal:
-        return "Who are you looking to meet?";
-      case EthnicityFlowStep.sexuality:
-        return "What’s your sexuality?";
-    }
-  }
-
-  List<String> get options {
-    switch (step) {
-      case EthnicityFlowStep.ethnicity:
-        return ethnicityOptions;
-      case EthnicityFlowStep.datingGoal:
-        return datingGoalOptions;
-      case EthnicityFlowStep.sexuality:
-        return sexualityOptions;
-    }
-  }
-
   Widget _optionCard(String text) {
-    final isSelected = selected == text;
+    final bool isSelected = selected == text;
 
     return GestureDetector(
       onTap: () => setState(() => selected = text),
@@ -211,25 +154,6 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  void _onContinue() {
-    setState(() {
-      selected = null;
-
-      if (step == EthnicityFlowStep.ethnicity) {
-        step = EthnicityFlowStep.datingGoal;
-      } else if (step == EthnicityFlowStep.datingGoal) {
-        step = EthnicityFlowStep.sexuality;
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const PreferencesScreen(),
-          ),
-        );
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -241,8 +165,13 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 1.h),
+
+              /// 🔝 PROGRESS BAR
               _animated(_topHeader(context), 0, 0.15),
+
               SizedBox(height: 3.h),
+
+              /// LABEL
               _animated(
                 const TextWidget(
                   text: 'COMPATIBILITY QUIZ',
@@ -253,22 +182,40 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
                 0.15,
                 0.3,
               ),
+
               SizedBox(height: 1.2.h),
+
+              /// QUESTION
               _animated(
-                TextWidget(
-                  text: questionText,
+                const TextWidget(
+                  text: 'Who are you looking to meet?',
                   size: 18,
                 ),
                 0.2,
                 0.4,
               ),
+              _animated(
+                const TextWidget(
+                  text: 'Tell us what matters so we can find your match.',
+                  size: 14,
+                ),
+                0.2,
+                0.4,
+              ),
+
               SizedBox(height: 4.h),
+
+              /// OPTIONS
+
               Expanded(
                 child: ListView(
                   children: options.map(_optionCard).toList(),
                 ),
               ),
+
               SizedBox(height: 2.h),
+
+              /// CTA
               _animated(
                 ButtonWidget(
                   text: 'Continue',
@@ -283,11 +230,21 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
                   ],
                   backgroundColor: Colors.grey.shade300,
                   enableShadow: selected != null,
-                  onTap: selected != null ? _onContinue : () {},
+                  onTap: selected != null
+                      ? () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PreferencesScreen(),
+                            ),
+                          );
+                        }
+                      : () {},
                 ),
                 0.8,
                 1,
               ),
+
               SizedBox(height: 3.h),
             ],
           ),

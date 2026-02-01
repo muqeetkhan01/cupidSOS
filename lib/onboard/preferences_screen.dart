@@ -18,8 +18,9 @@ class _PreferencesScreenState extends State<PreferencesScreen>
   bool heightAny = false;
   bool distanceAny = false;
 
-  double heightValue = 0.45;
-  double distanceValue = 0.25;
+  double minHeightFt = 5.1;
+  double maxHeightFt = 6.0;
+  double selectedHeightFt = 5.8; // default
 
   final Set<String> ethnicities = {};
   final Set<String> languages = {};
@@ -183,21 +184,9 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     );
   }
 
-  Widget _slider({
-    required double value,
-    required ValueChanged<double> onChanged,
-  }) {
-    return SliderTheme(
-      data: SliderTheme.of(context).copyWith(
-        activeTrackColor: const Color(0xFFFF6F7D),
-        inactiveTrackColor: const Color(0xFFFF6F7D).withOpacity(0.25),
-        thumbColor: const Color(0xFFFF6F7D),
-        overlayColor: const Color(0xFFFF6F7D).withOpacity(0.12),
-      ),
-      child: Slider(value: value, onChanged: onChanged),
-    );
-  }
-
+  RangeValues heightRange = const RangeValues(5.1, 6.0); // default full range
+  double selectedDistanceMi = 100; // default
+  RangeValues distanceRange = const RangeValues(0, 100); // default
   Widget _chip(String text, Set<String> selectedSet) {
     final selected = selectedSet.contains(text);
 
@@ -283,11 +272,41 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                       toggle: heightAny,
                       onToggle: () => setState(() => heightAny = !heightAny),
                     ),
-                    if (!heightAny)
-                      _slider(
-                        value: heightValue,
-                        onChanged: (v) => setState(() => heightValue = v),
-                      ),
+                    if (!heightAny) ...[
+                      SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: const Color(0xFFFF6F7D),
+                            inactiveTrackColor:
+                                const Color(0xFFFF6F7D).withOpacity(0.25),
+                            thumbColor: const Color(0xFFFF6F7D),
+                            overlayColor:
+                                const Color(0xFFFF6F7D).withOpacity(0.12),
+                          ),
+                          child: RangeSlider(
+                            min: 5.1,
+                            max: 6.0,
+                            divisions: 11,
+                            values: heightRange,
+                            onChanged: (values) {
+                              setState(() => heightRange = values);
+                            },
+                          )),
+                      Row(
+                        children: [
+                          TextWidget(
+                            text: "${heightRange.start.toStringAsFixed(1)} ft",
+                          ),
+                          Spacer(),
+                          TextWidget(
+                            text: "  –  ",
+                          ),
+                          Spacer(),
+                          TextWidget(
+                            text: "${heightRange.end.toStringAsFixed(1)} ft",
+                          )
+                        ],
+                      )
+                    ],
                     SizedBox(height: 3.h),
                     _sectionHeader(
                       'Preferred Distance *',
@@ -296,11 +315,43 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                       onToggle: () =>
                           setState(() => distanceAny = !distanceAny),
                     ),
-                    if (!distanceAny)
-                      _slider(
-                        value: distanceValue,
-                        onChanged: (v) => setState(() => distanceValue = v),
-                      ),
+                    if (!distanceAny) ...[
+                      SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: const Color(0xFFFF6F7D),
+                            inactiveTrackColor:
+                                const Color(0xFFFF6F7D).withOpacity(0.25),
+                            thumbColor: const Color(0xFFFF6F7D),
+                            overlayColor:
+                                const Color(0xFFFF6F7D).withOpacity(0.12),
+                          ),
+                          child: RangeSlider(
+                            min: 0,
+                            max: 200,
+                            divisions: 20,
+                            values: distanceRange,
+                            onChanged: (values) {
+                              setState(() => distanceRange = values);
+                            },
+                          )),
+                      Row(
+                        children: [
+                          TextWidget(
+                            text:
+                                "${distanceRange.start.round().toStringAsFixed(1)} mi",
+                          ),
+                          Spacer(),
+                          TextWidget(
+                            text: "  –  ",
+                          ),
+                          Spacer(),
+                          TextWidget(
+                            text:
+                                "${distanceRange.end.round().toStringAsFixed(1)} mi",
+                          )
+                        ],
+                      )
+                    ],
                     SizedBox(height: 3.h),
                     _sectionHeader('Preferred Ethnicity *'),
                     SizedBox(height: 2.h),

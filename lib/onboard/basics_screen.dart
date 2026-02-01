@@ -163,62 +163,6 @@ class _BasicsScreenState extends State<BasicsScreen>
         "${selectedDob!.year}";
   }
 
-  Widget _birthdayField(BuildContext context) {
-    return GestureDetector(
-      onTap: () async {
-        final now = DateTime.now();
-
-        final picked = await showDatePicker(
-          context: context,
-          initialDate: DateTime(now.year - 22),
-          firstDate: DateTime(1900),
-          lastDate: DateTime(now.year - 18),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                colorScheme: const ColorScheme.light(
-                  primary: Color(0xFFFF6F7D), // header & selection
-                  onPrimary: Colors.white,
-                  onSurface: Colors.black,
-                ),
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFFF6F7D),
-                  ),
-                ),
-                dialogTheme: DialogThemeData(backgroundColor: Colors.white),
-              ),
-              child: child!,
-            );
-          },
-        );
-
-        if (picked != null) {
-          setState(() => selectedDob = picked);
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextWidget(
-              text: dobText,
-              color: selectedDob == null ? Colors.grey.shade400 : Colors.black,
-            ),
-            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -264,30 +208,45 @@ class _BasicsScreenState extends State<BasicsScreen>
                     ),
                     SizedBox(height: 1.h),
                     _inputField(hint: 'What do friends call you?'),
+                    SizedBox(height: .4.h),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 2.w,
+                        ),
+                        TextWidget(
+                          text:
+                              'This is the name others will see o n your profile.',
+                          size: 12,
+                          weight: FontWeight.w400,
+                          color: Colors.black,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 0.3,
                 0.5,
               ),
               SizedBox(height: 3.h),
-              _animated(
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const TextWidget(
-                      text: 'BIRTHDAY',
-                      size: 12,
-                      weight: FontWeight.w600,
-                      color: Colors.grey,
-                    ),
-                    SizedBox(height: 1.h),
-                    _birthdayField(context),
-                  ],
-                ),
-                0.45,
-                0.65,
-              ),
-              SizedBox(height: 3.h),
+              // _animated(
+              //   Column(
+              //     crossAxisAlignment: CrossAxisAlignment.start,
+              //     children: [
+              //       const TextWidget(
+              //         text: 'BIRTHDAY',
+              //         size: 12,
+              //         weight: FontWeight.w600,
+              //         color: Colors.grey,
+              //       ),
+              //       SizedBox(height: 1.h),
+              //       _birthdayField(context),
+              //     ],
+              //   ),
+              //   0.45,
+              //   0.65,
+              // ),
+              // SizedBox(height: 3.h),
               _animated(
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,8 +263,8 @@ class _BasicsScreenState extends State<BasicsScreen>
                         _genderChip(Gender.woman, 'Woman'),
                         SizedBox(width: 3.w),
                         _genderChip(Gender.man, 'Man'),
-                        SizedBox(width: 3.w),
-                        _genderChip(Gender.other, 'Other'),
+                        // SizedBox(width: 3.w),
+                        // _genderChip(Gender.other, 'Other'),
                       ],
                     ),
                   ],
