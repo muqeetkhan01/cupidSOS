@@ -1,9 +1,10 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/map.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
-import 'preferences_screen.dart';
 
 enum EthnicityFlowStep { ethnicity, datingGoal, sexuality }
 
@@ -17,12 +18,13 @@ class EthnicityQuestionScreen extends StatefulWidget {
 
 class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
+
   late final AnimationController _controller;
 
   EthnicityFlowStep step = EthnicityFlowStep.ethnicity;
   String? selected;
 
-  /// OPTIONS
   final ethnicityOptions = [
     "East Asian",
     "Southeast Asian",
@@ -37,12 +39,6 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
   ];
 
   final datingGoalOptions = [
-    "Long-term",
-    "Casual",
-    "Friends",
-    "Prefer not to say",
-  ];
-  final texts = [
     "Long-term",
     "Casual",
     "Friends",
@@ -71,6 +67,19 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _controller.forward();
     });
+
+    // Resume: go to first missing field + preselect saved value
+    if (flow.ethnicity.value == null || flow.ethnicity.value!.isEmpty) {
+      step = EthnicityFlowStep.ethnicity;
+      selected = flow.ethnicity.value;
+    } else if (flow.datingGoal.value == null ||
+        flow.datingGoal.value!.isEmpty) {
+      step = EthnicityFlowStep.datingGoal;
+      selected = flow.datingGoal.value;
+    } else {
+      step = EthnicityFlowStep.sexuality;
+      selected = flow.sexuality.value;
+    }
   }
 
   @override
@@ -79,7 +88,6 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     super.dispose();
   }
 
-  /// 🔥 Animation helper
   Widget _animated(Widget child, double from, double to) {
     final anim = CurvedAnimation(
       parent: _controller,
@@ -98,7 +106,6 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  /// 🔝 Header
   Widget _topHeader(BuildContext context) {
     int stepIndex = step == EthnicityFlowStep.ethnicity
         ? 6
@@ -148,7 +155,6 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  /// 🧠 Dynamic question
   String get questionText {
     switch (step) {
       case EthnicityFlowStep.ethnicity:
@@ -212,14 +218,31 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  void _onContinue() {
+  Future<void> _onContinue() async {
+    final v = selected;
+    if (v == null) return;
+
+    if (step == EthnicityFlowStep.ethnicity) {
+      flow.ethnicity.value = v;
+    } else if (step == EthnicityFlowStep.datingGoal) {
+      flow.datingGoal.value = v;
+    } else {
+      flow.sexuality.value = v;
+    }
+
+    await flow.saveOnboardingProgress();
+
+    if (!mounted) return;
+
     setState(() {
       selected = null;
 
       if (step == EthnicityFlowStep.ethnicity) {
         step = EthnicityFlowStep.datingGoal;
+        selected = flow.datingGoal.value;
       } else if (step == EthnicityFlowStep.datingGoal) {
         step = EthnicityFlowStep.sexuality;
+        selected = flow.sexuality.value;
       } else {
         Navigator.push(
           context,

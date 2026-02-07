@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 class UserModel {
   final String uid;
   final String name;
@@ -18,13 +19,19 @@ class UserModel {
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
+    DateTime? toDate(dynamic v) {
+      if (v is Timestamp) return v.toDate();
+      if (v is String) return DateTime.tryParse(v);
+      return null;
+    }
+
     return UserModel(
-      uid: map['uid'] ?? "",
-      name: map['name'] ?? "",
-      email: map['email'] ?? "",
-      photoUrl: map['photoUrl'] ?? "",
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: (map['updatedAt'] as Timestamp).toDate(),
+      uid: (map['uid'] ?? "").toString(),
+      name: (map['name'] ?? "").toString(),
+      email: (map['email'] ?? "").toString(),
+      photoUrl: (map['photoUrl'] ?? "").toString(),
+      createdAt: toDate(map['createdAt']) ?? DateTime.now(),
+      updatedAt: toDate(map['updatedAt']) ?? DateTime.now(),
     );
   }
 

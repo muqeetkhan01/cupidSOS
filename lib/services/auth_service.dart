@@ -1,11 +1,14 @@
-// lib/services/auth_service.dart
-
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../config/cloudinary_config.dart';
 
@@ -41,25 +44,63 @@ class AuthService extends GetxService {
       final response = await request.send();
       final resBody = await response.stream.bytesToString();
 
-      print("📤 Cloudinary Response: $resBody");
-
       final data = jsonDecode(resBody);
-
-      if (data["secure_url"] == null) {
-        print("❌ Cloudinary upload FAILED");
-        return null;
-      }
-
-      print("✅ Uploaded URL: ${data["secure_url"]}");
-      return data["secure_url"];
-    } catch (e) {
-      print("❌ Cloudinary Exception: $e");
+      return data["secure_url"] as String?;
+    } catch (_) {
       return null;
     }
   }
 
   // ----------------------------------------------------------
-  // CREATE USER IN FIRESTORE
+  // USER RECORD HELPERS
+  // ----------------------------------------------------------
+  Future<DocumentSnapshot<Map<String, dynamic>>?> getUserDoc(String uid) async {
+    try {
+      return await _firestore.collection("users_cupid").doc(uid).get();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> ensureUserRecord({
+    required User user,
+    String? nameFallback,
+  }) async {
+    final doc = await getUserDoc(user.uid);
+    final exists = doc?.exists ?? false;
+
+    if (exists) {
+      // Always keep timestamps fresh
+      await _firestore.collection("users_cupid").doc(user.uid).set(
+        {"updatedAt": FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
+      return;
+    }
+
+    final displayName = user.displayName?.trim().isNotEmpty == true
+        ? user.displayName!.trim()
+        : (nameFallback?.trim().isNotEmpty == true ? nameFallback!.trim() : "");
+
+    await _firestore.collection("users_cupid").doc(user.uid).set({
+      "uid": user.uid,
+      "name": displayName,
+      "email": user.email ?? "",
+      "photoUrl": user.photoURL ?? "",
+      "onboardingDone": false,
+      "createdAt": FieldValue.serverTimestamp(),
+      "updatedAt": FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<bool> isOnboardingDone(String uid) async {
+    final doc = await getUserDoc(uid);
+    final data = doc?.data();
+    return data?["onboardingDone"] == true;
+  }
+
+  // ----------------------------------------------------------
+  // CREATE USER IN FIRESTORE (legacy)
   // ----------------------------------------------------------
   Future<void> createUserRecord({
     required String uid,
@@ -67,18 +108,19 @@ class AuthService extends GetxService {
     required String email,
     required String? photoUrl,
   }) async {
-    await _firestore.collection("users").doc(uid).set({
+    await _firestore.collection("users_cupid").doc(uid).set({
       "uid": uid,
       "name": name,
       "email": email,
       "photoUrl": photoUrl ?? "",
+      "onboardingDone": false,
       "createdAt": FieldValue.serverTimestamp(),
       "updatedAt": FieldValue.serverTimestamp(),
     });
   }
 
   // ----------------------------------------------------------
-  // SIGNUP
+  // SIGNUP (EMAIL/PASSWORD)
   // ----------------------------------------------------------
   Future<String?> signup(
     String name,
@@ -93,7 +135,6 @@ class AuthService extends GetxService {
       );
 
       String? photoUrl;
-
       if (image != null) {
         photoUrl = await uploadProfileImage(image);
       }
@@ -114,11 +155,13 @@ class AuthService extends GetxService {
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
   // ----------------------------------------------------------
-  // LOGIN
+  // LOGIN (EMAIL/PASSWORD)
   // ----------------------------------------------------------
   Future<String?> login(String email, String password) async {
     try {
@@ -126,9 +169,113 @@ class AuthService extends GetxService {
         email: email.trim(),
         password: password.trim(),
       );
+
+      final user = _auth.currentUser;
+      if (user != null) {
+        await ensureUserRecord(user: user);
+      }
+
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  // ----------------------------------------------------------
+  // GOOGLE SIGN-IN
+  // ----------------------------------------------------------
+  // Future<String?> signInWithGoogle() async {
+  //   try {
+  //     final googleUser = await GoogleSignIn().signIn();
+  //     if (googleUser == null) return "Google sign-in cancelled";
+
+  //     final googleAuth = await googleUser.authentication;
+
+  //     final credential = GoogleAuthProvider.credential(
+  //       accessToken: googleAuth.accessToken,
+  //       idToken: googleAuth.idToken,
+  //     );
+
+  //     final result = await _auth.signInWithCredential(credential);
+  //     final user = result.user;
+  //     if (user == null) return "Google sign-in failed";
+
+  //     await ensureUserRecord(user: user);
+  //     return null;
+  //   } on FirebaseAuthException catch (e) {
+  //     return e.message;
+  //   } catch (e) {
+  //     return e.toString();
+  //   }
+  // }
+
+  // ----------------------------------------------------------
+  // APPLE SIGN-IN
+  // ----------------------------------------------------------
+  String _randomNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final rand = Random.secure();
+    return List.generate(length, (_) => charset[rand.nextInt(charset.length)])
+        .join();
+  }
+
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  Future<String?> signInWithApple() async {
+    try {
+      if (!Platform.isIOS && !Platform.isMacOS) {
+        return "Apple Sign-In is only available on Apple platforms";
+      }
+
+      final rawNonce = _randomNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName
+        ],
+        nonce: nonce,
+      );
+
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+      );
+
+      final result = await _auth.signInWithCredential(oauthCredential);
+      final user = result.user;
+      if (user == null) return "Apple sign-in failed";
+
+      // Apple may only provide name/email once; use fullName as fallback if present.
+      final fullName = [
+        appleCredential.givenName?.trim(),
+        appleCredential.familyName?.trim(),
+      ].where((s) => s != null && s.isNotEmpty).map((s) => s!).join(" ");
+
+      await ensureUserRecord(
+        user: user,
+        nameFallback: fullName.isNotEmpty ? fullName : null,
+      );
+
+      if (fullName.isNotEmpty && (user.displayName?.isEmpty ?? true)) {
+        await user.updateDisplayName(fullName);
+      }
+
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
@@ -141,6 +288,8 @@ class AuthService extends GetxService {
       return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
+    } catch (e) {
+      return e.toString();
     }
   }
 
@@ -152,22 +301,18 @@ class AuthService extends GetxService {
     if (user == null) return "No logged-in user";
 
     try {
-      // Update Firebase Authentication profile
       await user.updateDisplayName(newName);
 
-      // Update Firestore user profile
-      await _firestore.collection("users").doc(user.uid).update({
+      await _firestore.collection("users_cupid").doc(user.uid).update({
         "name": newName,
         "updatedAt": FieldValue.serverTimestamp(),
       });
 
-      // Reload cached user
       await user.reload();
       firebaseUser.value = _auth.currentUser;
 
       return null;
-    } catch (e) {
-      print("❌ updateName error: $e");
+    } catch (_) {
       return "Failed to update name";
     }
   }
@@ -185,9 +330,13 @@ class AuthService extends GetxService {
 
       await user.updatePhotoURL(url);
 
-      await _firestore.collection("users").doc(user.uid).update({
-        "photoUrl": url,
-      });
+      await _firestore.collection("users_cupid").doc(user.uid).set(
+        {
+          "photoUrl": url,
+          "updatedAt": FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
 
       await user.reload();
       firebaseUser.value = _auth.currentUser;

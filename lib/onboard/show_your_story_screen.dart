@@ -1,8 +1,13 @@
 import 'dart:io';
+
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/match_loading_screen.dart';
+import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 
@@ -15,14 +20,26 @@ class ShowYourStoryScreen extends StatefulWidget {
 
 class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
+
   late final AnimationController _controller;
   final ImagePicker _picker = ImagePicker();
 
-  /// 6 slots max
+  /// 6 slots max - local picks
   final List<File?> photos = List.generate(6, (_) => null);
 
-  int get uploadedCount => photos.where((e) => e != null).length;
-  bool get isValid => uploadedCount >= 1;
+  /// 6 slots max - already uploaded urls (resume)
+  late final List<String?> photoUrls;
+
+  bool _uploading = false;
+
+  int get uploadedCount =>
+      photoUrls.where((e) => e != null && e.isNotEmpty).length +
+      photos.where((e) => e != null).length;
+
+  bool get isValid =>
+      (photoUrls.any((u) => u != null && u.isNotEmpty)) ||
+      (photos.any((f) => f != null));
 
   @override
   void initState() {
@@ -31,8 +48,14 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
+
+    // ✅ Prefill from saved urls (resume support)
+    final saved = flow.storyPhotoUrls.toList();
+    photoUrls =
+        List<String?>.generate(6, (i) => i < saved.length ? saved[i] : null);
+
     Future.delayed(const Duration(milliseconds: 120), () {
-      _controller.forward();
+      if (mounted) _controller.forward();
     });
   }
 
@@ -42,7 +65,6 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
     super.dispose();
   }
 
-  /// 🔥 Entrance animation (same as other screens)
   Widget _animated(Widget child, double from, double to) {
     final anim = CurvedAnimation(
       parent: _controller,
@@ -65,8 +87,19 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
     if (picked != null) {
       setState(() {
         photos[index] = File(picked.path);
+        // user picked new file -> we will replace existing url on upload
       });
     }
+  }
+
+  ImageProvider? _tileImageProvider(int index) {
+    final f = photos[index];
+    if (f != null) return FileImage(f);
+
+    final u = photoUrls[index];
+    if (u != null && u.isNotEmpty) return NetworkImage(u);
+
+    return null;
   }
 
   Widget _photoTile({
@@ -74,10 +107,11 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
     required String label,
     required IconData icon,
   }) {
-    final file = photos[index];
+    final imageProvider = _tileImageProvider(index);
+    final hasImage = imageProvider != null;
 
     return GestureDetector(
-      onTap: () => _pickImage(index),
+      onTap: _uploading ? null : () => _pickImage(index),
       child: Stack(
         children: [
           AnimatedContainer(
@@ -85,18 +119,13 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
             height: index == 0 ? 32.h : 15.h,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
-              image: file != null
-                  ? DecorationImage(image: FileImage(file), fit: BoxFit.cover)
+              image: hasImage
+                  ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                   : null,
-              color: file == null ? const Color(0xFFF7F7F7) : null,
-              border: file == null
-                  ? Border.all(
-                      color: Colors.grey.shade300,
-                      style: BorderStyle.solid,
-                    )
-                  : null,
+              color: hasImage ? null : const Color(0xFFF7F7F7),
+              border: hasImage ? null : Border.all(color: Colors.grey.shade300),
             ),
-            child: file == null
+            child: !hasImage
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -126,9 +155,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                     ),
                   ),
           ),
-
-          /// ✅ CHECK BADGE
-          if (file != null)
+          if (hasImage)
             Positioned(
               top: 10,
               right: 10,
@@ -147,6 +174,45 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
     );
   }
 
+  Future<void> _uploadAndContinue() async {
+    if (!isValid || _uploading) return;
+
+    setState(() => _uploading = true);
+
+    // Upload only newly-picked files; replace any existing url in that slot.
+    for (int i = 0; i < photos.length; i++) {
+      final f = photos[i];
+      if (f == null) continue;
+
+      final url = await AuthService.to.uploadProfileImage(f);
+      if (url == null || url.isEmpty) {
+        setState(() => _uploading = false);
+        Get.snackbar("Upload failed", "Could not upload one of the photos.");
+        return;
+      }
+
+      photoUrls[i] = url;
+      photos[i] = null;
+    }
+
+    // Persist compact list (no nulls, keep ordering)
+    final finalUrls = photoUrls
+        .where((u) => u != null && u.isNotEmpty)
+        .map((u) => u!)
+        .toList();
+    flow.storyPhotoUrls.assignAll(finalUrls);
+
+    await flow.saveOnboardingProgress();
+
+    if (!mounted) return;
+    setState(() => _uploading = false);
+
+    Navigator.push(
+      context,
+      _slideRightToLeft(const MatchLoadingScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,8 +224,6 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 1.5.h),
-
-              /// HEADER
               _animated(
                 Stack(
                   alignment: Alignment.center,
@@ -168,7 +232,8 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                       alignment: Alignment.centerLeft,
                       child: IconButton(
                         icon: const Icon(Icons.arrow_back_ios_new),
-                        onPressed: () => Navigator.pop(context),
+                        onPressed:
+                            _uploading ? null : () => Navigator.pop(context),
                       ),
                     ),
                     const TextWidget(
@@ -181,16 +246,14 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                 0,
                 0.15,
               ),
-
               SizedBox(height: 2.h),
-
               _animated(
                 Column(
                   children: [
                     Center(
                       child: TextWidget(
                         text:
-                            'Choose or take a photo\nLet yor vibe shine\nAuthentic looks good on you!',
+                            'Choose or take a photo\nLet your vibe shine\nAuthentic looks good on you!',
                         size: 18,
                         textAlign: TextAlign.center,
                         weight: FontWeight.w500,
@@ -208,10 +271,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                 0.15,
                 0.3,
               ),
-
               SizedBox(height: 2.h),
-
-              /// COUNTER CHIP
               Center(
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
@@ -222,17 +282,15 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                     ),
                   ),
                   child: TextWidget(
-                    text: '$uploadedCount/6 photos • At least 1 required',
+                    text:
+                        '${uploadedCount.clamp(0, 6)}/6 photos • At least 1 required',
                     size: 14,
                     color: const Color(0xFF8A5A2B),
                     weight: FontWeight.w600,
                   ),
                 ),
               ),
-
               SizedBox(height: 3.h),
-
-              /// PHOTO GRID
               _animated(
                 Column(
                   children: [
@@ -299,10 +357,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                 0.3,
                 0.8,
               ),
-
               SizedBox(height: 3.h),
-
-              /// VERIFIED BADGE
               Container(
                 padding: EdgeInsets.all(4.w),
                 decoration: BoxDecoration(
@@ -329,28 +384,17 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                   ],
                 ),
               ),
-
               SizedBox(height: 4.h),
-
-              /// CTA
               ButtonWidget(
-                text: 'Find My Match 💕',
+                text: _uploading ? 'Uploading…' : 'Find My Match 💕',
                 height: 7,
                 radius: 36,
                 variant: isValid ? ButtonVariant.gradient : ButtonVariant.solid,
                 gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 backgroundColor: Colors.grey.shade300,
                 enableShadow: isValid,
-                onTap: isValid
-                    ? () {
-                        Navigator.push(
-                          context,
-                          _slideRightToLeft(const MatchLoadingScreen()),
-                        );
-                      }
-                    : () {},
+                onTap: isValid ? _uploadAndContinue : () {},
               ),
-
               SizedBox(height: 3.h),
             ],
           ),

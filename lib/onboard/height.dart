@@ -1,5 +1,7 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/ethnicity_question_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -13,16 +15,27 @@ class HeightQuestionScreen extends StatefulWidget {
 
 class _HeightQuestionScreenState extends State<HeightQuestionScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
+
   late final AnimationController _controller;
 
-  final FixedExtentScrollController _scrollController =
-      FixedExtentScrollController(initialItem: 33); // 5'9"
+  late FixedExtentScrollController _scrollController;
 
   int selectedCm = 173;
 
   @override
   void initState() {
     super.initState();
+
+    final existing = flow.heightCm.value?.round();
+    if (existing != null && existing >= 140 && existing <= 220) {
+      selectedCm = existing;
+    }
+
+    _scrollController = FixedExtentScrollController(
+      initialItem: selectedCm - 140,
+    );
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -58,7 +71,6 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
     );
   }
 
-  /// 🔝 PROGRESS HEADER
   Widget _topHeader(BuildContext context) {
     return SizedBox(
       height: 7.h,
@@ -80,7 +92,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: 4 / 7,
+                    value: 4 / 10,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
                     valueColor: const AlwaysStoppedAnimation(
@@ -109,6 +121,19 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
     return "$feet'$inch\"";
   }
 
+  Future<void> _continue() async {
+    flow.heightCm.value = selectedCm.toDouble();
+    await flow.saveOnboardingProgress();
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const EthnicityQuestionScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,9 +146,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
             children: [
               SizedBox(height: 1.h),
               _animated(_topHeader(context), 0, 0.15),
-
               SizedBox(height: 3.h),
-
               _animated(
                 TextWidget(
                   text: 'How tall are you?',
@@ -133,9 +156,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                 0.15,
                 0.3,
               ),
-
               SizedBox(height: 0.8.h),
-
               _animated(
                 const TextWidget(
                   text:
@@ -146,10 +167,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                 0.2,
                 0.35,
               ),
-
               SizedBox(height: 6.h),
-
-              /// HEIGHT PICKER
               _animated(
                 Center(
                   child: Container(
@@ -162,7 +180,6 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        /// CENTER HIGHLIGHT
                         Container(
                           height: 6.5.h,
                           margin: EdgeInsets.symmetric(horizontal: 4.w),
@@ -171,8 +188,6 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-
-                        /// PICKER
                         ListWheelScrollView.useDelegate(
                           controller: _scrollController,
                           physics: const FixedExtentScrollPhysics(),
@@ -183,7 +198,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                             });
                           },
                           childDelegate: ListWheelChildBuilderDelegate(
-                            childCount: 81, // 140cm – 220cm
+                            childCount: 81,
                             builder: (_, index) {
                               final cm = 140 + index;
                               final isSelected = cm == selectedCm;
@@ -210,9 +225,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                 0.35,
                 0.8,
               ),
-
               const Spacer(),
-
               _animated(
                 ButtonWidget(
                   text: 'Next',
@@ -224,19 +237,11 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                     Color(0xFFD86BCF),
                   ],
                   enableShadow: true,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const EthnicityQuestionScreen(),
-                      ),
-                    );
-                  },
+                  onTap: _continue,
                 ),
                 0.8,
                 1,
               ),
-
               SizedBox(height: 3.h),
             ],
           ),

@@ -1,4 +1,6 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -13,14 +15,15 @@ class PreferencesScreen extends StatefulWidget {
 
 class _PreferencesScreenState extends State<PreferencesScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
+
   late final AnimationController _controller;
 
   bool heightAny = false;
   bool distanceAny = false;
 
-  double minHeightFt = 5.1;
-  double maxHeightFt = 6.0;
-  double selectedHeightFt = 5.8; // default
+  RangeValues heightRange = const RangeValues(5.1, 7.0);
+  RangeValues distanceRange = const RangeValues(0, 100);
 
   final Set<String> ethnicities = {};
   final Set<String> languages = {};
@@ -74,6 +77,19 @@ class _PreferencesScreenState extends State<PreferencesScreen>
   @override
   void initState() {
     super.initState();
+
+    // Resume state from controller
+    heightAny = flow.prefHeightAny.value;
+    distanceAny = flow.prefDistanceAny.value;
+
+    heightRange =
+        RangeValues(flow.prefHeightMinFt.value, flow.prefHeightMaxFt.value);
+    distanceRange =
+        RangeValues(flow.prefDistanceMinMi.value, flow.prefDistanceMaxMi.value);
+
+    ethnicities.addAll(flow.preferredEthnicities);
+    languages.addAll(flow.preferredLanguages);
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -108,7 +124,6 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     );
   }
 
-  /// 🔝 TOP PROGRESS HEADER (3 / 3)
   Widget _topHeader(BuildContext context) {
     return SizedBox(
       height: 7.h,
@@ -130,7 +145,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: 1, // 3 / 3
+                    value: 0.75,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
                     valueColor: const AlwaysStoppedAnimation(
@@ -141,7 +156,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
               ),
               SizedBox(height: 0.8.h),
               const TextWidget(
-                text: '7 10',
+                text: '7 of 10',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -184,9 +199,6 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     );
   }
 
-  RangeValues heightRange = const RangeValues(5.1, 6.0); // default full range
-  double selectedDistanceMi = 100; // default
-  RangeValues distanceRange = const RangeValues(0, 100); // default
   Widget _chip(String text, Set<String> selectedSet) {
     final selected = selectedSet.contains(text);
 
@@ -226,6 +238,37 @@ class _PreferencesScreenState extends State<PreferencesScreen>
           weight: FontWeight.w500,
           color: selected ? Colors.white : Colors.black,
         ),
+      ),
+    );
+  }
+
+  Future<void> _continue() async {
+    // Persist into controller
+    flow.prefHeightAny.value = heightAny;
+    flow.prefHeightMinFt.value = heightRange.start;
+    flow.prefHeightMaxFt.value = heightRange.end;
+
+    flow.prefDistanceAny.value = distanceAny;
+    flow.prefDistanceMinMi.value = distanceRange.start;
+    flow.prefDistanceMaxMi.value = distanceRange.end;
+
+    flow.preferredEthnicities.assignAll(ethnicities.toList());
+    flow.preferredLanguages.assignAll(languages.toList());
+
+    // Keep legacy list too (doesn't break anything else)
+    final merged = <String>[
+      ...ethnicities.map((e) => "ethnicity:$e"),
+      ...languages.map((l) => "language:$l"),
+    ];
+    flow.preferences.assignAll(merged);
+
+    await flow.saveOnboardingProgress();
+
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CulturalVibeScreen(),
       ),
     );
   }
@@ -294,16 +337,13 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                       Row(
                         children: [
                           TextWidget(
-                            text: "${heightRange.start.toStringAsFixed(1)} ft",
-                          ),
-                          Spacer(),
+                              text:
+                                  "${heightRange.start.toStringAsFixed(1)} ft"),
+                          const Spacer(),
+                          const TextWidget(text: "  –  "),
+                          const Spacer(),
                           TextWidget(
-                            text: "  –  ",
-                          ),
-                          Spacer(),
-                          TextWidget(
-                            text: "${heightRange.end.toStringAsFixed(1)} ft",
-                          )
+                              text: "${heightRange.end.toStringAsFixed(1)} ft")
                         ],
                       )
                     ],
@@ -336,19 +376,11 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                           )),
                       Row(
                         children: [
-                          TextWidget(
-                            text:
-                                "${distanceRange.start.round().toStringAsFixed(1)} mi",
-                          ),
-                          Spacer(),
-                          TextWidget(
-                            text: "  –  ",
-                          ),
-                          Spacer(),
-                          TextWidget(
-                            text:
-                                "${distanceRange.end.round().toStringAsFixed(1)} mi",
-                          )
+                          TextWidget(text: "${distanceRange.start.round()} mi"),
+                          const Spacer(),
+                          const TextWidget(text: "  –  "),
+                          const Spacer(),
+                          TextWidget(text: "${distanceRange.end.round()} mi")
                         ],
                       )
                     ],
@@ -364,7 +396,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     ),
                     SizedBox(height: 4.h),
                     _sectionHeader('Preferred Languages *'),
-                    TextWidget(
+                    const TextWidget(
                       text:
                           "Select the languages you’re comfortable using to chat, flirt, and connect.",
                       size: 14,
@@ -395,14 +427,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                   Color(0xFFD86BCF),
                 ],
                 enableShadow: true,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CulturalVibeScreen(),
-                    ),
-                  );
-                },
+                onTap: _continue,
               ),
             ),
           ],

@@ -18,7 +18,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
   // inside _BirthdayScreenState
   final flow = Get.find<AppFlowController>();
 
-  void _continue() {
+  Future<void> _continue() async {
     final mm = int.tryParse(mmCtrl.text.trim());
     final dd = int.tryParse(ddCtrl.text.trim());
     final yyyy = int.tryParse(yyyyCtrl.text.trim());
@@ -29,8 +29,16 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     }
 
     final dt = DateTime(yyyy, mm, dd);
-    flow.birthday.value = dt;
+    // Basic sanity check
+    if (dt.year != yyyy || dt.month != mm || dt.day != dd) {
+      Get.snackbar("Invalid date", "Enter a valid birthday");
+      return;
+    }
 
+    flow.birthday.value = dt;
+    await flow.saveOnboardingProgress();
+
+    if (!mounted) return;
     Navigator.push(
       context,
       PageRouteBuilder(

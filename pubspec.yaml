@@ -29,6 +29,8 @@ dependencies:
   # Image handling (split, crop, convert)
   image: ^4.1.7
   http:
+  google_sign_in: 7.2.0
+  sign_in_with_apple:
 
 dev_dependencies:
   flutter_test:
