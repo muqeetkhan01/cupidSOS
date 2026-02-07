@@ -185,27 +185,27 @@ class _SignupScreenState extends State<SignupScreen>
                   text: 'Continue with Phone',
                   variant: ButtonVariant.gradient,
                   gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                onTap: () {
-  Navigator.push(
-    context,
-    PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 400),
-      pageBuilder: (_, __, ___) => const BirthdayScreen(),
-      transitionsBuilder: (_, animation, __, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(1, 0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          )),
-          child: child,
-        );
-      },
-    ),
-  );
-},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        transitionDuration: const Duration(milliseconds: 400),
+                        pageBuilder: (_, __, ___) => const BirthdayScreen(),
+                        transitionsBuilder: (_, animation, __, child) {
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(1, 0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            )),
+                            child: child,
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
               ),
 
@@ -230,24 +230,24 @@ class _SignupScreenState extends State<SignupScreen>
               SizedBox(height: 2.h),
 
               // Email
-             _animatedItem(
-  start: 0.9,
-  end: 1.0,
-  child: GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        slideRightToLeft(const AuthScreen()),
-      );
-    },
-    child: TextWidget(
-      text: 'Sign up with Email',
-      size: 16,
-      color: const Color(0xFFFF6F7D),
-      weight: FontWeight.w600,
-    ),
-  ),
-),
+              _animatedItem(
+                start: 0.9,
+                end: 1.0,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      slideRightToLeft(const AuthScreen()),
+                    );
+                  },
+                  child: TextWidget(
+                    text: 'Sign up with Email',
+                    size: 16,
+                    color: const Color(0xFFFF6F7D),
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
 
               const Spacer(),
 
@@ -294,21 +294,21 @@ class _SignupScreenState extends State<SignupScreen>
   }
 
   Route slideRightToLeft(Widget page) {
-  return PageRouteBuilder(
-    transitionDuration: const Duration(milliseconds: 400),
-    pageBuilder: (_, __, ___) => page,
-    transitionsBuilder: (_, animation, __, child) {
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-        )),
-        child: child,
-      );
-    },
-  );
-}
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 400),
+      pageBuilder: (_, __, ___) => page,
+      transitionsBuilder: (_, animation, __, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
+        );
+      },
+    );
+  }
 }

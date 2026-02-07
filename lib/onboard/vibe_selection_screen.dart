@@ -1,4 +1,6 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -17,6 +19,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
     with TickerProviderStateMixin {
   late final AnimationController _pageController;
   late final AnimationController _selectController;
+  final flow = Get.find<AppFlowController>();
 
   VibeType? selected;
 
@@ -82,6 +85,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
       onTap: () {
         setState(() {
           selected = type;
+          flow.vibeType.value = type.name; // "taurus" / "tiger"
           _selectController.forward(from: 0);
         });
       },
@@ -313,7 +317,8 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                   enableShadow: selected != null,
                   onTap: selected == null
                       ? () {}
-                      : () {
+                      : () async {
+                          await flow.saveOnboardingProgress();
                           Navigator.push(
                             context,
                             MaterialPageRoute(

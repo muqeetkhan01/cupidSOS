@@ -1,3 +1,4 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -10,11 +11,11 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  Get.put(AuthService());
+  Get.put(AuthService(), permanent: true);
+  Get.put(AppFlowController(), permanent: true);
 
   runApp(const CupidApp());
 }

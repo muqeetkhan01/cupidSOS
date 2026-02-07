@@ -1,5 +1,7 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/vibe_selection_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -13,6 +15,33 @@ class BirthdayScreen extends StatefulWidget {
 
 class _BirthdayScreenState extends State<BirthdayScreen>
     with TickerProviderStateMixin {
+  // inside _BirthdayScreenState
+  final flow = Get.find<AppFlowController>();
+
+  void _continue() {
+    final mm = int.tryParse(mmCtrl.text.trim());
+    final dd = int.tryParse(ddCtrl.text.trim());
+    final yyyy = int.tryParse(yyyyCtrl.text.trim());
+
+    if (mm == null || dd == null || yyyy == null) {
+      Get.snackbar("Invalid date", "Enter a valid birthday");
+      return;
+    }
+
+    final dt = DateTime(yyyy, mm, dd);
+    flow.birthday.value = dt;
+
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 450),
+        pageBuilder: (_, __, ___) => const VibeSelectionScreen(),
+        transitionsBuilder: (_, animation, __, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
+
   late final AnimationController _controller;
 
   final mmCtrl = TextEditingController();
@@ -136,163 +165,169 @@ class _BirthdayScreenState extends State<BirthdayScreen>
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
-          child: Column(
-            children: [
-              SizedBox(height: 1.5.h),
+          child: SingleChildScrollView(
+            child: GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: Column(
+                children: [
+                  SizedBox(height: 1.5.h),
 
-              // 🔙 Back + Step
-              _animatedItem(
-                start: 0.0,
-                end: 0.15,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new),
-                        onPressed: () => Navigator.pop(context),
+                  // 🔙 Back + Step
+                  _animatedItem(
+                    start: 0.0,
+                    end: 0.15,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new),
+                            onPressed: () => Navigator.pop(context),
+                          ),
+                        ),
+                        const TextWidget(
+                          text: 'Step 2 10',
+                          size: 14,
+                          color: Colors.grey,
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 6.h),
+
+                  // 📅 Icon
+                  _animatedItem(
+                    start: 0.15,
+                    end: 0.3,
+                    child: Container(
+                      width: 18.w,
+                      height: 18.w,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFD86BCF).withOpacity(0.12),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(
+                        Icons.calendar_month_rounded,
+                        color: Color(0xFFD86BCF),
+                        size: 34,
                       ),
                     ),
-                    const TextWidget(
-                      text: 'Step 2 10',
-                      size: 14,
-                      color: Colors.grey,
+                  ),
+
+                  SizedBox(height: 4.h),
+
+                  _animatedItem(
+                    start: 0.3,
+                    end: 0.45,
+                    child: const TextWidget(
+                      text: "When’s your birthday? 🎂",
+                      size: 24,
+                      weight: FontWeight.bold,
                       textAlign: TextAlign.center,
                     ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: 6.h),
-
-              // 📅 Icon
-              _animatedItem(
-                start: 0.15,
-                end: 0.3,
-                child: Container(
-                  width: 18.w,
-                  height: 18.w,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFD86BCF).withOpacity(0.12),
                   ),
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.calendar_month_rounded,
-                    color: Color(0xFFD86BCF),
-                    size: 34,
+
+                  SizedBox(height: 1.2.h),
+
+                  _animatedItem(
+                    start: 0.45,
+                    end: 0.6,
+                    child: TextWidget(
+                      text:
+                          "We’ll unlock your cosmic soul badges\nYour birthday is locked once you set it.",
+                      size: 15,
+                      color: Colors.grey.shade600,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                ),
-              ),
 
-              SizedBox(height: 4.h),
+                  SizedBox(height: 5.h),
 
-              _animatedItem(
-                start: 0.3,
-                end: 0.45,
-                child: const TextWidget(
-                  text: "When’s your birthday? 🎂",
-                  size: 24,
-                  weight: FontWeight.bold,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              SizedBox(height: 1.2.h),
-
-              _animatedItem(
-                start: 0.45,
-                end: 0.6,
-                child: TextWidget(
-                  text:
-                      "We’ll unlock your cosmic soul badges\nYour birthday is locked once you set it.",
-                  size: 15,
-                  color: Colors.grey.shade600,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-
-              SizedBox(height: 5.h),
-
-              // 🔢 REAL INPUT FIELDS
-              _animatedItem(
-                start: 0.6,
-                end: 0.75,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _dateField(
-                      hint: 'MM',
-                      controller: mmCtrl,
-                      focus: mmFocus,
-                      maxLength: 2,
+                  // 🔢 REAL INPUT FIELDS
+                  _animatedItem(
+                    start: 0.6,
+                    end: 0.75,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _dateField(
+                          hint: 'MM',
+                          controller: mmCtrl,
+                          focus: mmFocus,
+                          maxLength: 2,
+                        ),
+                        _dateField(
+                          hint: 'DD',
+                          controller: ddCtrl,
+                          focus: ddFocus,
+                          maxLength: 2,
+                        ),
+                        _dateField(
+                          hint: 'YYYY',
+                          controller: yyyyCtrl,
+                          focus: yyyyFocus,
+                          maxLength: 4,
+                        ),
+                      ],
                     ),
-                    _dateField(
-                      hint: 'DD',
-                      controller: ddCtrl,
-                      focus: ddFocus,
-                      maxLength: 2,
+                  ),
+
+                  SizedBox(height: 5.h),
+
+                  _animatedItem(
+                    start: 0.75,
+                    end: 1.0,
+                    child: ButtonWidget(
+                      text: '✨ Reveal My Signs',
+                      height: 7,
+                      radius: 36,
+                      variant: ButtonVariant.gradient,
+                      gradient: const [
+                        Color(0xFFFF6F7D),
+                        Color(0xFFD86BCF),
+                      ],
+                      onTap: () {
+                        FocusScope.of(context).unfocus();
+                        _continue();
+                        // Navigator.push(
+                        //   context,
+                        //   PageRouteBuilder(
+                        //     transitionDuration: const Duration(milliseconds: 450),
+                        //     pageBuilder: (_, __, ___) =>
+                        //         const VibeSelectionScreen(),
+                        //     transitionsBuilder: (_, animation, __, child) {
+                        //       final slide = Tween<Offset>(
+                        //         begin: const Offset(0, 0.08),
+                        //         end: Offset.zero,
+                        //       ).animate(
+                        //         CurvedAnimation(
+                        //           parent: animation,
+                        //           curve: Curves.easeOutCubic,
+                        //         ),
+                        //       );
+
+                        //       return FadeTransition(
+                        //         opacity: animation,
+                        //         child: SlideTransition(
+                        //           position: slide,
+                        //           child: child,
+                        //         ),
+                        //       );
+                        //     },
+                        //   ),
+                        // );
+
+                        // validate date here later
+                      },
                     ),
-                    _dateField(
-                      hint: 'YYYY',
-                      controller: yyyyCtrl,
-                      focus: yyyyFocus,
-                      maxLength: 4,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-
-              SizedBox(height: 5.h),
-
-              _animatedItem(
-                start: 0.75,
-                end: 1.0,
-                child: ButtonWidget(
-                  text: '✨ Reveal My Signs',
-                  height: 7,
-                  radius: 36,
-                  variant: ButtonVariant.gradient,
-                  gradient: const [
-                    Color(0xFFFF6F7D),
-                    Color(0xFFD86BCF),
-                  ],
-                  onTap: () {
-                    FocusScope.of(context).unfocus();
-                    Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        transitionDuration: const Duration(milliseconds: 450),
-                        pageBuilder: (_, __, ___) =>
-                            const VibeSelectionScreen(),
-                        transitionsBuilder: (_, animation, __, child) {
-                          final slide = Tween<Offset>(
-                            begin: const Offset(0, 0.08),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            ),
-                          );
-
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: slide,
-                              child: child,
-                            ),
-                          );
-                        },
-                      ),
-                    );
-
-                    // validate date here later
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -1,5 +1,8 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/height.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -287,7 +290,11 @@ class _BasicsScreenState extends State<BasicsScreen>
                   backgroundColor: Colors.grey.shade300,
                   enableShadow: isValid,
                   onTap: isValid
-                      ? () {
+                      ? () async {
+                          final flow = Get.find<AppFlowController>();
+                          flow.displayName.value = nameCtrl.text.trim();
+                          flow.gender.value = gender?.name; // woman/man/other
+                          await flow.saveOnboardingProgress();
                           Navigator.push(
                             context,
                             MaterialPageRoute(

@@ -1,9 +1,11 @@
 import 'dart:math';
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/match_result_screen.dart';
+import 'package:cupid_app/widgets/bottomNav.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
-
 
 class MatchLoadingScreen extends StatefulWidget {
   const MatchLoadingScreen({super.key});
@@ -56,11 +58,19 @@ class _MatchLoadingScreenState extends State<MatchLoadingScreen>
     /// ✅ AUTO NAVIGATION AT 100%
     await Future.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
-
-    Navigator.pushReplacement(
+    final flow = Get.find<AppFlowController>();
+    await flow.completeOnboarding();
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const MatchResultScreen()),
+      MaterialPageRoute(
+          builder: (_) => const CustomCupidBottomNav(
+                currentIndex: 0,
+              )),
     );
+    // Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(builder: (_) => const MatchResultScreen()),
+    // );
   }
 
   @override

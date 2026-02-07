@@ -1,5 +1,8 @@
+// lib/auth/auth_screen.dart
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/vibe_selection_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -13,6 +16,8 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   late final AnimationController _controller;
+
+  final flow = Get.find<AppFlowController>();
 
   bool isSignup = false;
 
@@ -29,7 +34,6 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 850),
     );
 
-    // blank → animate in
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _controller.forward();
     });
@@ -37,6 +41,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
 
   void _toggle() {
     setState(() => isSignup = !isSignup);
+    flow.clearError();
     _controller.reset();
     _controller.forward();
   }
@@ -50,56 +55,27 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // 🎞️ stagger animation
-  Widget _animated({
-    required Widget child,
-    required double from,
-    required double to,
-  }) {
-    final anim = CurvedAnimation(
-      parent: _controller,
-      curve: Interval(from, to, curve: Curves.easeOutCubic),
-    );
+  _submit() async {
+    flow.clearError();
 
-    return AnimatedBuilder(
-      animation: anim,
-      builder: (_, __) => Opacity(
-        opacity: anim.value,
-        child: Transform.translate(
-          offset: Offset(0, (1 - anim.value) * 26),
-          child: child,
-        ),
-      ),
-    );
-  }
+    final email = emailCtrl.text.trim();
+    final pass = passwordCtrl.text.trim();
+    final name = nameCtrl.text.trim();
 
-  Widget _field(
-    String hint,
-    TextEditingController c, {
-    bool obscure = false,
-  }) {
-    return Container(
-      height: 6.5.h,
-      padding: EdgeInsets.symmetric(horizontal: 4.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: TextField(
-        controller: c,
-        obscureText: obscure,
-        decoration: InputDecoration(
-          hintText: hint,
-          contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 18),
-          border: InputBorder.none,
-        ),
-      ),
-    );
-  }
+    if (isSignup) {
+      if (name.isEmpty) {
+        flow.error.value = "Name is required";
+        return;
+      }
+      final ok = await flow.signup(name: name, email: email, password: pass);
+      if (!ok) return;
+    } else {
+      final ok = await flow.login(email: email, password: pass);
+      if (!ok) return;
+    }
 
-  void _goToVibeScreen() {
-    Navigator.push(
+    if (!mounted) return;
+    Navigator.pushReplacement(
       context,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 450),
@@ -109,23 +85,17 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
             begin: const Offset(0, 0.08),
             end: Offset.zero,
           ).animate(
-            CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            ),
-          );
-
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
           return FadeTransition(
             opacity: animation,
-            child: SlideTransition(
-              position: slide,
-              child: child,
-            ),
+            child: SlideTransition(position: slide, child: child),
           );
         },
       ),
     );
   }
+
+  // keep your existing _animated + _field widgets ...
 
   @override
   Widget build(BuildContext context) {
@@ -139,126 +109,43 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
               children: [
                 SizedBox(height: 4.h),
 
-                // 💗 LOGO
-                _animated(
-                  from: 0.0,
-                  to: 0.2,
-                  child: Container(
-                    width: 18.w,
-                    height: 18.w,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4.w),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                      ),
-                    ),
-                    alignment: Alignment.center,
+                // ... keep your existing UI ...
+
+                Obx(() {
+                  final err = flow.error.value;
+                  if (err == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: EdgeInsets.only(top: 1.5.h),
                     child: Text(
-                      isSignup ? '💖' : '🔐',
-                      style: const TextStyle(fontSize: 28),
+                      err,
+                      style: TextStyle(color: Colors.red, fontSize: 15.sp),
                     ),
-                  ),
-                ),
+                  );
+                }),
 
                 SizedBox(height: 3.h),
 
-                // TITLE
-                _animated(
-                  from: 0.2,
-                  to: 0.35,
-                  child: TextWidget(
-                    text: isSignup ? 'Create Account' : 'Welcome Back',
-                    size: 22,
-                    weight: FontWeight.bold,
-                  ),
-                ),
+                Obx(() {
+                  final busy = flow.isBusy.value;
+                  return ButtonWidget(
+                    text: busy
+                        ? "Please wait..."
+                        : (isSignup ? "Create Account" : "Login"),
+                    onTap: busy ? null : _submit(),
+                  );
+                }),
 
-                SizedBox(height: 1.h),
+                SizedBox(height: 2.h),
 
-                _animated(
-                  from: 0.35,
-                  to: 0.45,
+                GestureDetector(
+                  onTap: _toggle,
                   child: TextWidget(
                     text: isSignup
-                        ? 'Start your love journey ✨'
-                        : 'Login to continue 💫',
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-
-                SizedBox(height: 4.h),
-
-                if (isSignup)
-                  _animated(
-                    from: 0.45,
-                    to: 0.55,
-                    child: _field('Full Name', nameCtrl),
-                  ),
-
-                if (isSignup) SizedBox(height: 2.h),
-
-                _animated(
-                  from: isSignup ? 0.55 : 0.45,
-                  to: isSignup ? 0.65 : 0.55,
-                  child: _field('Email', emailCtrl),
-                ),
-
-                SizedBox(height: 2.h),
-
-                _animated(
-                  from: isSignup ? 0.65 : 0.55,
-                  to: isSignup ? 0.75 : 0.65,
-                  child: _field('Password', passwordCtrl, obscure: true),
-                ),
-
-                SizedBox(height: 4.h),
-
-                // 🚀 CTA → VIBE SCREEN
-                _animated(
-                  from: 0.75,
-                  to: 0.9,
-                  child: ButtonWidget(
-                    text: isSignup ? 'Sign Up' : 'Login',
-                    variant: ButtonVariant.gradient,
-                    gradient: const [
-                      Color(0xFFFF6F7D),
-                      Color(0xFFD86BCF),
-                    ],
-                    onTap: _goToVibeScreen,
-                  ),
-                ),
-
-                SizedBox(height: 2.h),
-
-                // TOGGLE
-                _animated(
-                  from: 0.9,
-                  to: 1.0,
-                  child: GestureDetector(
-                    onTap: _toggle,
-                    child: RichText(
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: 15.sp,
-                          color: Colors.grey,
-                        ),
-                        children: [
-                          TextSpan(
-                            text: isSignup
-                                ? 'Already have an account? '
-                                : 'Create New Account? ',
-                          ),
-                          TextSpan(
-                            text: isSignup ? 'Login' : 'Sign up',
-                            style: const TextStyle(
-                              color: Color(0xFFFF6F7D),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ? "Already have an account? Login"
+                        : "Don't have an account? Sign up",
+                    size: 15,
+                    color: Colors.pink,
+                    weight: FontWeight.w600,
                   ),
                 ),
               ],
