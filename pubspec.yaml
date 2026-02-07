@@ -12,11 +12,23 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.2.1
+  google_fonts: 
   responsive_sizer: ^3.3.1
   image_picker: ^1.0.7
   remixicon:
-   
+  get:
+    # Firebase packages
+  firebase_core: 3.8.0
+  firebase_auth: 5.3.3
+  cloud_firestore: 5.5.0
+  firebase_storage:
+  intl:
+  google_maps_flutter:
+  place_picker_google: 0.0.10
+
+  # Image handling (split, crop, convert)
+  image: ^4.1.7
+  http:
 
 dev_dependencies:
   flutter_test:

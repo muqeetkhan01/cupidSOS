@@ -1,3 +1,4 @@
+import 'package:cupid_app/onboard/map.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
@@ -223,7 +224,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const PreferencesScreen(),
+            builder: (_) => const LocationQuestionScreen(),
           ),
         );
       }

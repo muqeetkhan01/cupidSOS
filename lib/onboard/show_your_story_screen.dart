@@ -321,7 +321,8 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                     SizedBox(width: 12),
                     Expanded(
                       child: TextWidget(
-                        text: 'Get one free flirt signal for getting verified',
+                        text:
+                            'Real hearts only 💕\nFor trust and safety please take a moment to verify your profile.',
                         size: 15,
                       ),
                     ),

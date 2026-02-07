@@ -1,5 +1,6 @@
 import 'package:cupid_app/Discover/discover_screen.dart';
 import 'package:cupid_app/chat/chat_list_screen.dart';
+import 'package:cupid_app/config/colors.dart';
 import 'package:cupid_app/match/matches_screen.dart';
 import 'package:cupid_app/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +84,9 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
               ),
               _navItem(
                 index: 3,
-                label: "Profile",
+                label: "Me",
+                picUrl: currentUser?.photoUrl,
+                isPic: true,
                 activeIcon: Remix.user_fill,
                 inactiveIcon: Remix.user_line,
               ),
@@ -100,6 +103,8 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
     required IconData activeIcon,
     required IconData inactiveIcon,
     int? badge,
+    bool isPic = false,
+    String? picUrl,
   }) {
     final bool isSelected = _currentIndex == index;
 
@@ -107,7 +112,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(5.0),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
@@ -127,20 +132,46 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
                 children: [
                   AnimatedScale(
                     duration: const Duration(milliseconds: 260),
-                    scale: isSelected ? 1.15 : 1.0,
+                    scale: isSelected ? 1.2 : 1.2,
                     curve: Curves.easeOutCubic,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 260),
                       curve: Curves.easeOutCubic,
                       transform:
                           Matrix4.translationValues(0, isSelected ? -3 : 0, 0),
-                      child: Icon(
-                        isSelected ? activeIcon : inactiveIcon,
-                        size: 20.sp,
-                        color: isSelected
-                            ? const Color(0xFFFF6F7D)
-                            : Colors.grey.shade500,
-                      ),
+                      child: picUrl == null && isPic
+                          ? CircleAvatar(
+                              backgroundColor: !isSelected
+                                  ? const Color(0xFFFF6F7D)
+                                  : Colors.white,
+                              radius: 15.sp,
+                              child: Icon(
+                                isSelected ? activeIcon : inactiveIcon,
+                                size: 15.sp,
+                                color: isSelected
+                                    ? const Color(0xFFFF6F7D)
+                                    : Colors.white,
+                              ),
+                            )
+                          : picUrl != null && isPic
+                              ? CircleAvatar(
+                                  radius: 15.sp,
+                                  backgroundImage: NetworkImage(picUrl),
+                                )
+                              : Icon(
+                                  isSelected ? activeIcon : inactiveIcon,
+                                  size: 20.sp,
+                                  color: isSelected
+                                      ? const Color(0xFFFF6F7D)
+                                      : Colors.grey.shade500,
+                                ),
+                      //  Icon(
+                      //   isSelected ? activeIcon : inactiveIcon,
+                      //   size: 20.sp,
+                      //   color: isSelected
+                      //       ? const Color(0xFFFF6F7D)
+                      //       : Colors.grey.shade500,
+                      // ),
                     ),
                   ),
 

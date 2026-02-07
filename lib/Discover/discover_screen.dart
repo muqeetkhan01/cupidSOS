@@ -216,7 +216,31 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                     type: ActionType.refresh,
                     icon: Icons.refresh,
                     onTap: () {
-                      _entryController.forward(from: 0);
+                      _swipeTarget = Offset.zero;
+                      _currentIndex = 0;
+                      _entryController = AnimationController(
+                        vsync: this,
+                        duration: const Duration(milliseconds: 700),
+                      )..forward();
+
+                      _swipeController = AnimationController(
+                        vsync: this,
+                        duration: const Duration(milliseconds: 350),
+                      )
+                        ..addListener(() {
+                          setState(() {
+                            _dragOffset = Offset.lerp(_dragOffset, _swipeTarget,
+                                _swipeController.value)!;
+                            _rotation = _dragOffset.dx / 300;
+                          });
+                        })
+                        ..addStatusListener((status) {
+                          if (status == AnimationStatus.completed) {
+                            _nextCard();
+                          }
+                        });
+                      setState(() {});
+                      // _entryController.forward(from: 0);
                     },
                   ),
                   _actionButton(

@@ -13,7 +13,7 @@ class FilterScreen extends StatefulWidget {
 class _FilterScreenState extends State<FilterScreen> {
   bool heightAny = false;
   bool distanceAny = false;
-  RangeValues heightRange = const RangeValues(5.1, 6.0); // default full range
+  RangeValues heightRange = const RangeValues(5.1, 7.0); // default full range
   double selectedDistanceMi = 100; // default
   RangeValues distanceRange = const RangeValues(0, 100); // default
 
@@ -209,7 +209,7 @@ class _FilterScreenState extends State<FilterScreen> {
                           ),
                           child: RangeSlider(
                             min: 5.1,
-                            max: 6.0,
+                            max: 7.0,
                             divisions: 11,
                             values: heightRange,
                             onChanged: (values) {
