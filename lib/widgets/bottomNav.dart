@@ -1,11 +1,15 @@
+// lib/widgets/bottomNav.dart (or wherever this file lives)
+
 import 'package:cupid_app/Discover/discover_screen.dart';
 import 'package:cupid_app/chat/chat_list_screen.dart';
-import 'package:cupid_app/config/colors.dart';
 import 'package:cupid_app/match/matches_screen.dart';
 import 'package:cupid_app/profile/profile_screen.dart';
+import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:remixicon/remixicon.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
+
 import '../../widgets/text_widget.dart';
 
 class CustomCupidBottomNav extends StatefulWidget {
@@ -16,15 +20,10 @@ class CustomCupidBottomNav extends StatefulWidget {
   State<CustomCupidBottomNav> createState() => _CustomCupidBottomNavState();
 }
 
-class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
-    with SingleTickerProviderStateMixin {
+class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
   late int _currentIndex;
 
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.currentIndex;
-  }
+  final auth = AuthService.to;
 
   /// PAGES
   final List<Widget> _pages = const [
@@ -34,6 +33,17 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
     ProfileScreen(), // 3
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.currentIndex;
+
+    // Rebuild on auth state changes so profile pic updates
+    ever(auth.firebaseUser, (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
   void _onTabTapped(int index) {
     if (index == _currentIndex) return;
     setState(() => _currentIndex = index);
@@ -41,6 +51,9 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
 
   @override
   Widget build(BuildContext context) {
+    final user = auth.currentUser;
+    final picUrl = user?.photoURL; // ✅ FirebaseAuth photoURL
+
     return Scaffold(
       extendBody: true,
       body: _pages[_currentIndex],
@@ -85,7 +98,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
               _navItem(
                 index: 3,
                 label: "Me",
-                picUrl: currentUser?.photoUrl,
+                picUrl: picUrl,
                 isPic: true,
                 activeIcon: Remix.user_fill,
                 inactiveIcon: Remix.user_line,
@@ -132,50 +145,32 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
                 children: [
                   AnimatedScale(
                     duration: const Duration(milliseconds: 260),
-                    scale: isSelected ? 1.2 : 1.2,
+                    scale: 1.2,
                     curve: Curves.easeOutCubic,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 260),
                       curve: Curves.easeOutCubic,
-                      transform:
-                          Matrix4.translationValues(0, isSelected ? -3 : 0, 0),
-                      child: picUrl == null && isPic
-                          ? CircleAvatar(
-                              backgroundColor: !isSelected
-                                  ? const Color(0xFFFF6F7D)
-                                  : Colors.white,
-                              radius: 15.sp,
-                              child: Icon(
-                                isSelected ? activeIcon : inactiveIcon,
-                                size: 15.sp,
-                                color: isSelected
-                                    ? const Color(0xFFFF6F7D)
-                                    : Colors.white,
-                              ),
+                      transform: Matrix4.translationValues(
+                        0,
+                        isSelected ? -3 : 0,
+                        0,
+                      ),
+                      child: isPic
+                          ? _profileIconOrPhoto(
+                              isSelected: isSelected,
+                              activeIcon: activeIcon,
+                              inactiveIcon: inactiveIcon,
+                              picUrl: picUrl,
                             )
-                          : picUrl != null && isPic
-                              ? CircleAvatar(
-                                  radius: 15.sp,
-                                  backgroundImage: NetworkImage(picUrl),
-                                )
-                              : Icon(
-                                  isSelected ? activeIcon : inactiveIcon,
-                                  size: 20.sp,
-                                  color: isSelected
-                                      ? const Color(0xFFFF6F7D)
-                                      : Colors.grey.shade500,
-                                ),
-                      //  Icon(
-                      //   isSelected ? activeIcon : inactiveIcon,
-                      //   size: 20.sp,
-                      //   color: isSelected
-                      //       ? const Color(0xFFFF6F7D)
-                      //       : Colors.grey.shade500,
-                      // ),
+                          : Icon(
+                              isSelected ? activeIcon : inactiveIcon,
+                              size: 20.sp,
+                              color: isSelected
+                                  ? const Color(0xFFFF6F7D)
+                                  : Colors.grey.shade500,
+                            ),
                     ),
                   ),
-
-                  /// BADGE
                   if (badge != null && badge > 0)
                     Positioned(
                       right: -6,
@@ -215,6 +210,34 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _profileIconOrPhoto({
+    required bool isSelected,
+    required IconData activeIcon,
+    required IconData inactiveIcon,
+    required String? picUrl,
+  }) {
+    final url = (picUrl ?? "").trim();
+
+    if (url.isEmpty) {
+      return CircleAvatar(
+        backgroundColor: !isSelected ? const Color(0xFFFF6F7D) : Colors.white,
+        radius: 15.sp,
+        child: Icon(
+          isSelected ? activeIcon : inactiveIcon,
+          size: 15.sp,
+          color: isSelected ? const Color(0xFFFF6F7D) : Colors.white,
+        ),
+      );
+    }
+
+    return CircleAvatar(
+      radius: 15.sp,
+      backgroundImage: NetworkImage(url),
+      backgroundColor: Colors.grey.shade200,
+      onBackgroundImageError: (_, __) {},
     );
   }
 }

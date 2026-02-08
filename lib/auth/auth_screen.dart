@@ -188,6 +188,13 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     required TextEditingController controller,
     bool obscure = false,
   }) {
+    const borderColor = Color(0xFFFF6F7D);
+
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: color, width: 1.6),
+        );
+
     return Padding(
       padding: EdgeInsets.only(bottom: 1.5.h),
       child: TextField(
@@ -195,7 +202,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         obscureText: obscure,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          border: border(Colors.grey.shade300), // fallback
+          enabledBorder: border(borderColor), // ✅ enabled
+          focusedBorder: border(borderColor), // ✅ focused
         ),
       ),
     );

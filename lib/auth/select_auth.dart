@@ -173,7 +173,10 @@ class _SignupScreenState extends State<SignupScreen>
                   iconAsset: 'assets/images/apple.png',
                   onTap: _busy
                       ? () {}
-                      : () => _oauthAndRoute(AuthService.to.signInWithApple),
+                      : () => Get.snackbar(
+                            "Coming soon..",
+                            "In 3rd Milestone",
+                          ),
                 ),
               ),
               SizedBox(height: 2.h),
@@ -190,7 +193,12 @@ class _SignupScreenState extends State<SignupScreen>
                     onTap:
                         // _busy
                         //     ?
-                        () {}
+                        () {
+                      Get.snackbar(
+                        "Coming soon..",
+                        "In 3rd Milestone",
+                      );
+                    }
                     //     : () => _oauthAndRoute(AuthService.to.signInWithGoogle),
                     ),
               ),
@@ -205,6 +213,11 @@ class _SignupScreenState extends State<SignupScreen>
                   onTap: _busy
                       ? () {}
                       : () {
+                          Get.snackbar(
+                            "Coming soon..",
+                            "In 3rd Milestone",
+                          );
+                          return;
                           Navigator.push(
                             context,
                             PageRouteBuilder(

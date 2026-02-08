@@ -327,7 +327,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                           ),
                           child: RangeSlider(
                             min: 5.1,
-                            max: 6.0,
+                            max: 7.0,
                             divisions: 11,
                             values: heightRange,
                             onChanged: (values) {

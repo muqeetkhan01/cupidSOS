@@ -1,64 +1,9 @@
-import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/onboard/show_your_story_screen.dart';
 import 'package:cupid_app/onboard/voice_prompt_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
-
-class CulturalVibe {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final List<QuirkItem> prompts;
-
-  const CulturalVibe({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.prompts,
-  });
-}
-
-class QuirkItem {
-  final String emoji;
-  final String question;
-
-  const QuirkItem({required this.emoji, required this.question});
-}
-
-const List<CulturalVibe> culturalVibes = [
-  CulturalVibe(
-    title: "Third Culture Kid",
-    subtitle: "Born in one place, raised in another.",
-    icon: Icons.public,
-    prompts: [
-      QuirkItem(emoji: "🌍", question: "A culture shock I’ll never forget…"),
-      QuirkItem(emoji: "🍜", question: "The meal that always feels like home…"),
-      QuirkItem(emoji: "🧳", question: "My accent changes when I…"),
-    ],
-  ),
-  CulturalVibe(
-    title: "Homebody Heritage",
-    subtitle: "Traditions, family, roots.",
-    icon: Icons.home,
-    prompts: [
-      QuirkItem(emoji: "🫶", question: "A family tradition I actually love…"),
-      QuirkItem(emoji: "🎉", question: "My favorite cultural celebration is…"),
-      QuirkItem(emoji: "🍲", question: "The dish I’d cook to impress you…"),
-    ],
-  ),
-  CulturalVibe(
-    title: "City Blend",
-    subtitle: "Modern life, mixed influences.",
-    icon: Icons.location_city,
-    prompts: [
-      QuirkItem(emoji: "☕", question: "My ideal weekend looks like…"),
-      QuirkItem(emoji: "🎧", question: "My playlist says I’m…"),
-      QuirkItem(emoji: "🕺", question: "The song that makes me dance…"),
-    ],
-  ),
-];
 
 class CulturalVibeScreen extends StatefulWidget {
   const CulturalVibeScreen({super.key});
@@ -119,17 +64,8 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                         ),
                         child: Row(
                           children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFFFF6F7D).withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(vibe.icon,
-                                  color: const Color(0xFFFF6F7D)),
-                            ),
+                            Text(vibe.emoji,
+                                style: const TextStyle(fontSize: 26)),
                             SizedBox(width: 4.w),
                             Expanded(
                               child: Column(
@@ -137,25 +73,16 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                                 children: [
                                   TextWidget(
                                     text: vibe.title,
-                                    size: 16,
                                     weight: FontWeight.w600,
                                   ),
-                                  SizedBox(height: 0.5.h),
+                                  SizedBox(height: 4),
                                   TextWidget(
-                                    text: vibe.subtitle,
+                                    text: vibe.description,
                                     size: 13,
                                     color: Colors.grey,
                                   ),
                                 ],
                               ),
-                            ),
-                            Icon(
-                              selected
-                                  ? Icons.radio_button_checked
-                                  : Icons.radio_button_off,
-                              color: selected
-                                  ? const Color(0xFFFF6F7D)
-                                  : Colors.grey,
                             ),
                           ],
                         ),
@@ -164,12 +91,18 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                   },
                 ),
               ),
-              SizedBox(height: 2.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ShowYourStoryScreen(),
+                        ),
+                      );
+                    },
                     child: const TextWidget(
                       text: 'Skip',
                       color: Color(0xFFFF6F7D),
@@ -183,7 +116,10 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                     variant: selectedIndex != null
                         ? ButtonVariant.gradient
                         : ButtonVariant.solid,
-                    gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                    gradient: const [
+                      Color(0xFFFF6F7D),
+                      Color(0xFFD86BCF),
+                    ],
                     backgroundColor: Colors.grey.shade300,
                     enableShadow: selectedIndex != null,
                     onTap: selectedIndex != null
@@ -202,7 +138,7 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                   ),
                 ],
               ),
-              SizedBox(height: 3.h),
+              SizedBox(height: 2.h),
             ],
           ),
         ),
@@ -211,11 +147,116 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
   }
 }
 
-enum QuirkMode { type }
+class CulturalVibe {
+  final String title;
+  final String description;
+  final String emoji;
+  final List<QuirkItem> prompts;
+
+  const CulturalVibe({
+    required this.title,
+    required this.description,
+    required this.emoji,
+    required this.prompts,
+  });
+}
+
+final List<CulturalVibe> culturalVibes = [
+  CulturalVibe(
+    title: 'Local',
+    description: 'Born and raised here, regardless of parents’ origin.',
+    emoji: '🏠',
+    prompts: [
+      QuirkItem(
+          emoji: '🏡',
+          question: 'What makes this place feel like home to you?'),
+      QuirkItem(emoji: '🍜', question: 'A local food I’ll always defend is…'),
+      QuirkItem(
+          emoji: '🗺️',
+          question: 'My favorite spot only locals know about is…'),
+      QuirkItem(emoji: '🎉', question: 'A local tradition I actually love is…'),
+      QuirkItem(emoji: '💬', question: 'Growing up here taught me…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Studying Abroad',
+    description: 'Currently studying outside your home country.',
+    emoji: '🎓',
+    prompts: [
+      QuirkItem(emoji: '✈️', question: 'Moving abroad taught me…'),
+      QuirkItem(emoji: '📚', question: 'The biggest culture shock I had was…'),
+      QuirkItem(emoji: '☕', question: 'Studying abroad made me addicted to…'),
+      QuirkItem(emoji: '👀', question: 'Something I miss from home is…'),
+      QuirkItem(emoji: '💭', question: 'Living abroad changed how I see…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Living Abroad',
+    description: 'Living or working outside your home country.',
+    emoji: '🌍',
+    prompts: [
+      QuirkItem(emoji: '🏙️', question: 'Living abroad feels like…'),
+      QuirkItem(emoji: '🍽️', question: 'A food I learned to love abroad is…'),
+      QuirkItem(emoji: '🤝', question: 'The hardest part of living abroad is…'),
+      QuirkItem(emoji: '📞', question: 'Calling home usually means…'),
+      QuirkItem(
+          emoji: '✨', question: 'Living abroad taught me independence by…'),
+    ],
+  ),
+  CulturalVibe(
+    title: '1.5 Generation',
+    description: 'Immigrated as a child or teen.',
+    emoji: '🧳',
+    prompts: [
+      QuirkItem(
+          emoji: '👶', question: 'Growing up between cultures felt like…'),
+      QuirkItem(emoji: '🏫', question: 'School was different because…'),
+      QuirkItem(emoji: '🗣️', question: 'At home we spoke…'),
+      QuirkItem(emoji: '😅', question: 'Something people assume about me is…'),
+      QuirkItem(
+          emoji: '💡', question: 'Being 1.5 gen taught me adaptability by…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Second Generation',
+    description: 'Born and raised here, parents from another country.',
+    emoji: '🌱',
+    prompts: [
+      QuirkItem(emoji: '🏠', question: 'Home felt different because…'),
+      QuirkItem(emoji: '🍲', question: 'My comfort food growing up was…'),
+      QuirkItem(emoji: '🧠', question: 'Balancing cultures taught me…'),
+      QuirkItem(emoji: '🎭', question: 'Around family vs friends, I’m…'),
+      QuirkItem(emoji: '💬', question: 'I learned identity means…'),
+    ],
+  ),
+  CulturalVibe(
+    title: 'Other / Prefer Not to Say',
+    description: 'None of the above fits.',
+    emoji: '✨',
+    prompts: [
+      QuirkItem(
+          emoji: '🪞',
+          question: 'Culture means something different to me because…'),
+      QuirkItem(emoji: '🧩', question: 'I don’t fit one box because…'),
+      QuirkItem(emoji: '🌈', question: 'My background is best described as…'),
+      QuirkItem(emoji: '💭', question: 'What shaped me most was…'),
+      QuirkItem(emoji: '🫶', question: 'I connect with people through…'),
+    ],
+  ),
+];
+
+enum QuirkMode { type, voice }
+
+class QuirkItem {
+  final String emoji;
+  final String question;
+
+  const QuirkItem({required this.emoji, required this.question});
+}
 
 class QuirkPromptScreen extends StatefulWidget {
-  final List<QuirkItem> prompts;
-  const QuirkPromptScreen({super.key, required this.prompts});
+  List<QuirkItem> prompts;
+  QuirkPromptScreen({super.key, required this.prompts});
 
   @override
   State<QuirkPromptScreen> createState() => _QuirkPromptScreenState();
@@ -223,39 +264,16 @@ class QuirkPromptScreen extends StatefulWidget {
 
 class _QuirkPromptScreenState extends State<QuirkPromptScreen>
     with TickerProviderStateMixin {
-  final flow = Get.find<AppFlowController>();
-
   late final AnimationController _pageController;
   late final AnimationController _ctaController;
+  QuirkMode mode = QuirkMode.type;
 
   final TextEditingController _textCtrl = TextEditingController();
 
+  bool _ctaAnimated = false;
   int activeEmoji = 0;
 
   bool get isValid => _textCtrl.text.trim().isNotEmpty;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _ctaController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    );
-
-    Future.delayed(const Duration(milliseconds: 120), () {
-      if (mounted) _pageController.forward();
-    });
-
-    // ✅ Prefill from saved value (resume support)
-    final existing = flow.quirkText.value;
-    if (existing != null && existing.trim().isNotEmpty) {
-      _textCtrl.text = existing;
-    }
-  }
 
   @override
   void dispose() {
@@ -287,37 +305,83 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
     );
   }
 
-  Future<void> _continue() async {
-    flow.quirkText.value = _textCtrl.text.trim();
-    await flow.saveOnboardingProgress();
+  void _goToEmoji(int index) {
+    setState(() {
+      activeEmoji = index;
+      _textCtrl.clear();
+    });
+  }
 
-    if (!mounted) return;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => const VoicePromptScreen(),
-        transitionsBuilder: (_, animation, __, child) {
-          final tween = Tween<Offset>(
-            begin: const Offset(0, 0.06),
-            end: Offset.zero,
-          ).chain(CurveTween(curve: Curves.easeOutCubic));
+  Widget _emojiToggle(int index) {
+    final selected = index == activeEmoji;
 
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(
-              position: animation.drive(tween),
-              child: child,
-            ),
-          );
-        },
+    return GestureDetector(
+      onTap: () => _goToEmoji(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        padding: EdgeInsets.all(3.w),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: selected
+              ? const LinearGradient(
+                  colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                )
+              : null,
+          color: selected ? null : Colors.white,
+          border: Border.all(color: Colors.grey.shade300),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFD86BCF).withOpacity(0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : [],
+        ),
+        child: Text(quirks[index].emoji, style: const TextStyle(fontSize: 22)),
       ),
     );
   }
 
+  late final List<QuirkItem> quirks;
+
+  @override
+  void initState() {
+    super.initState();
+
+    quirks = widget.prompts;
+
+    _pageController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _ctaController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) _pageController.forward();
+    });
+
+    _textCtrl.addListener(() {
+      if (isValid && !_ctaAnimated) {
+        _ctaAnimated = true;
+        _ctaController.forward();
+      }
+      if (!isValid && _ctaAnimated) {
+        _ctaAnimated = false;
+        _ctaController.reverse();
+      }
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final prompt = widget.prompts[activeEmoji];
+    final current = quirks[activeEmoji];
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
@@ -325,9 +389,9 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 1.5.h),
+
               _animated(
                 from: 0,
                 to: 0.15,
@@ -342,87 +406,305 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 8 of 10',
+                      text: 'Step 9 of 10',
                       size: 14,
                       color: Colors.grey,
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: 2.h),
+
+              SizedBox(height: 4.h),
+
               _animated(
                 from: 0.15,
                 to: 0.3,
-                child: TextWidget(
-                  text: "Drop a cultural quirk ✨",
-                  size: 18.sp,
-                  weight: FontWeight.w600,
+                child: const Column(
+                  children: [
+                    TextWidget(
+                      text: 'Your Quik Prompt 💬',
+                      size: 20,
+                      weight: FontWeight.bold,
+                    ),
+                    SizedBox(height: 6),
+                    TextWidget(
+                      text: 'This becomes your "Opening Move" icebreaker',
+                      size: 15,
+                      color: Color(0xFF1E1E1E),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: 1.h),
-              TextWidget(
-                text: "${prompt.emoji}  ${prompt.question}",
-                size: 15,
-                color: Colors.grey.shade700,
-              ),
+
               SizedBox(height: 3.h),
+
+              /// EMOJI TOGGLES
               _animated(
                 from: 0.3,
                 to: 0.4,
-                child: TextField(
-                  controller: _textCtrl,
-                  maxLines: 5,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: "Type your answer…",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    quirks.length,
+                    (i) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: _emojiToggle(i),
                     ),
                   ),
                 ),
               ),
-              SizedBox(height: 2.h),
-              _animated(
-                from: 0.45,
-                to: 0.75,
+
+              /// 🔹 SKIP / NEXT (EMOJI NAV)
+              Padding(
+                padding: EdgeInsets.only(top: 1.5.h),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(widget.prompts.length, (i) {
-                    final selected = i == activeEmoji;
-                    return GestureDetector(
-                      onTap: () => setState(() => activeEmoji = i),
-                      child: Container(
-                        margin: EdgeInsets.symmetric(horizontal: 2.w),
-                        width: 10,
-                        height: 10,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: activeEmoji < quirks.length - 1
+                          ? () => _goToEmoji(activeEmoji + 1)
+                          : null,
+                      child: TextWidget(
+                        text: 'Skip',
+                        size: 14,
+                        color: activeEmoji > 0
+                            ? const Color(0xFFFF6F7D)
+                            : Colors.grey.shade400,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: activeEmoji < quirks.length - 1
+                          ? () => _goToEmoji(activeEmoji + 1)
+                          : null,
+                      child: TextWidget(
+                        text: 'Next',
+                        size: 14,
+                        color: activeEmoji < quirks.length - 1
+                            ? const Color(0xFFFF6F7D)
+                            : Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              SizedBox(height: 3.h),
+
+              /// PROMPT CARD
+              _animated(
+                from: 0.4,
+                to: 0.65,
+                child: Container(
+                  padding: EdgeInsets.all(5.w),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(26),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 22,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextWidget(
+                        text: '${current.emoji} ${current.question}',
+                        size: 17,
+                        weight: FontWeight.w500,
+                      ),
+                      SizedBox(height: 2.h),
+
+                      /// TYPE / VOICE TOGGLE (ADDED)
+                      // Row(
+                      //   children: [
+                      //     _modeToggle(
+                      //       QuirkMode.type,
+                      //       Icons.chat_bubble_outline,
+                      //       'Type',
+                      //       () {},
+                      //     ),
+                      //     SizedBox(width: 2.w),
+                      //     _modeToggle(
+                      //       QuirkMode.voice,
+                      //       Icons.mic_none,
+                      //       'Voice',
+                      //       () {
+                      //         MaterialPageRoute(
+                      //           builder: (context) => const VoicePromptScreen(),
+                      //         );
+                      //       },
+                      //     ),
+                      //   ],
+                      // ),
+
+                      // SizedBox(height: 2.h),
+
+                      Container(
+                        padding: EdgeInsets.all(4.w),
                         decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: selected
-                              ? const Color(0xFFFF6F7D)
-                              : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(
+                            color: isValid
+                                ? const Color(0xFFFF6F7D)
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            TextField(
+                              controller: _textCtrl,
+                              maxLength: 150,
+                              maxLines: 4,
+                              decoration: const InputDecoration(
+                                border: InputBorder.none,
+                                hintText: 'Finish the sentence...',
+                                counterText: '',
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                TextWidget(
+                                  text: '${_textCtrl.text.length}/150',
+                                  size: 13,
+                                  color: Colors.grey,
+                                ),
+                                if (_textCtrl.text.isNotEmpty)
+                                  GestureDetector(
+                                    onTap: _textCtrl.clear,
+                                    child: const TextWidget(
+                                      text: 'Clear',
+                                      size: 13,
+                                      color: Color(0xFFFF6F7D),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  }),
+                    ],
+                  ),
                 ),
               ),
-              SizedBox(height: 4.h),
-              _animated(
-                from: 0.75,
-                to: 1,
-                child: ButtonWidget(
-                  text: 'Continue',
-                  height: 7,
-                  radius: 36,
-                  variant:
-                      isValid ? ButtonVariant.gradient : ButtonVariant.solid,
-                  gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                  backgroundColor: Colors.grey.shade300,
-                  enableShadow: isValid,
-                  onTap: isValid ? _continue : () {},
+
+              /// PREVIEW
+              if (isValid)
+                Padding(
+                  padding: EdgeInsets.only(top: 2.5.h),
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(22),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFF3D8), Color(0xFFFFE8C2)],
+                      ),
+                    ),
+                    child: TextWidget(
+                      text: 'Preview on your profile:\n"${_textCtrl.text}"',
+                      size: 15,
+                      color: const Color(0xFF8A5A2B),
+                    ),
+                  ),
                 ),
+
+              SizedBox(height: 5.h),
+
+              /// CTA
+              AnimatedBuilder(
+                animation: _ctaController,
+                builder: (_, __) {
+                  final scale = 1 + (_ctaController.value * 0.04);
+                  return Transform.scale(
+                    scale: scale,
+                    child: ButtonWidget(
+                      text: 'Continue ✨',
+                      height: 7,
+                      radius: 36,
+                      variant: isValid
+                          ? ButtonVariant.gradient
+                          : ButtonVariant.solid,
+                      gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                      backgroundColor: Colors.grey.shade300,
+                      enableShadow: isValid,
+                      onTap: isValid
+                          ? () {
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  transitionDuration: const Duration(
+                                    milliseconds: 500,
+                                  ),
+                                  pageBuilder: (_, __, ___) =>
+                                      const VoicePromptScreen(),
+                                  transitionsBuilder:
+                                      (_, animation, __, child) {
+                                    final tween = Tween(
+                                      begin: const Offset(0, 0.06),
+                                      end: Offset.zero,
+                                    ).chain(
+                                      CurveTween(
+                                        curve: Curves.easeOutCubic,
+                                      ),
+                                    );
+
+                                    return FadeTransition(
+                                      opacity: animation,
+                                      child: SlideTransition(
+                                        position: animation.drive(tween),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            }
+                          : () {},
+                    ),
+                  );
+                },
               ),
+
               SizedBox(height: 3.h),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _modeToggle(QuirkMode m, IconData icon, String label, ontap) {
+    final selected = mode == m;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => mode = m),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          height: 5.5.h,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            color: selected ? const Color(0xFFFFECEF) : const Color(0xFFF1F1F1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? const Color(0xFFFF6F7D) : Colors.grey,
+              ),
+              SizedBox(width: 1.w),
+              TextWidget(
+                text: label,
+                size: 14,
+                weight: FontWeight.w600,
+                color: selected ? const Color(0xFFFF6F7D) : Colors.grey,
+              ),
             ],
           ),
         ),

@@ -6,9 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../config/cloudinary_config.dart';
 
@@ -228,56 +226,56 @@ class AuthService extends GetxService {
     return digest.toString();
   }
 
-  Future<String?> signInWithApple() async {
-    try {
-      if (!Platform.isIOS && !Platform.isMacOS) {
-        return "Apple Sign-In is only available on Apple platforms";
-      }
+  // Future<String?> signInWithApple() async {
+  //   try {
+  //     if (!Platform.isIOS && !Platform.isMacOS) {
+  //       return "Apple Sign-In is only available on Apple platforms";
+  //     }
 
-      final rawNonce = _randomNonce();
-      final nonce = _sha256ofString(rawNonce);
+  //     final rawNonce = _randomNonce();
+  //     final nonce = _sha256ofString(rawNonce);
 
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName
-        ],
-        nonce: nonce,
-      );
+  //     final appleCredential = await SignInWithApple.getAppleIDCredential(
+  //       scopes: [
+  //         AppleIDAuthorizationScopes.email,
+  //         AppleIDAuthorizationScopes.fullName
+  //       ],
+  //       nonce: nonce,
+  //     );
 
-      final oauthCredential = OAuthProvider("apple.com").credential(
-        idToken: appleCredential.identityToken,
-        rawNonce: rawNonce,
-      );
+  //     final oauthCredential = OAuthProvider("apple.com").credential(
+  //       idToken: appleCredential.identityToken,
+  //       rawNonce: rawNonce,
+  //     );
 
-      final result = await _auth.signInWithCredential(oauthCredential);
-      final user = result.user;
-      if (user == null) return "Apple sign-in failed";
+  //     final result = await _auth.signInWithCredential(oauthCredential);
+  //     final user = result.user;
+  //     if (user == null) return "Apple sign-in failed";
 
-      // Apple may only provide name/email once; use fullName as fallback if present.
-      final fullName = [
-        appleCredential.givenName?.trim(),
-        appleCredential.familyName?.trim(),
-      ].where((s) => s != null && s.isNotEmpty).map((s) => s!).join(" ");
+  //     // Apple may only provide name/email once; use fullName as fallback if present.
+  //     final fullName = [
+  //       appleCredential.givenName?.trim(),
+  //       appleCredential.familyName?.trim(),
+  //     ].where((s) => s != null && s.isNotEmpty).map((s) => s!).join(" ");
 
-      await ensureUserRecord(
-        user: user,
-        nameFallback: fullName.isNotEmpty ? fullName : null,
-      );
+  //     await ensureUserRecord(
+  //       user: user,
+  //       nameFallback: fullName.isNotEmpty ? fullName : null,
+  //     );
 
-      if (fullName.isNotEmpty && (user.displayName?.isEmpty ?? true)) {
-        await user.updateDisplayName(fullName);
-      }
+  //     if (fullName.isNotEmpty && (user.displayName?.isEmpty ?? true)) {
+  //       await user.updateDisplayName(fullName);
+  //     }
 
-      return null;
-    } on FirebaseAuthException catch (e) {
-      return e.message;
-    } on SignInWithAppleAuthorizationException catch (e) {
-      return e.message;
-    } catch (e) {
-      return e.toString();
-    }
-  }
+  //     return null;
+  //   } on FirebaseAuthException catch (e) {
+  //     return e.message;
+  //   } on SignInWithAppleAuthorizationException catch (e) {
+  //     return e.message;
+  //   } catch (e) {
+  //     return e.toString();
+  //   }
+  // }
 
   // ----------------------------------------------------------
   // RESET PASSWORD
