@@ -142,7 +142,7 @@ class AppFlowController extends GetxController {
   Future<void> hydrateFromFirestore() async {
     final user = firebaseUser;
     if (user == null) return;
-
+    print(user.email);
     final doc = await _firestore.collection("users_cupid").doc(user.uid).get();
     final data = doc.data();
     if (data == null) return;
@@ -218,7 +218,7 @@ class AppFlowController extends GetxController {
     if (user == null) return const BirthdayScreen();
 
     await hydrateFromFirestore();
-
+    print(user.email);
     if (onboardingDone.value == true) {
       return const CustomCupidBottomNav(currentIndex: 0);
     }

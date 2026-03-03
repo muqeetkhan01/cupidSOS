@@ -1,7 +1,4 @@
-// lib/auth/select_auth.dart
-// Fix: wire Apple/Google buttons to AuthService OAuth + route properly.
-
-import 'package:cupid_app/auth/BirthdayScreen.dart';
+// ===============================
 import 'package:cupid_app/auth/auth_screen.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/services/auth_service.dart';
@@ -117,7 +114,7 @@ class _SignupScreenState extends State<SignupScreen>
                         onPressed: _busy ? null : () => Navigator.pop(context),
                       ),
                     ),
-                    TextWidget(
+                    const TextWidget(
                       text: 'Step 1 of 10',
                       size: 14,
                       color: Colors.grey,
@@ -147,7 +144,7 @@ class _SignupScreenState extends State<SignupScreen>
               _animatedItem(
                 start: 0.3,
                 end: 0.4,
-                child: TextWidget(
+                child: const TextWidget(
                   text: 'Join Cupid SOS',
                   size: 22,
                   weight: FontWeight.bold,
@@ -164,6 +161,8 @@ class _SignupScreenState extends State<SignupScreen>
                 ),
               ),
               SizedBox(height: 6.h),
+
+              // ✅ Apple
               _animatedItem(
                 start: 0.5,
                 end: 0.6,
@@ -173,75 +172,29 @@ class _SignupScreenState extends State<SignupScreen>
                   iconAsset: 'assets/images/apple.png',
                   onTap: _busy
                       ? () {}
-                      : () => Get.snackbar(
-                            "Coming soon..",
-                            "In 3rd Milestone",
-                          ),
+                      : () => _oauthAndRoute(AuthService.to.signInWithApple),
                 ),
               ),
+
               SizedBox(height: 2.h),
+
+              // ✅ Google
               _animatedItem(
                 start: 0.6,
                 end: 0.7,
                 child: ButtonWidget(
-                    text: _busy ? "Please wait..." : 'Continue with Google',
-                    variant: ButtonVariant.outline,
-                    borderColor: Colors.grey.shade300,
-                    textColor: Colors.black,
-                    enableShadow: false,
-                    iconAsset: 'assets/images/google.png',
-                    onTap:
-                        // _busy
-                        //     ?
-                        () {
-                      Get.snackbar(
-                        "Coming soon..",
-                        "In 3rd Milestone",
-                      );
-                    }
-                    //     : () => _oauthAndRoute(AuthService.to.signInWithGoogle),
-                    ),
-              ),
-              SizedBox(height: 2.h),
-              _animatedItem(
-                start: 0.7,
-                end: 0.8,
-                child: ButtonWidget(
-                  text: 'Continue with Phone',
-                  variant: ButtonVariant.gradient,
-                  gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                  text: _busy ? "Please wait..." : 'Continue with Google',
+                  variant: ButtonVariant.outline,
+                  borderColor: Colors.grey.shade300,
+                  textColor: Colors.black,
+                  enableShadow: false,
+                  iconAsset: 'assets/images/google.png',
                   onTap: _busy
                       ? () {}
-                      : () {
-                          Get.snackbar(
-                            "Coming soon..",
-                            "In 3rd Milestone",
-                          );
-                          return;
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              transitionDuration:
-                                  const Duration(milliseconds: 400),
-                              pageBuilder: (_, __, ___) =>
-                                  const BirthdayScreen(),
-                              transitionsBuilder: (_, animation, __, child) {
-                                return SlideTransition(
-                                  position: Tween<Offset>(
-                                    begin: const Offset(1, 0),
-                                    end: Offset.zero,
-                                  ).animate(CurvedAnimation(
-                                    parent: animation,
-                                    curve: Curves.easeOutCubic,
-                                  )),
-                                  child: child,
-                                );
-                              },
-                            ),
-                          );
-                        },
+                      : () => _oauthAndRoute(AuthService.to.signInWithGoogle),
                 ),
               ),
+
               SizedBox(height: 3.h),
               _animatedItem(
                 start: 0.8,
@@ -251,7 +204,7 @@ class _SignupScreenState extends State<SignupScreen>
                     const Expanded(child: Divider()),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 2.w),
-                      child: TextWidget(text: 'or', size: 15),
+                      child: const TextWidget(text: 'or', size: 15),
                     ),
                     const Expanded(child: Divider()),
                   ],
@@ -270,10 +223,10 @@ class _SignupScreenState extends State<SignupScreen>
                             slideRightToLeft(const AuthScreen()),
                           );
                         },
-                  child: TextWidget(
+                  child: const TextWidget(
                     text: 'Sign up with Email',
                     size: 16,
-                    color: const Color(0xFFFF6F7D),
+                    color: Color(0xFFFF6F7D),
                     weight: FontWeight.w600,
                   ),
                 ),

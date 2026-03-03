@@ -24,13 +24,18 @@ dependencies:
   firebase_storage:
   intl:
   google_maps_flutter:
-  place_picker_google: 0.0.10
+  place_picker_google: 
 
   # Image handling (split, crop, convert)
   image: ^4.1.7
   http:
-  # google_sign_in: 7.2.0
-  # sign_in_with_apple:
+  google_sign_in: 7.2.0
+  sign_in_with_apple:
+  fancy_shimmer_image:
+  videosdk: 3.7.0
+  videosdk_webrtc:
+  permission_handler:
+  flutter_local_notifications: 
 
 dev_dependencies:
   flutter_test:

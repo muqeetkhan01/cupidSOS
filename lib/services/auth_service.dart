@@ -7,6 +7,9 @@ import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_sign_in/google_sign_in.dart' as gs;
+// ✅ NEW
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../config/cloudinary_config.dart';
 
@@ -23,6 +26,7 @@ class AuthService extends GetxService {
   @override
   void onInit() {
     firebaseUser.bindStream(_auth.authStateChanges());
+
     super.onInit();
   }
 
@@ -68,7 +72,6 @@ class AuthService extends GetxService {
     final exists = doc?.exists ?? false;
 
     if (exists) {
-      // Always keep timestamps fresh
       await _firestore.collection("users_cupid").doc(user.uid).set(
         {"updatedAt": FieldValue.serverTimestamp()},
         SetOptions(merge: true),
@@ -80,37 +83,14 @@ class AuthService extends GetxService {
         ? user.displayName!.trim()
         : (nameFallback?.trim().isNotEmpty == true ? nameFallback!.trim() : "");
 
+    // IMPORTANT: do NOT force onboardingDone true here.
+    // New OAuth users must complete onboarding via AppFlowController.
     await _firestore.collection("users_cupid").doc(user.uid).set({
       "uid": user.uid,
-      "name": displayName,
+      "name": displayName, // can be empty, flow will route to Basics later
+      "displayName": displayName,
       "email": user.email ?? "",
       "photoUrl": user.photoURL ?? "",
-      "onboardingDone": false,
-      "createdAt": FieldValue.serverTimestamp(),
-      "updatedAt": FieldValue.serverTimestamp(),
-    });
-  }
-
-  Future<bool> isOnboardingDone(String uid) async {
-    final doc = await getUserDoc(uid);
-    final data = doc?.data();
-    return data?["onboardingDone"] == true;
-  }
-
-  // ----------------------------------------------------------
-  // CREATE USER IN FIRESTORE (legacy)
-  // ----------------------------------------------------------
-  Future<void> createUserRecord({
-    required String uid,
-    required String name,
-    required String email,
-    required String? photoUrl,
-  }) async {
-    await _firestore.collection("users_cupid").doc(uid).set({
-      "uid": uid,
-      "name": name,
-      "email": email,
-      "photoUrl": photoUrl ?? "",
       "onboardingDone": false,
       "createdAt": FieldValue.serverTimestamp(),
       "updatedAt": FieldValue.serverTimestamp(),
@@ -140,12 +120,16 @@ class AuthService extends GetxService {
       await cred.user!.updateDisplayName(name);
       if (photoUrl != null) await cred.user!.updatePhotoURL(photoUrl);
 
-      await createUserRecord(
-        uid: cred.user!.uid,
-        name: name,
-        email: email,
-        photoUrl: photoUrl ?? "",
-      );
+      await _firestore.collection("users_cupid").doc(cred.user!.uid).set({
+        "uid": cred.user!.uid,
+        "name": name,
+        "displayName": name,
+        "email": email,
+        "photoUrl": photoUrl ?? "",
+        "onboardingDone": false,
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      });
 
       await cred.user!.reload();
       firebaseUser.value = _auth.currentUser;
@@ -182,35 +166,80 @@ class AuthService extends GetxService {
   }
 
   // ----------------------------------------------------------
-  // GOOGLE SIGN-IN
+  // GOOGLE SIGN-IN (NEW)
+  // Returns null on success, error message on failure.
   // ----------------------------------------------------------
-  // Future<String?> signInWithGoogle() async {
-  //   try {
-  //     final googleUser = await GoogleSignIn().signIn();
-  //     if (googleUser == null) return "Google sign-in cancelled";
 
-  //     final googleAuth = await googleUser.authentication;
+// ...
 
-  //     final credential = GoogleAuthProvider.credential(
-  //       accessToken: googleAuth.accessToken,
-  //       idToken: googleAuth.idToken,
-  //     );
+  Future<String?> signInWithGoogle() async {
+    try {
+      // 1) init GoogleSignIn singleton (safe to call multiple times)
+      await gs.GoogleSignIn.instance.initialize(
+          // Optional:
+          // clientId: kIsWeb ? "<WEB_CLIENT_ID>" : null,
+          // serverClientId: "<SERVER_CLIENT_ID>",
+          );
 
-  //     final result = await _auth.signInWithCredential(credential);
-  //     final user = result.user;
-  //     if (user == null) return "Google sign-in failed";
+      // 2) interactive auth (this is the "sign in" equivalent now)
+      if (!gs.GoogleSignIn.instance.supportsAuthenticate()) {
+        return "Google sign-in is not supported on this platform";
+      }
 
-  //     await ensureUserRecord(user: user);
-  //     return null;
-  //   } on FirebaseAuthException catch (e) {
-  //     return e.message;
-  //   } catch (e) {
-  //     return e.toString();
-  //   }
-  // }
+      final gs.GoogleSignInAccount user =
+          await gs.GoogleSignIn.instance.authenticate();
+
+      // 3) get OAuth tokens
+      final gs.GoogleSignInAuthentication auth = user.authentication;
+      if (auth.idToken == null) return "Missing Google ID token";
+
+      // 4) firebase credential
+      final credential = GoogleAuthProvider.credential(
+        idToken: auth.idToken,
+        accessToken: auth.idToken,
+      );
+
+      final result = await _auth.signInWithCredential(credential);
+      final fbUser = result.user;
+      if (fbUser == null) return "Firebase sign-in failed";
+
+      // 5) ensure firestore doc exists (so onboarding flow works)
+      await ensureUserRecord(user: fbUser, nameFallback: user.displayName);
+
+      // 6) optionally sync name if google provided it
+      final fallbackName = (fbUser.displayName?.trim().isNotEmpty == true)
+          ? fbUser.displayName!.trim()
+          : (user.displayName?.trim().isNotEmpty == true
+              ? user.displayName!.trim()
+              : "");
+
+      if (fallbackName.isNotEmpty) {
+        await _firestore.collection("users_cupid").doc(fbUser.uid).set(
+          {
+            "name": fallbackName,
+            "displayName": fallbackName,
+            "updatedAt": FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      await fbUser.reload();
+      firebaseUser.value = _auth.currentUser;
+
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message;
+    } on gs.GoogleSignInException catch (e) {
+      return e.description ?? "Google sign-in error: ${e.code}";
+    } catch (e) {
+      return e.toString();
+    }
+  }
 
   // ----------------------------------------------------------
-  // APPLE SIGN-IN
+  // APPLE SIGN-IN (NEW)
+  // Returns null on success, error message on failure.
   // ----------------------------------------------------------
   String _randomNonce([int length = 32]) {
     const charset =
@@ -226,56 +255,74 @@ class AuthService extends GetxService {
     return digest.toString();
   }
 
-  // Future<String?> signInWithApple() async {
-  //   try {
-  //     if (!Platform.isIOS && !Platform.isMacOS) {
-  //       return "Apple Sign-In is only available on Apple platforms";
-  //     }
+  Future<String?> signInWithApple() async {
+    try {
+      if (!Platform.isIOS && !Platform.isMacOS) {
+        return "Apple Sign-In is only available on Apple platforms";
+      }
 
-  //     final rawNonce = _randomNonce();
-  //     final nonce = _sha256ofString(rawNonce);
+      final rawNonce = _randomNonce();
+      final nonce = _sha256ofString(rawNonce);
 
-  //     final appleCredential = await SignInWithApple.getAppleIDCredential(
-  //       scopes: [
-  //         AppleIDAuthorizationScopes.email,
-  //         AppleIDAuthorizationScopes.fullName
-  //       ],
-  //       nonce: nonce,
-  //     );
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
 
-  //     final oauthCredential = OAuthProvider("apple.com").credential(
-  //       idToken: appleCredential.identityToken,
-  //       rawNonce: rawNonce,
-  //     );
+      final oauthCredential = OAuthProvider("apple.com").credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+      );
 
-  //     final result = await _auth.signInWithCredential(oauthCredential);
-  //     final user = result.user;
-  //     if (user == null) return "Apple sign-in failed";
+      final result = await _auth.signInWithCredential(oauthCredential);
+      final user = result.user;
+      if (user == null) return "Apple sign-in failed";
 
-  //     // Apple may only provide name/email once; use fullName as fallback if present.
-  //     final fullName = [
-  //       appleCredential.givenName?.trim(),
-  //       appleCredential.familyName?.trim(),
-  //     ].where((s) => s != null && s.isNotEmpty).map((s) => s!).join(" ");
+      // Apple may only provide name once
+      final fullName = [
+        appleCredential.givenName?.trim(),
+        appleCredential.familyName?.trim(),
+      ].where((s) => s != null && s.isNotEmpty).map((s) => s!).join(" ");
 
-  //     await ensureUserRecord(
-  //       user: user,
-  //       nameFallback: fullName.isNotEmpty ? fullName : null,
-  //     );
+      await ensureUserRecord(
+        user: user,
+        nameFallback: fullName.isNotEmpty ? fullName : null,
+      );
 
-  //     if (fullName.isNotEmpty && (user.displayName?.isEmpty ?? true)) {
-  //       await user.updateDisplayName(fullName);
-  //     }
+      // Sync name if available and not already set
+      final resolvedName = (user.displayName?.trim().isNotEmpty == true)
+          ? user.displayName!.trim()
+          : fullName;
 
-  //     return null;
-  //   } on FirebaseAuthException catch (e) {
-  //     return e.message;
-  //   } on SignInWithAppleAuthorizationException catch (e) {
-  //     return e.message;
-  //   } catch (e) {
-  //     return e.toString();
-  //   }
-  // }
+      if (resolvedName.isNotEmpty) {
+        if ((user.displayName?.trim().isEmpty ?? true)) {
+          await user.updateDisplayName(resolvedName);
+        }
+        await _firestore.collection("users_cupid").doc(user.uid).set(
+          {
+            "name": resolvedName,
+            "displayName": resolvedName,
+            "updatedAt": FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      await user.reload();
+      firebaseUser.value = _auth.currentUser;
+
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message;
+    } on SignInWithAppleAuthorizationException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
 
   // ----------------------------------------------------------
   // RESET PASSWORD
@@ -303,6 +350,7 @@ class AuthService extends GetxService {
 
       await _firestore.collection("users_cupid").doc(user.uid).update({
         "name": newName,
+        "displayName": newName,
         "updatedAt": FieldValue.serverTimestamp(),
       });
 

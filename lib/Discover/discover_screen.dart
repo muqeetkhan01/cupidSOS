@@ -1,13 +1,20 @@
-// lib/Discover/discover_screen.dart
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cupid_app/Discover/filter.dart';
+import 'package:cupid_app/config/colors.dart';
+import 'package:cupid_app/profile/user_profile.dart';
 import 'package:cupid_app/services/auth_service.dart';
+import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../../widgets/text_widget.dart';
+import '../services/match_service.dart';
+import 'got_match_screen.dart';
 
 enum ActionType { refresh, reject, boost, like }
 
@@ -29,8 +36,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   Offset _swipeTarget = Offset.zero;
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  late final MatchService _matchService = MatchService(_db);
 
-  final List<_DiscoverUser> _profiles = [];
+  final List<DiscoverUser> _profiles = [];
   int _currentIndex = 0;
 
   bool _loading = true;
@@ -41,9 +49,23 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   String? get _myUid => AuthService.to.currentUser?.uid;
 
+  late AnimationController _buttonPulseController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+    _buttonPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(
+        parent: _buttonPulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
     _entryController = AnimationController(
       vsync: this,
@@ -74,15 +96,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   void dispose() {
     _entryController.dispose();
     _swipeController.dispose();
+    _buttonPulseController.dispose();
     super.dispose();
   }
 
-  // -------------------------
-  // Firestore fetch
-  // -------------------------
   Query<Map<String, dynamic>> _baseQuery() {
-    // You can add filters here (age range, distance, etc).
-    // For now: only users who finished onboarding.
     return _db
         .collection("users_cupid")
         .where("onboardingDone", isEqualTo: true)
@@ -121,11 +139,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
       final myUid = _myUid;
       final batch = snap.docs
-          .map((d) => _DiscoverUser.fromDoc(d))
-          .where((u) => myUid == null || u.uid != myUid) // exclude self
-          .where((u) =>
-              u.photoUrl.isNotEmpty ||
-              u.storyPhotoUrls.isNotEmpty) // avoid empty cards
+          .map((d) => DiscoverUser.fromDoc(d))
+          .where((u) => myUid == null || u.uid != myUid)
+          .where((u) => u.photoUrl.isNotEmpty || u.storyPhotoUrls.isNotEmpty)
           .toList();
 
       setState(() {
@@ -136,32 +152,38 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     }
   }
 
-  // -------------------------
-  // Swipe & actions
-  // -------------------------
   void _swipe(bool right) {
     _swipeTarget = Offset(right ? 500 : -500, 0);
     _swipeController.forward(from: 0);
   }
 
-  Future<void> _persistAction(_DiscoverUser target,
-      {required bool liked}) async {
+  Future<void> _handleSwipe({
+    required DiscoverUser target,
+    required bool liked,
+  }) async {
     final myUid = _myUid;
     if (myUid == null) return;
 
-    // Minimal structure; adjust to your schema.
-    // /users/{uid}/swipes/{targetUid} = {liked, createdAt}
-    await _db
-        .collection("users_cupid")
-        .doc(myUid)
-        .collection("swipes")
-        .doc(target.uid)
-        .set({
-      "targetUid": target.uid,
-      "liked": liked,
-      "createdAt": FieldValue.serverTimestamp(),
-      "snapshot": target.toPublicSnapshot(),
-    }, SetOptions(merge: true));
+    final res = await _matchService.swipe(
+      myUid: myUid,
+      targetUid: target.uid,
+      liked: liked,
+      targetSnapshot: target.toPublicSnapshot(),
+    );
+
+    if (liked && res.isMatch) {
+      Get.to(
+        () => GotMatchScreen(
+          myUid: myUid,
+          targetUid: target.uid,
+          targetName: target.name,
+          targetPhotoUrl: target.heroImageUrl,
+          matchPercentLabel: "${_matchPercent(target)}%",
+        ),
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 250),
+      );
+    }
   }
 
   Future<void> _nextCard() async {
@@ -173,34 +195,20 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       _currentIndex = min(_currentIndex + 1, _profiles.length - 1);
     });
 
-    // Prefetch if we're near the end.
     if (_profiles.length - _currentIndex <= 5) {
       await _fetchNextPage();
     }
-
-    // If still at end and no more fetched -> reset index if list has more than 1
-    if (_currentIndex >= _profiles.length - 1 && _profiles.length > 1) {
-      // keep at last card; UI will show "No more" if only one.
-    }
   }
 
-  // -------------------------
-  // Matching score (client-side)
-  // -------------------------
-  int _matchPercent(_DiscoverUser other) {
-    // Simple score, deterministic, no heavy logic.
-    // You can replace with server computed score later.
+  int _matchPercent(DiscoverUser other) {
     final me = AuthService.to.currentUser;
     final myName = (me?.displayName ?? "").trim();
 
-    // Use some fields from "other" only (we don't have my full profile doc here).
-    // Add mild randomization based on uid hash for variety but stable per pair.
     final seed = other.uid.hashCode ^ myName.hashCode;
     final rnd = Random(seed);
 
-    int base = 70 + rnd.nextInt(20); // 70..89
+    int base = 70 + rnd.nextInt(20);
 
-    // Small boosts if they have vibeType / location set
     if (other.vibeType.isNotEmpty) base += 3;
     if (other.locationLabel.isNotEmpty) base += 3;
     if (other.quirkText.isNotEmpty) base += 2;
@@ -208,181 +216,257 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     return base.clamp(75, 99);
   }
 
-  // -------------------------
-  // UI
-  // -------------------------
   @override
   Widget build(BuildContext context) {
-    final hasProfiles = _profiles.isNotEmpty;
-    final current = hasProfiles ? _profiles[_currentIndex] : null;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            /// HEADER
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const TextWidget(
-                    text: 'Discover',
-                    size: 24,
-                    weight: FontWeight.bold,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          transitionDuration: const Duration(milliseconds: 400),
-                          pageBuilder: (_, __, ___) => const FilterScreen(),
-                          transitionsBuilder: (_, animation, __, child) {
-                            return SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(1, 0),
-                                end: Offset.zero,
-                              ).animate(CurvedAnimation(
-                                parent: animation,
-                                curve: Curves.easeOutCubic,
-                              )),
-                              child: child,
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
-                      decoration: BoxDecoration(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFFDF7F5),
+              Color(0xFFFBEFF3),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildPremiumHeader(),
+              Expanded(child: _buildCardStack()),
+              _buildFloatingActions(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPremiumHeader() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            "Discover",
+            style: GoogleFonts.poppins(
+              fontSize: 28,
+              color: const Color(0xFFFF6F7D),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                PageRouteBuilder(
+                  transitionDuration: const Duration(milliseconds: 400),
+                  pageBuilder: (_, __, ___) => const FilterScreen(),
+                  transitionsBuilder: (_, animation, __, child) {
+                    return SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      )),
+                      child: child,
+                    );
+                  },
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(15),
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: .8.h),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.white),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.tune, size: 18, color: Colors.white),
+                    SizedBox(width: 6),
+                    Text(
+                      "Filters",
+                      style: TextStyle(
+                        fontSize: 14,
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: const [
-                          Icon(Icons.auto_awesome, size: 18),
-                          SizedBox(width: 6),
-                          TextWidget(text: 'Filters'),
-                        ],
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
 
-            /// CARD
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : (!hasProfiles
-                      ? _emptyState()
-                      : AnimatedBuilder(
-                          animation: _entryController,
-                          builder: (_, __) {
-                            final slide = Tween(
-                              begin: const Offset(0, 80),
-                              end: Offset.zero,
-                            ).transform(_entryController.value);
+  Widget _buildFloatingActions() {
+    if (_profiles.isEmpty) {
+      return SizedBox(height: 10.h);
+    }
 
-                            return Transform.translate(
-                              offset: slide,
-                              child: GestureDetector(
-                                onPanUpdate: (d) {
-                                  setState(() {
-                                    _dragOffset += d.delta;
-                                    _rotation = _dragOffset.dx / 300;
-                                  });
-                                },
-                                onPanEnd: (_) async {
-                                  if (_dragOffset.dx.abs() > 120) {
-                                    final right = _dragOffset.dx > 0;
-                                    final target = _profiles[_currentIndex];
-                                    await _persistAction(target, liked: right);
-                                    _swipe(right);
-                                  } else {
-                                    setState(() {
-                                      _dragOffset = Offset.zero;
-                                      _rotation = 0;
-                                    });
-                                  }
-                                },
-                                child: Transform.translate(
-                                  offset: _dragOffset,
-                                  child: Transform.rotate(
-                                    angle: _rotation,
-                                    child: _profileCard(
-                                      current!,
-                                      match: "${_matchPercent(current)}%",
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        )),
-            ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 2.h, top: 2.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _animatedAction(
+            icon: Icons.refresh,
+            color: Colors.orange,
+            onTap: () async => _loadFirstPage(),
+          ),
+          _animatedAction(
+            icon: Icons.close,
+            color: Colors.redAccent,
+            onTap: () async {
+              final target = _profiles[_currentIndex];
+              await _handleSwipe(target: target, liked: false);
+              _swipe(false);
+            },
+          ),
+          _animatedAction(
+            icon: Icons.flash_on,
+            color: Colors.amber,
+            big: true,
+            pulse: true,
+            onTap: () async {
+              final target = _profiles[_currentIndex];
+              await _handleSwipe(target: target, liked: true);
+              _swipe(true);
+            },
+          ),
+          _animatedAction(
+            icon: Icons.favorite,
+            color: Colors.pinkAccent,
+            pulse: true,
+            onTap: () async {
+              final target = _profiles[_currentIndex];
+              await _handleSwipe(target: target, liked: true);
+              _swipe(true);
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
-            /// ACTION BUTTONS
-            Padding(
-              padding: EdgeInsets.only(
-                bottom: 4.h,
-                top: 2.h,
-                left: 12.w,
-                right: 12.w,
+  Widget _animatedAction({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+    bool big = false,
+    bool pulse = false,
+  }) {
+    final size = big ? 20.w : 16.w;
+
+    final button = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [color.withOpacity(0.95), color],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.6),
+            blurRadius: pulse ? 30 : 18,
+            spreadRadius: pulse ? 4 : 1,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Icon(icon, color: Colors.white, size: big ? 34 : 28),
+    );
+
+    if (pulse) {
+      return ScaleTransition(
+        scale: _pulseAnimation,
+        child: GestureDetector(onTap: onTap, child: button),
+      );
+    }
+
+    return GestureDetector(onTap: onTap, child: button);
+  }
+
+  Widget _buildCardStack() {
+    if (_profiles.isEmpty) return _emptyState();
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        if (_currentIndex + 2 < _profiles.length)
+          _stackedCard(_profiles[_currentIndex + 2], scale: 0.92, offset: 40),
+        if (_currentIndex + 1 < _profiles.length)
+          _stackedCard(_profiles[_currentIndex + 1], scale: 0.96, offset: 20),
+        GestureDetector(
+          onPanUpdate: (d) {
+            setState(() {
+              _dragOffset += d.delta;
+              _rotation = _dragOffset.dx / 300;
+            });
+          },
+          onPanEnd: (_) async {
+            if (_dragOffset.dx.abs() > 120) {
+              final right = _dragOffset.dx > 0;
+              final target = _profiles[_currentIndex];
+
+              await _handleSwipe(target: target, liked: right);
+              _swipe(right);
+            } else {
+              setState(() {
+                _dragOffset = Offset.zero;
+                _rotation = 0;
+              });
+            }
+          },
+          child: Transform.translate(
+            offset: _dragOffset,
+            child: Transform.rotate(
+              angle: _rotation,
+              child: InkWell(
+                onTap: () {
+                  Get.to(() => UserProfileScreen(
+                        user: _profiles[_currentIndex],
+                        match: "${_matchPercent(_profiles[_currentIndex])}%",
+                      ));
+                },
+                child: _profileCard(
+                  _profiles[_currentIndex],
+                  match: "${_matchPercent(_profiles[_currentIndex])}%",
+                  height: 82.h,
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _actionButton(
-                    type: ActionType.refresh,
-                    icon: Icons.refresh,
-                    onTap: () async {
-                      await _loadFirstPage();
-                      _entryController.forward(from: 0);
-                    },
-                  ),
-                  _actionButton(
-                    type: ActionType.reject,
-                    icon: Icons.close,
-                    onTap: hasProfiles
-                        ? () async {
-                            final target = _profiles[_currentIndex];
-                            await _persistAction(target, liked: false);
-                            _swipe(false);
-                          }
-                        : () {},
-                  ),
-                  _actionButton(
-                    type: ActionType.boost,
-                    icon: Icons.flash_on,
-                    onTap: hasProfiles
-                        ? () async {
-                            // You can implement "boost" as a like for now
-                            final target = _profiles[_currentIndex];
-                            await _persistAction(target, liked: true);
-                            _swipe(true);
-                          }
-                        : () {},
-                  ),
-                  _actionButton(
-                    type: ActionType.like,
-                    icon: Icons.favorite,
-                    onTap: hasProfiles
-                        ? () async {
-                            final target = _profiles[_currentIndex];
-                            await _persistAction(target, liked: true);
-                            _swipe(true);
-                          }
-                        : () {},
-                  ),
-                ],
-              ),
             ),
-          ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _stackedCard(DiscoverUser user,
+      {required double scale, required double offset}) {
+    return Transform.translate(
+      offset: Offset(0, offset),
+      child: Transform.scale(
+        scale: scale,
+        child: Opacity(
+          opacity: 0.7,
+          child: _profileCard(
+            user,
+            match: "${_matchPercent(user)}%",
+            height: 82.h,
+          ),
         ),
       ),
     );
@@ -414,12 +498,13 @@ class _DiscoverScreenState extends State<DiscoverScreen>
             SizedBox(height: 3.h),
             ElevatedButton(
               style: ButtonStyle(
-                  backgroundColor:
-                      WidgetStateProperty.all(const Color(0xFFFF6F7D))),
+                backgroundColor:
+                    WidgetStateProperty.all(const Color(0xFFFF6F7D)),
+              ),
               onPressed: _loadFirstPage,
-              child: const Text(
+              child: Text(
                 "Refresh",
-                style: TextStyle(color: Colors.white),
+                style: GoogleFonts.poppins(color: Colors.white),
               ),
             ),
           ],
@@ -428,81 +513,102 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     );
   }
 
-  Widget _profileCard(_DiscoverUser u, {required String match}) {
+  Widget _profileCard(DiscoverUser u,
+      {required String match, required double height}) {
     final imageUrl = u.heroImageUrl;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 5.w),
-      height: 68.h,
+      height: height,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        image: DecorationImage(
-          image: NetworkImage(imageUrl),
-          fit: BoxFit.cover,
-          onError: (_, __) {},
-        ),
-      ),
-      child: Container(
-        padding: EdgeInsets.all(4.w),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [
-              Colors.black.withOpacity(0.72),
-              Colors.transparent,
-            ],
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 40,
+            offset: const Offset(0, 20),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.end,
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(40),
+        child: Stack(
           children: [
-            Row(
-              children: [
-                TextWidget(
-                  text: u.displayTitle,
-                  size: 18,
-                  weight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                const Spacer(),
-                _matchBadge(match),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.location_on, size: 16, color: Colors.white70),
-                const SizedBox(width: 4),
-                SizedBox(
-                  width: 70.w,
-                  child: TextWidget(
-                    text: u.locationLabel.isEmpty ? "Unknown" : u.locationLabel,
-                    size: 13,
-                    color: Colors.white70,
+            Positioned.fill(child: FancyShimmerImage(imageUrl: imageUrl)),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.9),
+                      Colors.black.withOpacity(0.4),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.45, 0.85],
                   ),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 10),
-            TextWidget(
-              text: u.bioText.isEmpty ? " " : u.bioText,
-              size: 14,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: u.tags.take(6).map((t) {
-                return Chip(
-                  label: TextWidget(text: t, size: 12, color: Colors.white),
-                  backgroundColor: Colors.white24,
-                  side: BorderSide(color: Colors.white.withOpacity(0.08)),
-                );
-              }).toList(),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: EdgeInsets.all(4.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextWidget(
+                            text: u.displayTitle,
+                            size: 22,
+                            weight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        _glassMatchBadge(match),
+                      ],
+                    ),
+                    SizedBox(height: 1.h),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on,
+                            size: 16, color: Colors.white70),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: TextWidget(
+                            text: u.locationLabel.isEmpty
+                                ? "Unknown location"
+                                : u.locationLabel,
+                            size: 13,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 1.5.h),
+                    if (u.bioText.isNotEmpty)
+                      TextWidget(
+                        text: u.bioText,
+                        size: 14,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    SizedBox(height: 2.h),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children:
+                          u.tags.take(9).map((t) => _glassTag(t)).toList(),
+                    ),
+                    SizedBox(height: 1.5.h),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -510,73 +616,59 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     );
   }
 
-  Widget _matchBadge(String percent) {
+  Widget _glassTag(String text) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: TextWidget(
-        text: '$percent match',
-        weight: FontWeight.bold,
-        color: const Color(0xFFFF6F7D),
-      ),
-    );
-  }
-
-  Widget _actionButton({
-    required ActionType type,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    final bool isBoost = type == ActionType.boost;
-
-    Color? bgColor;
-    Gradient? gradient;
-    Color iconColor = Colors.grey;
-
-    switch (type) {
-      case ActionType.refresh:
-        bgColor = Colors.white;
-        iconColor = const Color(0xFFFFA000);
-        break;
-      case ActionType.reject:
-        bgColor = Colors.white;
-        iconColor = Colors.redAccent;
-        break;
-      case ActionType.boost:
-        bgColor = const Color(0xFFFFC107);
-        iconColor = Colors.white;
-        break;
-      case ActionType.like:
-        gradient = const LinearGradient(
-          colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withOpacity(0.22),
+            Colors.white.withOpacity(0.12),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-        );
-        iconColor = Colors.white;
-        break;
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 14.w,
-        height: 14.w,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: gradient == null ? bgColor : null,
-          gradient: gradient,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.12),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
         ),
-        child: Icon(icon, color: iconColor, size: 26),
+        border: Border.all(color: Colors.white.withOpacity(0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Colors.white,
+          letterSpacing: -0.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _glassMatchBadge(String match) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+          ),
+          child: TextWidget(
+            text: "$match Match",
+            size: 12,
+            weight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -585,7 +677,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 // ------------------------------------------------------------
 // Model
 // ------------------------------------------------------------
-class _DiscoverUser {
+class DiscoverUser {
   final String uid;
   final String name;
   final String photoUrl;
@@ -606,7 +698,7 @@ class _DiscoverUser {
   final String sexuality;
   final String datingGoal;
 
-  _DiscoverUser({
+  DiscoverUser({
     required this.uid,
     required this.name,
     required this.photoUrl,
@@ -635,7 +727,7 @@ class _DiscoverUser {
     return null;
   }
 
-  static _DiscoverUser fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+  static DiscoverUser fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
     final loc = d["location"];
     String label = "";
@@ -651,7 +743,7 @@ class _DiscoverUser {
     final name =
         ((d["displayName"] as String?) ?? (d["name"] as String?) ?? "").trim();
 
-    return _DiscoverUser(
+    return DiscoverUser(
       uid: (d["uid"] as String?) ?? doc.id,
       name: name.isEmpty ? "User" : name,
       photoUrl: ((d["photoUrl"] as String?) ?? "").trim(),
@@ -673,7 +765,6 @@ class _DiscoverUser {
   String get heroImageUrl {
     if (storyPhotoUrls.isNotEmpty) return storyPhotoUrls.first;
     if (photoUrl.isNotEmpty) return photoUrl;
-    // fallback placeholder (keep stable)
     return "https://images.unsplash.com/photo-1502685104226-ee32379fefbe";
   }
 
@@ -684,7 +775,6 @@ class _DiscoverUser {
   }
 
   String get bioText {
-    // Prefer story text, then quirk text, else empty
     if (storyText.isNotEmpty) return storyText;
     if (quirkText.isNotEmpty) return quirkText;
     return "";
@@ -702,7 +792,6 @@ class _DiscoverUser {
   }
 
   Map<String, dynamic> toPublicSnapshot() {
-    // Keep only non-sensitive fields
     return {
       "uid": uid,
       "name": name,
@@ -722,7 +811,7 @@ class _DiscoverUser {
     final hadBirthdayThisYear = (now.month > birthday.month) ||
         (now.month == birthday.month && now.day >= birthday.day);
     if (!hadBirthdayThisYear) age -= 1;
-    if (age < 18 || age > 120) return null; // avoid showing invalid / underage
+    if (age < 18 || age > 120) return null;
     return age;
   }
 }

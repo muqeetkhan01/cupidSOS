@@ -120,8 +120,6 @@ class _HomeScreenState extends State<HomeScreen>
               SizedBox(height: 1.5.h),
               _fadeSlide(_topMatches(), 0.35, 0.55),
 
-             
-
               /// SOS ACTIONS
               _fadeSlide(_sosActions(), 0.5, 0.65),
 
@@ -397,6 +395,7 @@ class _ActionCard extends StatelessWidget {
     );
   }
 }
+
 class _FunCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -462,4 +461,3 @@ class _FunCard extends StatelessWidget {
     );
   }
 }
-
