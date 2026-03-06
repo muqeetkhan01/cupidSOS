@@ -1155,6 +1155,9 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
+  - audioplayers_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - BoringSSL-GRPC (0.0.36):
     - BoringSSL-GRPC/Implementation (= 0.0.36)
     - BoringSSL-GRPC/Interface (= 0.0.36)
@@ -1404,11 +1407,11 @@ PODS:
     - Flutter
   - PromisesObjC (2.4.0)
   - RecaptchaInterop (100.0.0)
+  - record_ios (1.2.0):
+    - Flutter
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
-  - sign_in_with_apple (0.0.1):
-    - Flutter
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
@@ -1421,6 +1424,7 @@ PODS:
   - WebRTC-SDK (137.7151.04)
 
 DEPENDENCIES:
+  - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/darwin`)
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
@@ -1437,8 +1441,8 @@ DEPENDENCIES:
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - record_ios (from `.symlinks/plugins/record_ios/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
-  - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - videosdk (from `.symlinks/plugins/videosdk/ios`)
   - videosdk_webrtc (from `.symlinks/plugins/videosdk_webrtc/ios`)
@@ -1475,6 +1479,8 @@ SPEC REPOS:
     - WebRTC-SDK
 
 EXTERNAL SOURCES:
+  audioplayers_darwin:
+    :path: ".symlinks/plugins/audioplayers_darwin/darwin"
   cloud_firestore:
     :path: ".symlinks/plugins/cloud_firestore/ios"
   device_info_plus:
@@ -1507,10 +1513,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  record_ios:
+    :path: ".symlinks/plugins/record_ios/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
-  sign_in_with_apple:
-    :path: ".symlinks/plugins/sign_in_with_apple/ios"
   sqflite_darwin:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
   videosdk:
@@ -1522,6 +1528,7 @@ SPEC CHECKSUMS:
   abseil: d121da9ef7e2ff4cab7666e76c5a3e0915ae08c3
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
+  audioplayers_darwin: 835ced6edd4c9fc8ebb0a7cc9e294a91d99917d5
   BoringSSL-GRPC: ca6a8e5d04812fce8ffd6437810c2d46f925eaeb
   cloud_firestore: f5f37d55cffb850b85f46ce9ac852ca60e9545d4
   device_info_plus: 21fcca2080fbcd348be798aa36c3e5ed849eefbe
@@ -1562,8 +1569,8 @@ SPEC CHECKSUMS:
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
+  record_ios: 412daca2350b228e698fffcd08f1f94ceb1e3844
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
-  sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   videosdk: 54cf046d46212a7de6d45720e83a6c9281a49e3d
   videosdk_webrtc: b2483fabf14939461c1aa1ad3cc9e4d28d077c8c

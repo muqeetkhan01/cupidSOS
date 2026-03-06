@@ -1,5 +1,6 @@
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/vibe_selection_screen.dart';
+import 'package:cupid_app/widgets/zodiac.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -15,7 +16,6 @@ class BirthdayScreen extends StatefulWidget {
 
 class _BirthdayScreenState extends State<BirthdayScreen>
     with TickerProviderStateMixin {
-  // inside _BirthdayScreenState
   final flow = Get.find<AppFlowController>();
 
   Future<void> _continue() async {
@@ -29,13 +29,26 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     }
 
     final dt = DateTime(yyyy, mm, dd);
-    // Basic sanity check
     if (dt.year != yyyy || dt.month != mm || dt.day != dd) {
       Get.snackbar("Invalid date", "Enter a valid birthday");
       return;
     }
 
     flow.birthday.value = dt;
+
+    // ✅ Compute & store signs immediately
+    final western = ZodiacUtils.westernZodiac(dt);
+
+    // Use your existing fields without breaking flow:
+    // - vibeType: shows as tag in Discover (good for "Vibe: Leo" etc.)
+    flow.vibeType.value = western.name;
+
+    // - sunSign is part of bigThree saved later; setting now is safe.
+    flow.sunSign.value = western.name;
+
+    // If you WANT to store Chinese zodiac too, the clean way is to add a new field.
+    // But since you asked only to fix display, we keep it UI-only in VibeSelectionScreen.
+
     await flow.saveOnboardingProgress();
 
     if (!mounted) return;
@@ -65,15 +78,12 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     super.initState();
 
     _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
+        vsync: this, duration: const Duration(milliseconds: 900));
 
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _controller.forward();
     });
 
-    // rebuild on focus change
     mmFocus.addListener(() => setState(() {}));
     ddFocus.addListener(() => setState(() {}));
     yyyyFocus.addListener(() => setState(() {}));

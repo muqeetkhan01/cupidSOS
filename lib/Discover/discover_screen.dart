@@ -29,6 +29,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     with TickerProviderStateMixin {
   late AnimationController _entryController;
   late AnimationController _swipeController;
+  Map<String, dynamic>? _filters; // null => no filters
+  double? _myLat;
+  double? _myLng;
 
   Offset _dragOffset = Offset.zero;
   double _rotation = 0;
@@ -534,7 +537,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         borderRadius: BorderRadius.circular(40),
         child: Stack(
           children: [
-            Positioned.fill(child: FancyShimmerImage(imageUrl: imageUrl)),
+            Positioned.fill(
+                child: FancyShimmerImage(
+              imageUrl: imageUrl,
+              boxFit: BoxFit.cover,
+            )),
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -681,7 +688,7 @@ class DiscoverUser {
   final String uid;
   final String name;
   final String photoUrl;
-
+  final String voiceNoteUrl; // remote URL (preferred)
   final String locationLabel;
   final DateTime? birthday;
   final String vibeType;
@@ -701,6 +708,7 @@ class DiscoverUser {
   DiscoverUser({
     required this.uid,
     required this.name,
+    required this.voiceNoteUrl,
     required this.photoUrl,
     required this.locationLabel,
     required this.birthday,
@@ -745,6 +753,11 @@ class DiscoverUser {
 
     return DiscoverUser(
       uid: (d["uid"] as String?) ?? doc.id,
+      voiceNoteUrl: ((d["voiceNoteUrl"] as String?) ??
+              (d["voiceNotePath"]
+                  as String?) ?? // fallback if you used path key
+              "")
+          .trim(),
       name: name.isEmpty ? "User" : name,
       photoUrl: ((d["photoUrl"] as String?) ?? "").trim(),
       locationLabel: label.trim(),
@@ -801,6 +814,8 @@ class DiscoverUser {
       "storyPhotoUrls": storyPhotoUrls,
       "datingGoal": datingGoal,
       "ethnicity": ethnicity,
+      "voicePromptText": voicePromptText,
+      "voiceNoteUrl": voiceNoteUrl,
     };
   }
 

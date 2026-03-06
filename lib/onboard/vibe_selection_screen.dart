@@ -1,12 +1,15 @@
+// lib/onboard/vibe_selection_screen.dart
+// Fix: Remove hardcoded Taurus/Tiger and show computed Western + Chinese from birthday.
+
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/widgets/zodiac.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import '../../widgets/text_widget.dart';
-import '../../widgets/button_widget.dart';
-import 'big_three_screen.dart';
 
-enum VibeType { taurus, tiger }
+import '../../widgets/button_widget.dart';
+import '../../widgets/text_widget.dart';
+import 'big_three_screen.dart';
 
 class VibeSelectionScreen extends StatefulWidget {
   const VibeSelectionScreen({super.key});
@@ -21,7 +24,11 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
   late final AnimationController _selectController;
   final flow = Get.find<AppFlowController>();
 
-  VibeType? selected;
+  // Instead of enum, use dynamic selection keys
+  String? selectedKey;
+
+  late WesternZodiac _western;
+  late ChineseZodiac _chinese;
 
   @override
   void initState() {
@@ -37,6 +44,18 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
       duration: const Duration(milliseconds: 420),
     );
 
+    final dob = flow.birthday.value;
+    if (dob != null) {
+      _western = ZodiacUtils.westernZodiac(dob);
+      _chinese = ZodiacUtils.chineseZodiac(dob);
+
+      selectedKey = "western";
+      flow.vibeType.value = _western.name;
+      flow.sunSign.value = _western.name;
+
+      _selectController.value = 1.0; // ✅ FULLY selected immediately
+    }
+
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _pageController.forward();
     });
@@ -49,7 +68,6 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
     super.dispose();
   }
 
-  // Page entrance animation
   Widget _animatedItem({
     required Widget child,
     required double start,
@@ -73,21 +91,22 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
   }
 
   Widget _vibeCard({
-    required VibeType type,
+    required String keyName,
     required String title,
     required String subtitle,
     required String meta,
     required String emoji,
+    required VoidCallback onSelected,
   }) {
-    final bool isSelected = selected == type;
+    final bool isSelected = selectedKey == keyName;
 
     return GestureDetector(
       onTap: () {
         setState(() {
-          selected = type;
-          flow.vibeType.value = type.name; // "taurus" / "tiger"
+          selectedKey = keyName;
           _selectController.forward(from: 0);
         });
+        onSelected();
       },
       child: AnimatedBuilder(
         animation: _selectController,
@@ -110,7 +129,6 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
               borderRadius: BorderRadius.circular(26),
               child: Stack(
                 children: [
-                  // 🔥 Gradient fill animation (TOP → BOTTOM)
                   Positioned.fill(
                     child: Align(
                       alignment: Alignment.topCenter,
@@ -122,17 +140,13 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [
-                                Color(0xFFFF6F7D),
-                                Color(0xFFD86BCF),
-                              ],
+                              colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
-
                   Padding(
                     padding:
                         EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
@@ -148,10 +162,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                                 : Colors.white,
                           ),
                           alignment: Alignment.center,
-                          child: Text(
-                            emoji,
-                            style: TextStyle(fontSize: 26.sp),
-                          ),
+                          child: Text(emoji, style: TextStyle(fontSize: 26.sp)),
                         ),
                         SizedBox(width: 4.w),
                         Expanded(
@@ -192,11 +203,8 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                               shape: BoxShape.circle,
                               color: Color(0xFFFF6F7D),
                             ),
-                            child: const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 18,
-                            ),
+                            child: const Icon(Icons.check,
+                                color: Colors.white, size: 18),
                           ),
                       ],
                     ),
@@ -212,6 +220,8 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
 
   @override
   Widget build(BuildContext context) {
+    final ready = flow.birthday.value != null;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
       body: SafeArea(
@@ -234,7 +244,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 1 of 10',
+                      text: 'Step 3 of 10',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -246,7 +256,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                 start: 0.15,
                 end: 0.3,
                 child: TextWidget(
-                  text: '✨ YOUR SOUL AURA ✨',
+                  text: '✨ YOUR COSMIC BADGES ✨',
                   size: 15,
                   color: Colors.grey.shade600,
                 ),
@@ -256,7 +266,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                 start: 0.3,
                 end: 0.45,
                 child: TextWidget(
-                  text: 'Which vibe is more YOU? 🌙',
+                  text: 'Your signs based on your birthday 🌙',
                   size: 18,
                   weight: FontWeight.bold,
                   textAlign: TextAlign.center,
@@ -267,7 +277,9 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                 start: 0.45,
                 end: 0.55,
                 child: TextWidget(
-                  text: 'This becomes your glowing profile badge',
+                  text: ready
+                      ? 'Pick the badge you want on your profile'
+                      : 'Go back and enter your birthday',
                   size: 14,
                   color: Colors.grey.shade600,
                   textAlign: TextAlign.center,
@@ -280,18 +292,26 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                 child: Column(
                   children: [
                     _vibeCard(
-                      type: VibeType.taurus,
-                      title: 'Taurus',
-                      subtitle: 'Grounded Soul',
-                      meta: 'Western • Apr 20 – May 20',
-                      emoji: '♉️',
+                      keyName: "western",
+                      title: _western.name,
+                      subtitle: "Western Zodiac",
+                      meta: _western.rangeLabel,
+                      emoji: _western.emoji,
+                      onSelected: () {
+                        flow.vibeType.value = _western.name;
+                        flow.sunSign.value = _western.name;
+                      },
                     ),
                     _vibeCard(
-                      type: VibeType.tiger,
-                      title: 'Tiger',
-                      subtitle: 'Brave',
-                      meta: 'Chinese Zodiac • Born in 1998',
-                      emoji: '🐯',
+                      keyName: "chinese",
+                      title: _chinese.animal,
+                      subtitle: "Chinese Zodiac",
+                      meta: "Born in ${_chinese.year}",
+                      emoji: _chinese.emoji,
+                      onSelected: () {
+                        // If you want this as profile badge instead:
+                        flow.vibeType.value = _chinese.animal;
+                      },
                     ),
                   ],
                 ),
@@ -304,26 +324,22 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                   text: 'Continue ✨',
                   height: 7,
                   radius: 36,
-                  variant: selected != null
+                  variant: selectedKey != null
                       ? ButtonVariant.gradient
                       : ButtonVariant.solid,
-                  gradient: selected != null
-                      ? const [
-                          Color(0xFFFF6F7D),
-                          Color(0xFFD86BCF),
-                        ]
+                  gradient: selectedKey != null
+                      ? const [Color(0xFFFF6F7D), Color(0xFFD86BCF)]
                       : null,
                   backgroundColor: Colors.grey.shade300,
-                  enableShadow: selected != null,
-                  onTap: selected == null
+                  enableShadow: selectedKey != null,
+                  onTap: selectedKey == null
                       ? () {}
                       : () async {
                           await flow.saveOnboardingProgress();
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const BigThreeScreen(),
-                            ),
+                                builder: (_) => const BigThreeScreen()),
                           );
                         },
                 ),

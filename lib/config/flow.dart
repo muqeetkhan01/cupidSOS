@@ -27,7 +27,7 @@ class AppFlowController extends GetxController {
 
   final RxBool isBusy = false.obs;
   final RxnString error = RxnString();
-
+  final RxnString voiceNotePath = RxnString(); // local path (or later URL)
   User? get firebaseUser => _authService.currentUser;
   bool get isLoggedIn => _authService.isLoggedIn;
 
@@ -151,7 +151,8 @@ class AppFlowController extends GetxController {
 
     birthday.value = _tryParseDate(data["birthday"]);
     vibeType.value = data["vibeType"] as String?;
-
+    voicePromptText.value = data["voicePromptText"] as String?;
+    voiceNotePath.value = data["voiceNotePath"] as String?;
     displayName.value =
         (data["displayName"] as String?) ?? (data["name"] as String?);
     gender.value = data["gender"] as String?;
@@ -279,6 +280,8 @@ class AppFlowController extends GetxController {
       "updatedAt": FieldValue.serverTimestamp(),
       "birthday": birthday.value?.toIso8601String(),
       "vibeType": vibeType.value,
+      "voicePromptText": voicePromptText.value,
+      "voiceNotePath": voiceNotePath.value,
       "displayName": displayName.value,
       "gender": gender.value,
       "bigThree": {

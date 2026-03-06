@@ -48,7 +48,7 @@ class NotificationsServiceLocal {
           ),
         ),
         androidScheduleMode: Platform.isAndroid
-            ? AndroidScheduleMode.exactAllowWhileIdle
+            ? AndroidScheduleMode.inexactAllowWhileIdle
             : AndroidScheduleMode.alarmClock,
         matchDateTimeComponents: DateTimeComponents.dateAndTime,
         uiLocalNotificationDateInterpretation:

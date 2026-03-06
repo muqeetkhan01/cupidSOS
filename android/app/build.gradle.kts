@@ -1,44 +1,96 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-android {
-    namespace = "com.example.cupid_app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
-
-    defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.cupid_app"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-    }
-
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
-        }
+// ✅ Load keystore from local.properties
+val keystoreProperties = Properties().apply {
+    val keystoreFile = rootProject.file("key.properties")
+    if (keystoreFile.exists()) {
+        load(keystoreFile.inputStream())
     }
 }
 
+android {
+    namespace = "com.mk.pz"
+    compileSdk = 36
+    ndkVersion = "28.0.12674087"
+
+  packaging {
+    resources {
+        excludes += setOf(
+            "AndroidManifest.xml",
+            "R.txt",
+            "**/R.txt",
+            "proguard.txt",
+            "**/proguard.txt"
+        )
+    }
+
+    jniLibs {
+        excludes += setOf(
+            "**/armeabi-v7a/**",
+            "**/x86/**",
+            "**/x86_64/**"
+        )
+    }
+}
+
+    defaultConfig {
+        applicationId = "com.mk.pz"
+        minSdk = 29
+        targetSdk = 36
+        versionCode = 5
+        versionName = "1.1"
+
+    ndk {
+    abiFilters.clear()
+    abiFilters.add("arm64-v8a")
+}
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    signingConfigs {
+    create("release") {
+        storeFile = file(keystoreProperties["KEYSTORE_PATH"]?.toString())
+        storePassword = keystoreProperties["KEYSTORE_PASSWORD"]?.toString()
+        keyAlias = keystoreProperties["KEY_ALIAS"]?.toString()
+        keyPassword = keystoreProperties["KEY_PASSWORD"]?.toString()
+    }
+}
+    buildTypes {
+        getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                file("proguard-rules.pro")
+            )
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+        implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha06")
+
+}
 flutter {
     source = "../.."
 }

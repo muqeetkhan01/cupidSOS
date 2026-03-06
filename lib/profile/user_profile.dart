@@ -1,6 +1,7 @@
 // lib/screens/user/user_profile_screen.dart
 import 'dart:ui';
 import 'package:cupid_app/Discover/discover_screen.dart';
+import 'package:cupid_app/widgets/voice.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
@@ -79,18 +80,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       /// Prompts (if you want to show these from user model)
                       _sectionTitle("Prompts"),
                       SizedBox(height: 1.2.h),
+
                       _promptCard(
                         title: "Cultural quirk",
                         value: u.quirkText.isEmpty ? "Not set" : u.quirkText,
                       ),
                       SizedBox(height: 1.2.h),
-                      // _promptCard(
-                      //   title: "Voice prompt",
-                      //   value: u.voicePromptText.isEmpty
-                      //       ? "Not set"
-                      //       : u.voicePromptText,
-                      // ),
-                      // SizedBox(height: 1.2.h),
+
+                      _voicePromptCard(
+                        promptText: u.voicePromptText,
+                        audioUrl: u.voiceNoteUrl,
+                      ),
+
+                      SizedBox(height: 1.2.h),
+
                       _promptCard(
                         title: "Story",
                         value: u.storyText.isEmpty ? "Not set" : u.storyText,
@@ -133,6 +136,53 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       text: text,
       size: 16,
       weight: FontWeight.w800,
+    );
+  }
+
+  Widget _voicePromptCard({
+    required String promptText,
+    required String audioUrl,
+  }) {
+    final hasPrompt = promptText.trim().isNotEmpty;
+    final hasAudio = audioUrl.trim().isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextWidget(
+            text: "Voice prompt",
+            size: 12.5,
+            color: Colors.grey.shade600,
+            weight: FontWeight.w700,
+          ),
+          SizedBox(height: 0.8.h),
+          TextWidget(
+            text: hasPrompt ? promptText : "Not set",
+            size: 14.5,
+            weight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+          if (hasAudio) ...[
+            SizedBox(height: 1.4.h),
+            VoiceNotePlayer(source: audioUrl), // ✅ plays URL (or local path)
+          ] else ...[
+            SizedBox(height: 1.h),
+            TextWidget(
+              text: "No voice note available",
+              size: 13,
+              color: Colors.grey.shade600,
+            ),
+          ],
+        ],
+      ),
     );
   }
 

@@ -1,10 +1,19 @@
+// ==============================
+// lib/Discover/filter.dart (PATCH)
+// ==============================
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 
 class FilterScreen extends StatefulWidget {
-  const FilterScreen({super.key});
+  const FilterScreen({
+    super.key,
+    this.initial,
+  });
+
+  /// Pass existing filters so the UI opens with previous selections.
+  final Map<String, dynamic>? initial;
 
   @override
   State<FilterScreen> createState() => _FilterScreenState();
@@ -13,17 +22,14 @@ class FilterScreen extends StatefulWidget {
 class _FilterScreenState extends State<FilterScreen> {
   bool heightAny = false;
   bool distanceAny = false;
-  RangeValues heightRange = const RangeValues(5.1, 7.0); // default full range
-  double selectedDistanceMi = 100; // default
-  RangeValues distanceRange = const RangeValues(0, 100); // default
 
-  double heightValue = 0.45;
-  double distanceValue = 0.25;
+  RangeValues heightRange = const RangeValues(5.1, 7.0); // feet
+  RangeValues distanceRange = const RangeValues(0, 100); // miles
 
   final Set<String> ethnicities = {};
   final Set<String> languages = {};
 
-  final ethnicityOptions = [
+  final ethnicityOptions = const [
     "East Asian",
     "Southeast Asian",
     "South Asian",
@@ -33,10 +39,10 @@ class _FilterScreenState extends State<FilterScreen> {
     "Middle Eastern",
     "Pacific Islander",
     "American Indian",
-    'Other',
+    "Other",
   ];
 
-  final languageOptions = [
+  final languageOptions = const [
     "English",
     "Mandarin Chinese",
     "Yue Chinese",
@@ -66,10 +72,32 @@ class _FilterScreenState extends State<FilterScreen> {
     "Javanese",
     "Kannada",
     "Maithili",
-    "Odia"
+    "Odia",
   ];
 
-  /// ================= HELPERS =================
+  @override
+  void initState() {
+    super.initState();
+    final m = widget.initial;
+    if (m == null) return;
+
+    heightAny = (m["heightAny"] as bool?) ?? heightAny;
+    distanceAny = (m["distanceAny"] as bool?) ?? distanceAny;
+
+    final hMin = (m["heightMinFt"] as num?)?.toDouble();
+    final hMax = (m["heightMaxFt"] as num?)?.toDouble();
+    if (hMin != null && hMax != null) heightRange = RangeValues(hMin, hMax);
+
+    final dMin = (m["distanceMinMi"] as num?)?.toDouble();
+    final dMax = (m["distanceMaxMi"] as num?)?.toDouble();
+    if (dMin != null && dMax != null) distanceRange = RangeValues(dMin, dMax);
+
+    final e = m["ethnicities"];
+    if (e is List) ethnicities.addAll(e.whereType<String>());
+
+    final l = m["languages"];
+    if (l is List) languages.addAll(l.whereType<String>());
+  }
 
   Widget _sectionHeader(
     String title, {
@@ -100,21 +128,6 @@ class _FilterScreenState extends State<FilterScreen> {
             ),
           ),
       ],
-    );
-  }
-
-  Widget _slider({
-    required double value,
-    required ValueChanged<double> onChanged,
-  }) {
-    return SliderTheme(
-      data: SliderTheme.of(context).copyWith(
-        activeTrackColor: const Color(0xFFFF6F7D),
-        inactiveTrackColor: const Color(0xFFFF6F7D).withOpacity(0.25),
-        thumbColor: const Color(0xFFFF6F7D),
-        overlayColor: const Color(0xFFFF6F7D).withOpacity(0.12),
-      ),
-      child: Slider(value: value, onChanged: onChanged),
     );
   }
 
@@ -161,7 +174,17 @@ class _FilterScreenState extends State<FilterScreen> {
     );
   }
 
-  /// ================= UI =================
+  SliderThemeData _rangeTheme(BuildContext context) {
+    return SliderTheme.of(context).copyWith(
+      activeTrackColor: const Color(0xFFFF6F7D),
+      inactiveTrackColor: const Color(0xFFFF6F7D).withOpacity(0.25),
+      thumbColor: const Color(0xFFFF6F7D),
+      overlayColor: const Color(0xFFFF6F7D).withOpacity(0.12),
+      rangeThumbShape: const RoundRangeSliderThumbShape(enabledThumbRadius: 8),
+      rangeTrackShape: const RoundedRectRangeSliderTrackShape(),
+      showValueIndicator: ShowValueIndicator.never,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -192,49 +215,39 @@ class _FilterScreenState extends State<FilterScreen> {
                   children: [
                     SizedBox(height: 2.h),
                     _sectionHeader(
-                      'Preferred Height *',
+                      'Preferred Height',
                       showToggle: true,
                       toggle: heightAny,
                       onToggle: () => setState(() => heightAny = !heightAny),
                     ),
                     if (!heightAny) ...[
                       SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: const Color(0xFFFF6F7D),
-                            inactiveTrackColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.25),
-                            thumbColor: const Color(0xFFFF6F7D),
-                            overlayColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.12),
-                          ),
-                          child: RangeSlider(
-                            min: 5.1,
-                            max: 7.0,
-                            divisions: 11,
-                            values: heightRange,
-                            onChanged: (values) {
-                              setState(() => heightRange = values);
-                            },
-                          )),
+                        data: _rangeTheme(context),
+                        child: RangeSlider(
+                          min: 5.1,
+                          max: 7.0,
+                          divisions: 19,
+                          values: heightRange,
+                          onChanged: (values) =>
+                              setState(() => heightRange = values),
+                        ),
+                      ),
                       Row(
                         children: [
                           TextWidget(
-                            text: "${heightRange.start.toStringAsFixed(1)} ft",
-                          ),
-                          Spacer(),
+                              text:
+                                  "${heightRange.start.toStringAsFixed(1)} ft"),
+                          const Spacer(),
+                          const TextWidget(text: "–"),
+                          const Spacer(),
                           TextWidget(
-                            text: "  –  ",
-                          ),
-                          Spacer(),
-                          TextWidget(
-                            text: "${heightRange.end.toStringAsFixed(1)} ft",
-                          )
+                              text: "${heightRange.end.toStringAsFixed(1)} ft"),
                         ],
-                      )
+                      ),
                     ],
                     SizedBox(height: 3.h),
                     _sectionHeader(
-                      'Preferred Distance *',
+                      'Preferred Distance',
                       showToggle: true,
                       toggle: distanceAny,
                       onToggle: () =>
@@ -242,43 +255,28 @@ class _FilterScreenState extends State<FilterScreen> {
                     ),
                     if (!distanceAny) ...[
                       SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: const Color(0xFFFF6F7D),
-                            inactiveTrackColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.25),
-                            thumbColor: const Color(0xFFFF6F7D),
-                            overlayColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.12),
-                          ),
-                          child: RangeSlider(
-                            min: 0,
-                            max: 200,
-                            divisions: 20,
-                            values: distanceRange,
-                            onChanged: (values) {
-                              setState(() => distanceRange = values);
-                            },
-                          )),
+                        data: _rangeTheme(context),
+                        child: RangeSlider(
+                          min: 0,
+                          max: 200,
+                          divisions: 40,
+                          values: distanceRange,
+                          onChanged: (values) =>
+                              setState(() => distanceRange = values),
+                        ),
+                      ),
                       Row(
                         children: [
-                          TextWidget(
-                            text:
-                                "${distanceRange.start.round().toStringAsFixed(1)} mi",
-                          ),
-                          Spacer(),
-                          TextWidget(
-                            text: "  –  ",
-                          ),
-                          Spacer(),
-                          TextWidget(
-                            text:
-                                "${distanceRange.end.round().toStringAsFixed(1)} mi",
-                          )
+                          TextWidget(text: "${distanceRange.start.round()} mi"),
+                          const Spacer(),
+                          const TextWidget(text: "–"),
+                          const Spacer(),
+                          TextWidget(text: "${distanceRange.end.round()} mi"),
                         ],
-                      )
+                      ),
                     ],
                     SizedBox(height: 3.h),
-                    _sectionHeader('Preferred Ethnicity *'),
+                    _sectionHeader('Preferred Ethnicity'),
                     SizedBox(height: 2.h),
                     Wrap(
                       spacing: 3.w,
@@ -288,7 +286,7 @@ class _FilterScreenState extends State<FilterScreen> {
                           .toList(),
                     ),
                     SizedBox(height: 4.h),
-                    _sectionHeader('Preferred Languages *'),
+                    _sectionHeader('Preferred Languages'),
                     SizedBox(height: 2.h),
                     Wrap(
                       spacing: 3.w,
@@ -302,8 +300,6 @@ class _FilterScreenState extends State<FilterScreen> {
                 ),
               ),
             ),
-
-            /// APPLY BUTTON (SAME AS ONBOARDING)
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.5.h),
               child: ButtonWidget(
@@ -311,17 +307,16 @@ class _FilterScreenState extends State<FilterScreen> {
                 height: 7,
                 radius: 36,
                 variant: ButtonVariant.gradient,
-                gradient: const [
-                  Color(0xFFFF6F7D),
-                  Color(0xFFD86BCF),
-                ],
+                gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 enableShadow: true,
                 onTap: () {
-                  Navigator.pop(context, {
+                  Navigator.pop(context, <String, dynamic>{
                     "heightAny": heightAny,
-                    "heightValue": heightValue,
+                    "heightMinFt": heightRange.start,
+                    "heightMaxFt": heightRange.end,
                     "distanceAny": distanceAny,
-                    "distanceValue": distanceValue,
+                    "distanceMinMi": distanceRange.start,
+                    "distanceMaxMi": distanceRange.end,
                     "ethnicities": ethnicities.toList(),
                     "languages": languages.toList(),
                   });

@@ -1,6 +1,7 @@
 // lib/screens/profile/profile_screen.dart
 import 'package:cupid_app/onboard/cupid_splash_screen.dart';
 import 'package:cupid_app/profile/edit.dart';
+import 'package:cupid_app/widgets/voice.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -97,6 +98,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     IconButton(
                       icon: const Icon(Icons.settings_outlined),
                       onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const EditProfileScreen()),
+                        ).then((_) => _refresh());
+
                         // TODO: route to settings screen if you have one
                       },
                     ),
@@ -140,9 +147,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   value: (flow.quirkText.value ?? "").trim(),
                 ),
                 SizedBox(height: 1.2.h),
-                _promptCard(
+                _promptCardWithAudio(
                   title: "Voice prompt",
                   value: (flow.voicePromptText.value ?? "").trim(),
+                  audioPathOrUrl: (flow.voiceNotePath.value ?? "").trim(),
                 ),
                 SizedBox(height: 2.5.h),
 
@@ -266,6 +274,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             )
             .toList(),
+      ),
+    );
+  }
+
+  Widget _promptCardWithAudio({
+    required String title,
+    required String value,
+    required String audioPathOrUrl,
+  }) {
+    final shown = value.isEmpty ? "Not set" : value;
+    final hasAudio = audioPathOrUrl.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextWidget(
+            text: title,
+            size: 13,
+            color: Colors.grey.shade600,
+            weight: FontWeight.w600,
+          ),
+          SizedBox(height: 0.8.h),
+          TextWidget(
+            text: shown,
+            size: 15,
+            weight: FontWeight.w500,
+          ),
+          if (hasAudio) ...[
+            SizedBox(height: 1.6.h),
+            VoiceNotePlayer(source: audioPathOrUrl),
+          ] else ...[
+            SizedBox(height: 1.2.h),
+            TextWidget(
+              text: "No voice note recorded",
+              size: 13,
+              color: Colors.grey.shade600,
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -450,7 +505,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              ).then((_) => _refresh());
+            },
           )
         ],
       ),
