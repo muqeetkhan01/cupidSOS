@@ -3,8 +3,9 @@ import 'package:cupid_app/onboard/map.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import '../../widgets/text_widget.dart';
+
 import '../../widgets/button_widget.dart';
+import '../../widgets/text_widget.dart';
 
 enum EthnicityFlowStep { ethnicity, datingGoal, sexuality }
 
@@ -19,33 +20,19 @@ class EthnicityQuestionScreen extends StatefulWidget {
 class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     with TickerProviderStateMixin {
   final flow = Get.find<AppFlowController>();
-
   late final AnimationController _controller;
 
   EthnicityFlowStep step = EthnicityFlowStep.ethnicity;
   String? selected;
 
-  final ethnicityOptions = [
-    "East Asian",
-    "Southeast Asian",
-    "South Asian",
-    "White/Caucasian",
-    "Black/African Descent",
-    "Hispanic/Latino",
-    "Middle Eastern",
-    "Pacific Islander",
-    "American Indian",
-    "Other",
-  ];
-
-  final datingGoalOptions = [
+  final datingGoalOptions = const [
     "Long-term",
     "Casual",
     "Friends",
     "Prefer not to say",
   ];
 
-  final sexualityOptions = [
+  final sexualityOptions = const [
     "Straight",
     "Bisexual",
     "Asexual",
@@ -55,6 +42,103 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     "Lesbian",
     "Prefer not to say",
   ];
+
+  final ethnicityGroups = const <String, List<Map<String, String>>>{
+    "East Asian": [
+      {"flag": "🇨🇳", "country": "China"},
+      {"flag": "🇭🇰", "country": "Hong Kong"},
+      {"flag": "🇯🇵", "country": "Japan"},
+      {"flag": "🇰🇷", "country": "South Korea"},
+      {"flag": "🇹🇼", "country": "Taiwan"},
+      {"flag": "🇲🇴", "country": "Macau"},
+      {"flag": "🇲🇳", "country": "Mongolia"},
+    ],
+    "Southeast Asian": [
+      {"flag": "🇰🇭", "country": "Cambodia"},
+      {"flag": "🇻🇳", "country": "Vietnam"},
+      {"flag": "🇹🇭", "country": "Thailand"},
+      {"flag": "🇵🇭", "country": "Philippines"},
+      {"flag": "🇱🇦", "country": "Laos"},
+      {"flag": "🇲🇾", "country": "Malaysia"},
+      {"flag": "🇮🇩", "country": "Indonesia"},
+      {"flag": "🇸🇬", "country": "Singapore"},
+      {"flag": "🇲🇲", "country": "Myanmar"},
+      {"flag": "🇧🇳", "country": "Brunei"},
+      {"flag": "🇹🇱", "country": "Timor-Leste"},
+    ],
+    "South Asian": [
+      {"flag": "🇮🇳", "country": "India"},
+      {"flag": "🇵🇰", "country": "Pakistan"},
+      {"flag": "🇧🇩", "country": "Bangladesh"},
+      {"flag": "🇱🇰", "country": "Sri Lanka"},
+      {"flag": "🇳🇵", "country": "Nepal"},
+      {"flag": "🇧🇹", "country": "Bhutan"},
+      {"flag": "🇲🇻", "country": "Maldives"},
+    ],
+    "White / Caucasian": [
+      {"flag": "🇦🇹", "country": "Austria"},
+      {"flag": "🇧🇪", "country": "Belgium"},
+      {"flag": "🇩🇰", "country": "Denmark"},
+      {"flag": "🇫🇮", "country": "Finland"},
+      {"flag": "🇫🇷", "country": "France"},
+      {"flag": "🇩🇪", "country": "Germany"},
+      {"flag": "🇮🇹", "country": "Italy"},
+      {"flag": "🇳🇱", "country": "Netherlands"},
+      {"flag": "🇳🇴", "country": "Norway"},
+      {"flag": "🇵🇱", "country": "Poland"},
+      {"flag": "🇵🇹", "country": "Portugal"},
+      {"flag": "🇪🇸", "country": "Spain"},
+      {"flag": "🇸🇪", "country": "Sweden"},
+      {"flag": "🇨🇭", "country": "Switzerland"},
+      {"flag": "🇬🇧", "country": "United Kingdom"},
+    ],
+    "Hispanic / Latino": [
+      {"flag": "🇲🇽", "country": "Mexico"},
+      {"flag": "🇵🇷", "country": "Puerto Rico"},
+      {"flag": "🇨🇺", "country": "Cuba"},
+      {"flag": "🇩🇴", "country": "Dominican Republic"},
+      {"flag": "🇨🇴", "country": "Colombia"},
+      {"flag": "🇻🇪", "country": "Venezuela"},
+      {"flag": "🇵🇪", "country": "Peru"},
+      {"flag": "🇨🇱", "country": "Chile"},
+      {"flag": "🇦🇷", "country": "Argentina"},
+      {"flag": "🇪🇨", "country": "Ecuador"},
+      {"flag": "🇸🇻", "country": "El Salvador"},
+      {"flag": "🇬🇹", "country": "Guatemala"},
+      {"flag": "🇭🇳", "country": "Honduras"},
+      {"flag": "🇳🇮", "country": "Nicaragua"},
+      {"flag": "🇵🇦", "country": "Panama"},
+      {"flag": "🇧🇴", "country": "Bolivia"},
+    ],
+    "African / Caribbean": [
+      {"flag": "🇳🇬", "country": "Nigeria"},
+      {"flag": "🇪🇹", "country": "Ethiopia"},
+      {"flag": "🇰🇪", "country": "Kenya"},
+      {"flag": "🇬🇭", "country": "Ghana"},
+      {"flag": "🇿🇦", "country": "South Africa"},
+      {"flag": "🇸🇳", "country": "Senegal"},
+      {"flag": "🇯🇲", "country": "Jamaica"},
+      {"flag": "🇭🇹", "country": "Haiti"},
+      {"flag": "🇹🇹", "country": "Trinidad & Tobago"},
+      {"flag": "🇧🇧", "country": "Barbados"},
+    ],
+    "Pacific Islander": [
+      {"flag": "🇼🇸", "country": "Samoa"},
+      {"flag": "🇹🇴", "country": "Tonga"},
+      {"flag": "🇫🇯", "country": "Fiji"},
+      {"flag": "🇲🇭", "country": "Marshall Islands"},
+      {"flag": "🇫🇲", "country": "Micronesia"},
+      {"flag": "🇵🇼", "country": "Palau"},
+      {"flag": "🇻🇺", "country": "Vanuatu"},
+      {"flag": "🇬🇺", "country": "Guam"},
+    ],
+    "Other": [
+      {"flag": "🌍", "country": "Mixed / Multiracial"},
+      {"flag": "✍️", "country": "Self-describe"},
+    ],
+  };
+
+  bool get isValid => selected != null && selected!.trim().isNotEmpty;
 
   @override
   void initState() {
@@ -68,7 +152,6 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
       if (mounted) _controller.forward();
     });
 
-    // Resume: go to first missing field + preselect saved value
     if (flow.ethnicity.value == null || flow.ethnicity.value!.isEmpty) {
       step = EthnicityFlowStep.ethnicity;
       selected = flow.ethnicity.value;
@@ -107,11 +190,11 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
   }
 
   Widget _topHeader(BuildContext context) {
-    int stepIndex = step == EthnicityFlowStep.ethnicity
-        ? 6
+    final stepIndex = step == EthnicityFlowStep.ethnicity
+        ? 0
         : step == EthnicityFlowStep.datingGoal
-            ? 7
-            : 8;
+            ? 1
+            : 2;
 
     return SizedBox(
       height: 7.h,
@@ -133,18 +216,16 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: stepIndex / 10,
+                    value: (7 + stepIndex) / 11,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
-                    valueColor: const AlwaysStoppedAnimation(
-                      Color(0xFFFF3B7A),
-                    ),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFF3B7A)),
                   ),
                 ),
               ),
               SizedBox(height: 0.8.h),
               TextWidget(
-                text: '$stepIndex of 10',
+                text: '${8 + stepIndex} of 11',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -155,103 +236,167 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
     );
   }
 
-  String get questionText {
-    switch (step) {
-      case EthnicityFlowStep.ethnicity:
-        return "What is your ethnicity?";
-      case EthnicityFlowStep.datingGoal:
-        return "Who are you looking to meet?";
-      case EthnicityFlowStep.sexuality:
-        return "What’s your sexuality?";
-    }
-  }
-
-  List<String> get options {
-    switch (step) {
-      case EthnicityFlowStep.ethnicity:
-        return ethnicityOptions;
-      case EthnicityFlowStep.datingGoal:
-        return datingGoalOptions;
-      case EthnicityFlowStep.sexuality:
-        return sexualityOptions;
-    }
-  }
-
-  Widget _optionCard(String text) {
+  Widget _pill(String text) {
     final isSelected = selected == text;
-
     return GestureDetector(
       onTap: () => setState(() => selected = text),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.2.h),
-        margin: EdgeInsets.only(bottom: 2.h),
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.7.h),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                )
-              : null,
-          color: isSelected ? null : Colors.white,
+          color: isSelected ? const Color(0xFFFFECEF) : Colors.white,
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            color: isSelected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+            width: isSelected ? 1.5 : 1,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFD86BCF).withOpacity(0.25),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : [],
         ),
         child: TextWidget(
           text: text,
-          size: 15,
-          weight: FontWeight.w500,
-          color: isSelected ? Colors.white : Colors.black,
+          weight: FontWeight.w600,
+          color: isSelected ? const Color(0xFFFF6F7D) : const Color(0xFF1E1E1E),
         ),
       ),
     );
   }
 
-  Future<void> _onContinue() async {
-    final v = selected;
-    if (v == null) return;
+  Widget _countryTile(String group, String flag, String country) {
+    final value = "$group • $country";
+    final isSelected = selected == value;
+
+    return GestureDetector(
+      onTap: () => setState(() => selected = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.2.h),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFFFECEF) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(flag, style: TextStyle(fontSize: 18.sp)),
+            SizedBox(height: 0.6.h),
+            TextWidget(
+              text: country,
+              size: 13,
+              weight: FontWeight.w600,
+              color: isSelected
+                  ? const Color(0xFFFF6F7D)
+                  : const Color(0xFF1E1E1E),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _ethnicityGrid() {
+    final children = <Widget>[];
+
+    ethnicityGroups.forEach((group, items) {
+      children.add(
+        Padding(
+          padding: EdgeInsets.only(top: 2.h, bottom: 1.h),
+          child: TextWidget(text: group, size: 16, weight: FontWeight.w700),
+        ),
+      );
+
+      children.add(
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 1.2.h,
+          crossAxisSpacing: 2.w,
+          childAspectRatio: 1.05,
+          children: items
+              .map((e) => _countryTile(group, e["flag"]!, e["country"]!))
+              .toList(),
+        ),
+      );
+    });
+
+    return SingleChildScrollView(
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, children: children),
+    );
+  }
+
+  Future<void> _continue() async {
+    if (!isValid) return;
 
     if (step == EthnicityFlowStep.ethnicity) {
-      flow.ethnicity.value = v;
-    } else if (step == EthnicityFlowStep.datingGoal) {
-      flow.datingGoal.value = v;
-    } else {
-      flow.sexuality.value = v;
+      flow.ethnicity.value = selected;
+      step = EthnicityFlowStep.datingGoal;
+      selected = flow.datingGoal.value;
+      setState(() {});
+      await flow.saveOnboardingProgress();
+      return;
     }
 
+    if (step == EthnicityFlowStep.datingGoal) {
+      flow.datingGoal.value = selected;
+      step = EthnicityFlowStep.sexuality;
+      selected = flow.sexuality.value;
+      setState(() {});
+      await flow.saveOnboardingProgress();
+      return;
+    }
+
+    flow.sexuality.value = selected;
     await flow.saveOnboardingProgress();
 
     if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LocationQuestionScreen()),
+    );
+  }
 
-    setState(() {
-      selected = null;
+  String get _title {
+    switch (step) {
+      case EthnicityFlowStep.ethnicity:
+        return "What’s your ethnic background?";
+      case EthnicityFlowStep.datingGoal:
+        return "What are you looking for?";
+      case EthnicityFlowStep.sexuality:
+        return "How do you identify?";
+    }
+  }
 
-      if (step == EthnicityFlowStep.ethnicity) {
-        step = EthnicityFlowStep.datingGoal;
-        selected = flow.datingGoal.value;
-      } else if (step == EthnicityFlowStep.datingGoal) {
-        step = EthnicityFlowStep.sexuality;
-        selected = flow.sexuality.value;
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const LocationQuestionScreen(),
-          ),
-        );
-      }
-    });
+  String get _subtitle {
+    switch (step) {
+      case EthnicityFlowStep.ethnicity:
+        return "Select one — you can always edit this later.";
+      case EthnicityFlowStep.datingGoal:
+        return "Be honest. It helps matches feel right.";
+      case EthnicityFlowStep.sexuality:
+        return "Share what feels accurate for you.";
+    }
+  }
+
+  Widget _content() {
+    if (step == EthnicityFlowStep.ethnicity) return _ethnicityGrid();
+
+    final options = step == EthnicityFlowStep.datingGoal
+        ? datingGoalOptions
+        : sexualityOptions;
+
+    return SingleChildScrollView(
+      child: Wrap(
+        spacing: 3.w,
+        runSpacing: 1.4.h,
+        children: options.map(_pill).toList(),
+      ),
+    );
   }
 
   @override
@@ -268,48 +413,32 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
               _animated(_topHeader(context), 0, 0.15),
               SizedBox(height: 3.h),
               _animated(
-                const TextWidget(
-                  text: 'COMPATIBILITY QUIZ',
-                  size: 13,
-                  weight: FontWeight.w700,
-                  color: Color(0xFFFF6F7D),
-                ),
+                TextWidget(text: _title, size: 18.sp, weight: FontWeight.w500),
                 0.15,
                 0.3,
               ),
-              SizedBox(height: 1.2.h),
+              SizedBox(height: 0.8.h),
               _animated(
-                TextWidget(
-                  text: questionText,
-                  size: 18,
-                ),
+                TextWidget(text: _subtitle, size: 15, color: Colors.grey),
                 0.2,
-                0.4,
-              ),
-              SizedBox(height: 4.h),
-              Expanded(
-                child: ListView(
-                  children: options.map(_optionCard).toList(),
-                ),
+                0.35,
               ),
               SizedBox(height: 2.h),
+              _animated(Expanded(child: _content()), 0.35, 0.9),
               _animated(
                 ButtonWidget(
-                  text: 'Continue',
+                  text:
+                      step == EthnicityFlowStep.sexuality ? 'Next' : 'Continue',
                   height: 7,
                   radius: 36,
-                  variant: selected != null
-                      ? ButtonVariant.gradient
-                      : ButtonVariant.solid,
-                  gradient: const [
-                    Color(0xFFFF6F7D),
-                    Color(0xFFD86BCF),
-                  ],
+                  variant:
+                      isValid ? ButtonVariant.gradient : ButtonVariant.solid,
+                  gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                   backgroundColor: Colors.grey.shade300,
-                  enableShadow: selected != null,
-                  onTap: selected != null ? _onContinue : () {},
+                  enableShadow: isValid,
+                  onTap: isValid ? _continue : () {},
                 ),
-                0.8,
+                0.9,
                 1,
               ),
               SizedBox(height: 3.h),
