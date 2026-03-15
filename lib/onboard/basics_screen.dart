@@ -1,5 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/height.dart';
+import 'package:cupid_app/onboard/religion_question_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -298,7 +298,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const HeightQuestionScreen(),
+                              builder: (_) => const ReligionQuestionScreen(),
                             ),
                           );
                         }

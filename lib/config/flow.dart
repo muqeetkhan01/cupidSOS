@@ -8,9 +8,13 @@ import 'package:get/get.dart';
 
 import '../auth/BirthdayScreen.dart';
 import '../onboard/basics_screen.dart';
+import '../onboard/religion_question_screen.dart';
 import '../onboard/ethnicity_question_screen.dart';
 import '../onboard/height.dart';
 import '../onboard/map.dart';
+import '../onboard/work_education_hometown_screen.dart';
+import '../onboard/photo_verification_screen.dart';
+import '../onboard/match_loading_screen.dart';
 import '../onboard/preferences_screen.dart';
 import '../onboard/quirk_prompt_screen.dart';
 import '../onboard/show_your_story_screen.dart';
@@ -43,6 +47,10 @@ class AppFlowController extends GetxController {
 
   final RxnString displayName = RxnString();
   final RxnString gender = RxnString();
+  final RxnString religion = RxnString();
+
+  // Height: store numeric value in cm, but remember the user's chosen unit for UI.
+  final RxString heightUnit = "cm".obs;
 
   final RxnString sunSign = RxnString();
   final RxnString moonSign = RxnString();
@@ -58,8 +66,8 @@ class AppFlowController extends GetxController {
   final RxList<String> preferences = <String>[].obs;
 
   final RxBool prefHeightAny = false.obs;
-  final RxDouble prefHeightMinFt = 5.1.obs;
-  final RxDouble prefHeightMaxFt = 6.0.obs;
+  final RxnDouble prefHeightMinCm = RxnDouble();
+  final RxnDouble prefHeightMaxCm = RxnDouble();
 
   final RxBool prefDistanceAny = false.obs;
   final RxDouble prefDistanceMinMi = 0.0.obs;
@@ -75,6 +83,15 @@ class AppFlowController extends GetxController {
   final RxnString locationLabel = RxnString();
   final RxnDouble latitude = RxnDouble();
   final RxnDouble longitude = RxnDouble();
+
+  final RxnString workPlace = RxnString();
+  final RxnString workRole = RxnString();
+  final RxnString educationSchool = RxnString();
+  final RxnString educationLevel = RxnString();
+  final RxnString hometown = RxnString();
+
+  final RxBool photoVerified = false.obs;
+  final RxnString verificationPhotoUrl = RxnString();
 
   // ✅ NEW: story photos saved as Cloudinary URLs
   final RxList<String> storyPhotoUrls = <String>[].obs;
@@ -156,7 +173,25 @@ class AppFlowController extends GetxController {
     displayName.value =
         (data["displayName"] as String?) ?? (data["name"] as String?);
     gender.value = data["gender"] as String?;
+// AFTER: gender.value = data["gender"] as String?;
+    religion.value = data["religion"] as String?;
 
+// heightUnit saved from Height screen
+    final hu = data["heightUnit"];
+    if (hu is String && (hu == "cm" || hu == "ft")) {
+      heightUnit.value = hu;
+    }
+
+// Work / Education / Hometown
+    workPlace.value = data["workPlace"] as String?;
+    workRole.value = data["workRole"] as String?;
+    educationSchool.value = data["educationSchool"] as String?;
+    educationLevel.value = data["educationLevel"] as String?;
+    hometown.value = data["hometown"] as String?;
+
+// Photo verification
+    photoVerified.value = data["photoVerified"] == true;
+    verificationPhotoUrl.value = data["verificationPhotoUrl"] as String?;
     final bigThree = data["bigThree"];
     if (bigThree is Map) {
       sunSign.value = bigThree["sun"] as String?;
@@ -177,10 +212,10 @@ class AppFlowController extends GetxController {
     if (prefs is List) preferences.assignAll(prefs.whereType<String>());
 
     prefHeightAny.value = data["prefHeightAny"] == true;
-    final phMin = data["prefHeightMinFt"];
-    final phMax = data["prefHeightMaxFt"];
-    if (phMin is num) prefHeightMinFt.value = phMin.toDouble();
-    if (phMax is num) prefHeightMaxFt.value = phMax.toDouble();
+    final phMin = data["prefHeightMinCm"] ?? data["prefHeightMinFt"];
+    final phMax = data["prefHeightMaxCm"] ?? data["prefHeightMaxFt"];
+    if (phMin is num) prefHeightMinCm.value = phMin.toDouble();
+    if (phMax is num) prefHeightMaxCm.value = phMax.toDouble();
 
     prefDistanceAny.value = data["prefDistanceAny"] == true;
     final pdMin = data["prefDistanceMinMi"];
@@ -234,6 +269,9 @@ class AppFlowController extends GetxController {
         gender.value!.isEmpty) {
       return const BasicsScreen();
     }
+    if (religion.value == null || religion.value!.isEmpty) {
+      return const ReligionQuestionScreen();
+    }
     if (heightCm.value == null) return const HeightQuestionScreen();
     if (ethnicity.value == null ||
         datingGoal.value == null ||
@@ -244,6 +282,17 @@ class AppFlowController extends GetxController {
         latitude.value == null ||
         longitude.value == null) {
       return const LocationQuestionScreen();
+    }
+
+    if (workPlace.value == null ||
+        workPlace.value!.isEmpty ||
+        workRole.value == null ||
+        workRole.value!.isEmpty ||
+        educationLevel.value == null ||
+        educationLevel.value!.isEmpty ||
+        hometown.value == null ||
+        hometown.value!.isEmpty) {
+      return const WorkEducationHometownScreen();
     }
 
     // ✅ Resume later steps
@@ -260,12 +309,15 @@ class AppFlowController extends GetxController {
       return const VoicePromptScreen();
     }
 
-    if (storyPhotoUrls.isEmpty) {
+    if (storyPhotoUrls.length < 3) {
       return const ShowYourStoryScreen();
     }
 
-    // If they got this far, MatchLoading will call completeOnboarding().
-    return const ShowYourStoryScreen();
+    if (photoVerified.value != true) {
+      return const PhotoVerificationScreen();
+    }
+
+    return const MatchLoadingScreen();
   }
 
   // -----------------------------
@@ -284,6 +336,8 @@ class AppFlowController extends GetxController {
       "voiceNotePath": voiceNotePath.value,
       "displayName": displayName.value,
       "gender": gender.value,
+      "religion": religion.value,
+      "heightUnit": heightUnit.value,
       "bigThree": {
         "sun": sunSign.value,
         "moon": moonSign.value,
@@ -296,8 +350,8 @@ class AppFlowController extends GetxController {
       "meetPreference": meetPreference.value,
       "preferences": preferences.toList(),
       "prefHeightAny": prefHeightAny.value,
-      "prefHeightMinFt": prefHeightMinFt.value,
-      "prefHeightMaxFt": prefHeightMaxFt.value,
+      "prefHeightMinCm": prefHeightMinCm.value,
+      "prefHeightMaxCm": prefHeightMaxCm.value,
       "prefDistanceAny": prefDistanceAny.value,
       "prefDistanceMinMi": prefDistanceMinMi.value,
       "prefDistanceMaxMi": prefDistanceMaxMi.value,
@@ -312,6 +366,16 @@ class AppFlowController extends GetxController {
         "lat": latitude.value,
         "lng": longitude.value,
       },
+      // Work / Education / Hometown
+      "workPlace": workPlace.value,
+      "workRole": workRole.value,
+      "educationSchool": educationSchool.value,
+      "educationLevel": educationLevel.value,
+      "hometown": hometown.value,
+
+// Photo verification
+      "photoVerified": photoVerified.value,
+      "verificationPhotoUrl": verificationPhotoUrl.value,
     };
 
     payload.removeWhere((_, v) => v == null);

@@ -30,7 +30,7 @@ dependencies:
   image: ^4.1.7
   http:
   google_sign_in: 7.2.0
-  # sign_in_with_apple:
+  sign_in_with_apple:
   fancy_shimmer_image:
   videosdk: 3.7.0
   videosdk_webrtc:

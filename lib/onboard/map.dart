@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/onboard/work_education_hometown_screen.dart';
 import 'package:cupid_app/onboard/preferences_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -117,7 +118,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const PreferencesScreen()),
+      MaterialPageRoute(builder: (_) => const WorkEducationHometownScreen()),
     );
   }
 
@@ -160,8 +161,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
               ),
               SizedBox(height: 1.h),
               const TextWidget(
-                text:
-                    "We’ll use this to show you better matches near you.",
+                text: "We’ll use this to show you better matches near you.",
                 size: 15,
                 color: Colors.grey,
               ),
@@ -169,7 +169,8 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
               GestureDetector(
                 onTap: _pickLocation,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -222,7 +223,8 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
                 text: "Continue",
                 height: 7,
                 radius: 36,
-                variant: canContinue ? ButtonVariant.gradient : ButtonVariant.solid,
+                variant:
+                    canContinue ? ButtonVariant.gradient : ButtonVariant.solid,
                 backgroundColor: Colors.grey.shade300,
                 gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 onTap: canContinue ? _continue : () {},

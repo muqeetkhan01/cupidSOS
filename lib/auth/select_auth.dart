@@ -156,25 +156,25 @@ class _SignupScreenState extends State<SignupScreen>
                 end: 0.5,
                 child: TextWidget(
                   text: 'One tap to start your love story ✨',
-                  size: 17,
+                  size: 16,
                   color: Colors.grey.shade600,
                 ),
               ),
-              // SizedBox(height: 6.h),
+              SizedBox(height: 6.h),
 
               // // ✅ Apple
-              // _animatedItem(
-              //   start: 0.5,
-              //   end: 0.6,
-              //   child: ButtonWidget(
-              //     text: _busy ? "Please wait..." : 'Continue with Apple',
-              //     backgroundColor: Colors.black,
-              //     iconAsset: 'assets/images/apple.png',
-              //     onTap: _busy
-              //         ? () {}
-              //         : () => _oauthAndRoute(AuthService.to.signInWithApple),
-              //   ),
-              // ),
+              _animatedItem(
+                start: 0.5,
+                end: 0.6,
+                child: ButtonWidget(
+                  text: _busy ? "Please wait..." : 'Continue with Apple',
+                  backgroundColor: Colors.black,
+                  iconAsset: 'assets/images/apple.png',
+                  onTap: _busy
+                      ? () {}
+                      : () => _oauthAndRoute(AuthService.to.signInWithApple),
+                ),
+              ),
 
               SizedBox(height: 2.h),
 

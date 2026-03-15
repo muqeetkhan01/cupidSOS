@@ -22,6 +22,64 @@ class UserProfileScreen extends StatefulWidget {
 }
 
 class _UserProfileScreenState extends State<UserProfileScreen> {
+  // lib/screens/user/user_profile_screen.dart
+// Add these methods INSIDE _UserProfileScreenState (same class where _aboutCard/_promptCard exist)
+
+  Widget _infoRow(
+      {required String label, required String value, String? emoji}) {
+    final v = value.trim();
+    if (v.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.2.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (emoji != null) ...[
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 8),
+          ],
+          SizedBox(
+            width: 26.w,
+            child: TextWidget(
+              text: label,
+              size: 12.5,
+              color: Colors.grey.shade600,
+              weight: FontWeight.w700,
+            ),
+          ),
+          Expanded(
+            child: TextWidget(
+              text: v,
+              size: 14.5,
+              weight: FontWeight.w700,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailsCard({required List<Widget> children}) {
+    final visible = children.where((w) => w is! SizedBox).toList();
+    if (visible.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: visible,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final u = widget.user;
@@ -74,7 +132,36 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                             ? "No bio yet. You can ask them about their vibe 😉"
                             : u.bioText,
                       ),
+                      SizedBox(height: 2.2.h),
 
+                      /// Work & Education (NEW)
+                      _sectionTitle("Work & Education"),
+                      SizedBox(height: 1.2.h),
+                      _detailsCard(
+                        children: [
+                          _infoRow(
+                            emoji: "💼",
+                            label: "Work",
+                            value: [
+                              u.workRole.trim(),
+                              u.workPlace.trim(),
+                            ].where((s) => s.isNotEmpty).join(" • "),
+                          ),
+                          _infoRow(
+                            emoji: "🎓",
+                            label: "Education",
+                            value: [
+                              u.educationLevel.trim(),
+                              u.educationSchool.trim(),
+                            ].where((s) => s.isNotEmpty).join("\n"),
+                          ),
+                          _infoRow(
+                            emoji: "🌍",
+                            label: "Hometown",
+                            value: u.hometown,
+                          ),
+                        ],
+                      ),
                       SizedBox(height: 2.2.h),
 
                       /// Prompts (if you want to show these from user model)

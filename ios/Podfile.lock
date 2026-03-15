@@ -1412,6 +1412,8 @@ PODS:
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - sign_in_with_apple (0.0.1):
+    - Flutter
   - sqflite_darwin (0.0.4):
     - Flutter
     - FlutterMacOS
@@ -1443,6 +1445,7 @@ DEPENDENCIES:
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - record_ios (from `.symlinks/plugins/record_ios/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
+  - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
   - sqflite_darwin (from `.symlinks/plugins/sqflite_darwin/darwin`)
   - videosdk (from `.symlinks/plugins/videosdk/ios`)
   - videosdk_webrtc (from `.symlinks/plugins/videosdk_webrtc/ios`)
@@ -1517,6 +1520,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/record_ios/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
+  sign_in_with_apple:
+    :path: ".symlinks/plugins/sign_in_with_apple/ios"
   sqflite_darwin:
     :path: ".symlinks/plugins/sqflite_darwin/darwin"
   videosdk:
@@ -1571,11 +1576,12 @@ SPEC CHECKSUMS:
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
   record_ios: 412daca2350b228e698fffcd08f1f94ceb1e3844
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
+  sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0
   videosdk: 54cf046d46212a7de6d45720e83a6c9281a49e3d
   videosdk_webrtc: b2483fabf14939461c1aa1ad3cc9e4d28d077c8c
   WebRTC-SDK: 40d4f5ba05cadff14e4db5614aec402a633f007e
 
-PODFILE CHECKSUM: 51d1eae8e4890e3aefafecb7434e935b7eb3cc69
+PODFILE CHECKSUM: 95f2ac121e8a5a8253dcca99ecad56dcf4616a36
 
 COCOAPODS: 1.16.2

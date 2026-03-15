@@ -7,6 +7,7 @@ import 'package:cupid_app/config/colors.dart';
 import 'package:cupid_app/profile/user_profile.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -439,6 +440,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               angle: _rotation,
               child: InkWell(
                 onTap: () {
+                  // FirebaseFirestore.instance
+                  //     .collection('users_cupid')
+                  //     .doc(_profiles[_currentIndex].uid)
+                  //     .delete();
+                  // setState(() {});
                   Get.to(() => UserProfileScreen(
                         user: _profiles[_currentIndex],
                         match: "${_matchPercent(_profiles[_currentIndex])}%",
@@ -516,9 +522,58 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     );
   }
 
+// lib/.../your_discover_screen.dart (where _profileCard lives)
+
+  // Put these INSIDE class _DiscoverScreenState extends State<DiscoverScreen> { ... }
+
+// ✅ Education section (works with your current DiscoverUser where fields are NON-nullable Strings)
+  Widget _educationSection(DiscoverUser u) {
+    final level = u.educationLevel.trim();
+    final school = u.educationSchool.trim();
+
+    if (level.isEmpty && school.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: const [
+            Text("🎓", style: TextStyle(fontSize: 14)),
+            SizedBox(width: 6),
+            TextWidget(
+              text: "Education",
+              size: 13,
+              weight: FontWeight.w700,
+              color: Colors.white70,
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        if (level.isNotEmpty)
+          TextWidget(
+            text: level,
+            size: 14,
+            weight: FontWeight.w600,
+            color: Colors.white.withOpacity(0.95),
+          ),
+        if (school.isNotEmpty)
+          TextWidget(
+            text: school,
+            size: 14,
+            weight: FontWeight.w600,
+            color: Colors.white.withOpacity(0.95),
+          ),
+      ],
+    );
+  }
+
+// ✅ Updated _profileCard: shows Education block if present
   Widget _profileCard(DiscoverUser u,
       {required String match, required double height}) {
     final imageUrl = u.heroImageUrl;
+
+    final hasEducation = u.educationLevel.trim().isNotEmpty ||
+        u.educationSchool.trim().isNotEmpty;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 5.w),
@@ -538,10 +593,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
         child: Stack(
           children: [
             Positioned.fill(
-                child: FancyShimmerImage(
-              imageUrl: imageUrl,
-              boxFit: BoxFit.cover,
-            )),
+              child: FancyShimmerImage(
+                imageUrl: imageUrl,
+                boxFit: BoxFit.cover,
+              ),
+            ),
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -605,6 +661,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                         size: 14,
                         color: Colors.white.withOpacity(0.9),
                       ),
+                    if (hasEducation) ...[
+                      SizedBox(height: 1.6.h),
+                      _educationSection(u),
+                    ],
                     SizedBox(height: 2.h),
                     Wrap(
                       spacing: 10,
@@ -688,7 +748,7 @@ class DiscoverUser {
   final String uid;
   final String name;
   final String photoUrl;
-  final String voiceNoteUrl; // remote URL (preferred)
+  final String voiceNoteUrl;
   final String locationLabel;
   final DateTime? birthday;
   final String vibeType;
@@ -701,9 +761,20 @@ class DiscoverUser {
 
   final String gender;
   final double? heightCm;
+
+  /// NEW: user's chosen display unit for height ("cm" or "ft")
+  final String heightUnit;
+
   final String ethnicity;
   final String sexuality;
   final String datingGoal;
+
+  /// NEW: Work / Education / Hometown
+  final String workPlace;
+  final String workRole;
+  final String educationLevel;
+  final String educationSchool;
+  final String hometown;
 
   DiscoverUser({
     required this.uid,
@@ -719,9 +790,15 @@ class DiscoverUser {
     required this.storyPhotoUrls,
     required this.gender,
     required this.heightCm,
+    required this.heightUnit,
     required this.ethnicity,
     required this.sexuality,
     required this.datingGoal,
+    required this.workPlace,
+    required this.workRole,
+    required this.educationLevel,
+    required this.educationSchool,
+    required this.hometown,
   });
 
   static DateTime? _parseDate(dynamic v) {
@@ -734,6 +811,8 @@ class DiscoverUser {
     }
     return null;
   }
+
+  static String _asTrimmedString(dynamic v) => (v is String ? v : "").trim();
 
   static DiscoverUser fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? {};
@@ -751,27 +830,37 @@ class DiscoverUser {
     final name =
         ((d["displayName"] as String?) ?? (d["name"] as String?) ?? "").trim();
 
+    final heightUnit = _asTrimmedString(d["heightUnit"]);
+    final normalizedUnit =
+        (heightUnit == "ft" || heightUnit == "cm") ? heightUnit : "cm";
+
     return DiscoverUser(
       uid: (d["uid"] as String?) ?? doc.id,
-      voiceNoteUrl: ((d["voiceNoteUrl"] as String?) ??
-              (d["voiceNotePath"]
-                  as String?) ?? // fallback if you used path key
-              "")
-          .trim(),
+      voiceNoteUrl: _asTrimmedString(d["voiceNoteUrl"]).isNotEmpty
+          ? _asTrimmedString(d["voiceNoteUrl"])
+          : _asTrimmedString(d["voiceNotePath"]),
       name: name.isEmpty ? "User" : name,
-      photoUrl: ((d["photoUrl"] as String?) ?? "").trim(),
+      photoUrl: _asTrimmedString(d["photoUrl"]),
       locationLabel: label.trim(),
       birthday: _parseDate(d["birthday"]),
-      vibeType: ((d["vibeType"] as String?) ?? "").trim(),
-      quirkText: ((d["quirkText"] as String?) ?? "").trim(),
-      storyText: ((d["storyText"] as String?) ?? "").trim(),
-      voicePromptText: ((d["voicePromptText"] as String?) ?? "").trim(),
+      vibeType: _asTrimmedString(d["vibeType"]),
+      quirkText: _asTrimmedString(d["quirkText"]),
+      storyText: _asTrimmedString(d["storyText"]),
+      voicePromptText: _asTrimmedString(d["voicePromptText"]),
       storyPhotoUrls: photos,
-      gender: ((d["gender"] as String?) ?? "").trim(),
+      gender: _asTrimmedString(d["gender"]),
       heightCm: heightCm,
-      ethnicity: ((d["ethnicity"] as String?) ?? "").trim(),
-      sexuality: ((d["sexuality"] as String?) ?? "").trim(),
-      datingGoal: ((d["datingGoal"] as String?) ?? "").trim(),
+      heightUnit: normalizedUnit,
+      ethnicity: _asTrimmedString(d["ethnicity"]),
+      sexuality: _asTrimmedString(d["sexuality"]),
+      datingGoal: _asTrimmedString(d["datingGoal"]),
+
+      // NEW fields
+      workPlace: _asTrimmedString(d["workPlace"]),
+      workRole: _asTrimmedString(d["workRole"]),
+      educationLevel: _asTrimmedString(d["educationLevel"]),
+      educationSchool: _asTrimmedString(d["educationSchool"]),
+      hometown: _asTrimmedString(d["hometown"]),
     );
   }
 
@@ -793,6 +882,19 @@ class DiscoverUser {
     return "";
   }
 
+  String _formatHeight() {
+    final cm = heightCm;
+    if (cm == null) return "";
+
+    if (heightUnit == "ft") {
+      final totalInches = (cm / 2.54).round();
+      final feet = totalInches ~/ 12;
+      final inches = totalInches % 12;
+      return "$feet'$inches\"";
+    }
+    return "${cm.round()} cm";
+  }
+
   List<String> get tags {
     final items = <String>[];
     if (vibeType.isNotEmpty) items.add("Vibe: $vibeType");
@@ -800,7 +902,14 @@ class DiscoverUser {
     if (ethnicity.isNotEmpty) items.add(ethnicity);
     if (gender.isNotEmpty) items.add(gender);
     if (sexuality.isNotEmpty) items.add(sexuality);
-    if (heightCm != null) items.add("${heightCm!.round()} cm");
+
+    final h = _formatHeight();
+    if (h.isNotEmpty) items.add(h);
+
+    // Optional extra tags (keep/remove as you like)
+    if (educationLevel.isNotEmpty) items.add("🎓 $educationLevel");
+    if (hometown.isNotEmpty) items.add("📍 $hometown");
+
     return items;
   }
 
@@ -816,6 +925,15 @@ class DiscoverUser {
       "ethnicity": ethnicity,
       "voicePromptText": voicePromptText,
       "voiceNoteUrl": voiceNoteUrl,
+
+      // Include if your match system needs them
+      "heightCm": heightCm,
+      "heightUnit": heightUnit,
+      "educationLevel": educationLevel,
+      "educationSchool": educationSchool,
+      "workPlace": workPlace,
+      "workRole": workRole,
+      "hometown": hometown,
     };
   }
 

@@ -6,6 +6,17 @@ import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 import 'quirk_prompt_screen.dart';
 
+import 'dart:math';
+
+import 'package:cupid_app/config/flow.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
+
+import '../../widgets/text_widget.dart';
+import '../../widgets/button_widget.dart';
+import 'quirk_prompt_screen.dart';
+
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
 
@@ -16,19 +27,21 @@ class PreferencesScreen extends StatefulWidget {
 class _PreferencesScreenState extends State<PreferencesScreen>
     with TickerProviderStateMixin {
   final flow = Get.find<AppFlowController>();
-
   late final AnimationController _controller;
 
   bool heightAny = false;
   bool distanceAny = false;
 
-  RangeValues heightRange = const RangeValues(5.1, 7.0);
-  RangeValues distanceRange = const RangeValues(0, 100);
+  /// Always store height range in cm locally.
+  RangeValues heightRangeCm = const RangeValues(160, 190);
+
+  /// Store distance in miles locally.
+  RangeValues distanceRange = const RangeValues(0, 200);
 
   final Set<String> ethnicities = {};
   final Set<String> languages = {};
 
-  final ethnicityOptions = [
+  final ethnicityOptions = const [
     "East Asian",
     "Southeast Asian",
     "South Asian",
@@ -38,10 +51,10 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     "Middle Eastern",
     "Pacific Islander",
     "American Indian",
-    'Other',
+    "Other",
   ];
 
-  final languageOptions = [
+  final languageOptions = const [
     "English",
     "Mandarin Chinese",
     "Yue Chinese",
@@ -71,21 +84,29 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     "Javanese",
     "Kannada",
     "Maithili",
-    "Odia"
+    "Odia",
   ];
 
   @override
   void initState() {
     super.initState();
 
-    // Resume state from controller
     heightAny = flow.prefHeightAny.value;
     distanceAny = flow.prefDistanceAny.value;
 
-    heightRange =
-        RangeValues(flow.prefHeightMinFt.value, flow.prefHeightMaxFt.value);
-    distanceRange =
-        RangeValues(flow.prefDistanceMinMi.value, flow.prefDistanceMaxMi.value);
+    // Restore (clamp to safe bounds)
+    heightRangeCm = _clampRange(
+      RangeValues(
+          flow.prefHeightMinCm.value ?? 0.0, flow.prefHeightMaxCm.value ?? 0.0),
+      min: 140,
+      max: 220,
+    );
+
+    distanceRange = _clampRange(
+      RangeValues(flow.prefDistanceMinMi.value, flow.prefDistanceMaxMi.value),
+      min: 0,
+      max: 200,
+    );
 
     ethnicities.addAll(flow.preferredEthnicities);
     languages.addAll(flow.preferredLanguages);
@@ -104,6 +125,28 @@ class _PreferencesScreenState extends State<PreferencesScreen>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  RangeValues _clampRange(RangeValues v,
+      {required double min, required double max}) {
+    final a = v.start.clamp(min, max).toDouble();
+    final b = v.end.clamp(min, max).toDouble();
+    return a <= b ? RangeValues(a, b) : RangeValues(b, a);
+  }
+
+  double _cmToFtDecimal(double cm) => cm / 30.48; // 1ft=30.48cm
+
+  double _ftDecimalToCm(double ft) => ft * 30.48;
+
+  String _formatHeight(double cm) {
+    final unit = flow.heightUnit.value; // "cm" or "ft"
+    if (unit == "cm") {
+      return "${cm.round()} cm";
+    }
+    final totalInches = (cm / 2.54).round();
+    final feet = totalInches ~/ 12;
+    final inches = totalInches % 12;
+    return "$feet'$inches\"";
   }
 
   Widget _animated(Widget child, double from, double to) {
@@ -148,9 +191,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     value: 0.75,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
-                    valueColor: const AlwaysStoppedAnimation(
-                      Color(0xFFFF3B7A),
-                    ),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFF3B7A)),
                   ),
                 ),
               ),
@@ -215,13 +256,11 @@ class _PreferencesScreenState extends State<PreferencesScreen>
           borderRadius: BorderRadius.circular(32),
           gradient: selected
               ? const LinearGradient(
-                  colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                )
+                  colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)])
               : null,
           color: selected ? null : Colors.white,
           border: Border.all(
-            color: selected ? Colors.transparent : Colors.grey.shade300,
-          ),
+              color: selected ? Colors.transparent : Colors.grey.shade300),
           boxShadow: selected
               ? [
                   BoxShadow(
@@ -243,10 +282,10 @@ class _PreferencesScreenState extends State<PreferencesScreen>
   }
 
   Future<void> _continue() async {
-    // Persist into controller
+    // Save preferences in canonical units.
     flow.prefHeightAny.value = heightAny;
-    flow.prefHeightMinFt.value = heightRange.start;
-    flow.prefHeightMaxFt.value = heightRange.end;
+    flow.prefHeightMinCm.value = heightRangeCm.start;
+    flow.prefHeightMaxCm.value = heightRangeCm.end;
 
     flow.prefDistanceAny.value = distanceAny;
     flow.prefDistanceMinMi.value = distanceRange.start;
@@ -255,26 +294,58 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     flow.preferredEthnicities.assignAll(ethnicities.toList());
     flow.preferredLanguages.assignAll(languages.toList());
 
-    // Keep legacy list too (doesn't break anything else)
-    final merged = <String>[
+    flow.preferences.assignAll([
       ...ethnicities.map((e) => "ethnicity:$e"),
       ...languages.map((l) => "language:$l"),
-    ];
-    flow.preferences.assignAll(merged);
+    ]);
 
     await flow.saveOnboardingProgress();
 
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const CulturalVibeScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const CulturalVibeScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final unit = flow.heightUnit.value; // "cm" or "ft"
+
+    // Slider bounds
+    const minCm = 140.0;
+    const maxCm = 220.0;
+
+    // Distance bounds
+    const minMi = 0.0;
+    const maxMi = 200.0;
+
+    // Keep values safe (prevents RangeSlider assertion)
+    final safeHeightCm = _clampRange(heightRangeCm, min: minCm, max: maxCm);
+    final safeDistance = _clampRange(distanceRange, min: minMi, max: maxMi);
+
+    if (safeHeightCm != heightRangeCm || safeDistance != distanceRange) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          heightRangeCm = safeHeightCm;
+          distanceRange = safeDistance;
+        });
+      });
+    }
+
+    // For display slider in ft: show ft-decimal but persist cm.
+    final heightSliderMin = unit == "ft" ? _cmToFtDecimal(minCm) : minCm;
+    final heightSliderMax = unit == "ft" ? _cmToFtDecimal(maxCm) : maxCm;
+
+    RangeValues heightSliderValues = unit == "ft"
+        ? RangeValues(_cmToFtDecimal(safeHeightCm.start),
+            _cmToFtDecimal(safeHeightCm.end))
+        : safeHeightCm;
+
+    heightSliderValues = _clampRange(heightSliderValues,
+        min: heightSliderMin, max: heightSliderMax);
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
       body: SafeArea(
@@ -317,35 +388,42 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     ),
                     if (!heightAny) ...[
                       SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: const Color(0xFFFF6F7D),
-                            inactiveTrackColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.25),
-                            thumbColor: const Color(0xFFFF6F7D),
-                            overlayColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.12),
-                          ),
-                          child: RangeSlider(
-                            min: 5.1,
-                            max: 7.0,
-                            divisions: 11,
-                            values: heightRange,
-                            onChanged: (values) {
-                              setState(() => heightRange = values);
-                            },
-                          )),
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: const Color(0xFFFF6F7D),
+                          inactiveTrackColor:
+                              const Color(0xFFFF6F7D).withOpacity(0.25),
+                          thumbColor: const Color(0xFFFF6F7D),
+                          overlayColor:
+                              const Color(0xFFFF6F7D).withOpacity(0.12),
+                        ),
+                        child: RangeSlider(
+                          min: heightSliderMin,
+                          max: heightSliderMax,
+                          divisions: 16,
+                          values: heightSliderValues,
+                          onChanged: (values) {
+                            setState(() {
+                              // Convert back to cm for storage in state.
+                              final newCm = unit == "ft"
+                                  ? RangeValues(_ftDecimalToCm(values.start),
+                                      _ftDecimalToCm(values.end))
+                                  : values;
+
+                              heightRangeCm =
+                                  _clampRange(newCm, min: minCm, max: maxCm);
+                            });
+                          },
+                        ),
+                      ),
                       Row(
                         children: [
-                          TextWidget(
-                              text:
-                                  "${heightRange.start.toStringAsFixed(1)} ft"),
+                          TextWidget(text: _formatHeight(heightRangeCm.start)),
                           const Spacer(),
                           const TextWidget(text: "  –  "),
                           const Spacer(),
-                          TextWidget(
-                              text: "${heightRange.end.toStringAsFixed(1)} ft")
+                          TextWidget(text: _formatHeight(heightRangeCm.end)),
                         ],
-                      )
+                      ),
                     ],
                     SizedBox(height: 3.h),
                     _sectionHeader(
@@ -357,32 +435,40 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     ),
                     if (!distanceAny) ...[
                       SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: const Color(0xFFFF6F7D),
-                            inactiveTrackColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.25),
-                            thumbColor: const Color(0xFFFF6F7D),
-                            overlayColor:
-                                const Color(0xFFFF6F7D).withOpacity(0.12),
-                          ),
-                          child: RangeSlider(
-                            min: 0,
-                            max: 200,
-                            divisions: 20,
-                            values: distanceRange,
-                            onChanged: (values) {
-                              setState(() => distanceRange = values);
-                            },
-                          )),
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: const Color(0xFFFF6F7D),
+                          inactiveTrackColor:
+                              const Color(0xFFFF6F7D).withOpacity(0.25),
+                          thumbColor: const Color(0xFFFF6F7D),
+                          overlayColor:
+                              const Color(0xFFFF6F7D).withOpacity(0.12),
+                        ),
+                        child: RangeSlider(
+                          min: minMi,
+                          max: maxMi,
+                          divisions: 20,
+                          values: safeDistance,
+                          onChanged: (values) {
+                            setState(() {
+                              distanceRange =
+                                  _clampRange(values, min: minMi, max: maxMi);
+                            });
+                          },
+                        ),
+                      ),
                       Row(
                         children: [
-                          TextWidget(text: "${distanceRange.start.round()} mi"),
+                          TextWidget(
+                              text:
+                                  "${max(0, distanceRange.start.round())} mi"),
                           const Spacer(),
                           const TextWidget(text: "  –  "),
                           const Spacer(),
-                          TextWidget(text: "${distanceRange.end.round()} mi")
+                          TextWidget(
+                              text:
+                                  "${min(200, distanceRange.end.round())} mi"),
                         ],
-                      )
+                      ),
                     ],
                     SizedBox(height: 3.h),
                     _sectionHeader('Preferred Ethnicity *'),
@@ -422,10 +508,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                 height: 7,
                 radius: 36,
                 variant: ButtonVariant.gradient,
-                gradient: const [
-                  Color(0xFFFF6F7D),
-                  Color(0xFFD86BCF),
-                ],
+                gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 enableShadow: true,
                 onTap: _continue,
               ),

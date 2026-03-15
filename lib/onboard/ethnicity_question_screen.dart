@@ -406,43 +406,48 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 1.h),
-              _animated(_topHeader(context), 0, 0.15),
-              SizedBox(height: 3.h),
-              _animated(
-                TextWidget(text: _title, size: 18.sp, weight: FontWeight.w500),
-                0.15,
-                0.3,
-              ),
-              SizedBox(height: 0.8.h),
-              _animated(
-                TextWidget(text: _subtitle, size: 15, color: Colors.grey),
-                0.2,
-                0.35,
-              ),
-              SizedBox(height: 2.h),
-              _animated(Expanded(child: _content()), 0.35, 0.9),
-              _animated(
-                ButtonWidget(
-                  text:
-                      step == EthnicityFlowStep.sexuality ? 'Next' : 'Continue',
-                  height: 7,
-                  radius: 36,
-                  variant:
-                      isValid ? ButtonVariant.gradient : ButtonVariant.solid,
-                  gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                  backgroundColor: Colors.grey.shade300,
-                  enableShadow: isValid,
-                  onTap: isValid ? _continue : () {},
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 1.h),
+                _animated(_topHeader(context), 0, 0.15),
+                SizedBox(height: 3.h),
+                _animated(
+                  TextWidget(
+                      text: _title, size: 18.sp, weight: FontWeight.w500),
+                  0.15,
+                  0.3,
                 ),
-                0.9,
-                1,
-              ),
-              SizedBox(height: 3.h),
-            ],
+                SizedBox(height: 0.8.h),
+                _animated(
+                  TextWidget(text: _subtitle, size: 15, color: Colors.grey),
+                  0.2,
+                  0.35,
+                ),
+                SizedBox(height: 2.h),
+                _animated(_content(), 0.35, 0.9),
+                SizedBox(height: 2.h),
+                _animated(
+                  ButtonWidget(
+                    text: step == EthnicityFlowStep.sexuality
+                        ? 'Next'
+                        : 'Continue',
+                    height: 7,
+                    radius: 36,
+                    variant:
+                        isValid ? ButtonVariant.gradient : ButtonVariant.solid,
+                    gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                    backgroundColor: Colors.grey.shade300,
+                    enableShadow: isValid,
+                    onTap: isValid ? _continue : () {},
+                  ),
+                  0.9,
+                  1,
+                ),
+                SizedBox(height: 3.h),
+              ],
+            ),
           ),
         ),
       ),

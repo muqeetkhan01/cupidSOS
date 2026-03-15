@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/match_loading_screen.dart';
+import 'package:cupid_app/onboard/photo_verification_screen.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -209,7 +210,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
 
     Navigator.push(
       context,
-      _slideRightToLeft(const MatchLoadingScreen()),
+      _slideRightToLeft(const PhotoVerificationScreen()),
     );
   }
 
@@ -283,7 +284,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                   ),
                   child: TextWidget(
                     text:
-                        '${uploadedCount.clamp(0, 6)}/6 photos • At least 1 required',
+                        '${uploadedCount.clamp(0, 6)}/6 photos • At least 3 required',
                     size: 14,
                     color: const Color(0xFF8A5A2B),
                     weight: FontWeight.w600,
@@ -386,14 +387,19 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
               ),
               SizedBox(height: 4.h),
               ButtonWidget(
-                text: _uploading ? 'Uploading…' : 'Find My Match 💕',
+                text: _uploading ? 'Uploading…' : 'Next ($uploadedCount/3)',
                 height: 7,
                 radius: 36,
                 variant: isValid ? ButtonVariant.gradient : ButtonVariant.solid,
                 gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 backgroundColor: Colors.grey.shade300,
                 enableShadow: isValid,
-                onTap: isValid ? _uploadAndContinue : () {},
+                onTap: uploadedCount >= 3
+                    ? _uploadAndContinue
+                    : () {
+                        Get.snackbar("Missing information.",
+                            "Upload at least 3 photos.");
+                      },
               ),
               SizedBox(height: 3.h),
             ],

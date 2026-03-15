@@ -1,9 +1,12 @@
+// lib/onboard/birthday_screen.dart
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/vibe_selection_screen.dart';
+import 'package:cupid_app/widgets/roldex.dart';
 import 'package:cupid_app/widgets/zodiac.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
+
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 
@@ -18,36 +21,59 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     with TickerProviderStateMixin {
   final flow = Get.find<AppFlowController>();
 
+  late final AnimationController _controller;
+
+  late DateTime _dob;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ Preserve previous behavior: if already saved, show saved DOB
+    _dob = flow.birthday.value ?? DateTime(2000, 1, 5);
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    Future.delayed(const Duration(milliseconds: 120), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  int _ageFromDob(DateTime dob) {
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    final hadBirthdayThisYear = (now.month > dob.month) ||
+        (now.month == dob.month && now.day >= dob.day);
+    if (!hadBirthdayThisYear) age -= 1;
+    return age;
+  }
+
   Future<void> _continue() async {
-    final mm = int.tryParse(mmCtrl.text.trim());
-    final dd = int.tryParse(ddCtrl.text.trim());
-    final yyyy = int.tryParse(yyyyCtrl.text.trim());
+    final dt = _dob;
 
-    if (mm == null || dd == null || yyyy == null) {
+    // ✅ Same validity guard as before (and common dating-app requirement)
+    final age = _ageFromDob(dt);
+    if (age < 18 || age > 120) {
       Get.snackbar("Invalid date", "Enter a valid birthday");
       return;
     }
 
-    final dt = DateTime(yyyy, mm, dd);
-    if (dt.year != yyyy || dt.month != mm || dt.day != dd) {
-      Get.snackbar("Invalid date", "Enter a valid birthday");
-      return;
-    }
-
+    // ✅ Save exactly like before
     flow.birthday.value = dt;
 
-    // ✅ Compute & store signs immediately
+    // ✅ Compute & store signs immediately (same as your previous code)
     final western = ZodiacUtils.westernZodiac(dt);
-
-    // Use your existing fields without breaking flow:
-    // - vibeType: shows as tag in Discover (good for "Vibe: Leo" etc.)
     flow.vibeType.value = western.name;
-
-    // - sunSign is part of bigThree saved later; setting now is safe.
     flow.sunSign.value = western.name;
-
-    // If you WANT to store Chinese zodiac too, the clean way is to add a new field.
-    // But since you asked only to fix display, we keep it UI-only in VibeSelectionScreen.
 
     await flow.saveOnboardingProgress();
 
@@ -61,44 +87,6 @@ class _BirthdayScreenState extends State<BirthdayScreen>
             FadeTransition(opacity: animation, child: child),
       ),
     );
-  }
-
-  late final AnimationController _controller;
-
-  final mmCtrl = TextEditingController();
-  final ddCtrl = TextEditingController();
-  final yyyyCtrl = TextEditingController();
-
-  final mmFocus = FocusNode();
-  final ddFocus = FocusNode();
-  final yyyyFocus = FocusNode();
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
-
-    Future.delayed(const Duration(milliseconds: 120), () {
-      if (mounted) _controller.forward();
-    });
-
-    mmFocus.addListener(() => setState(() {}));
-    ddFocus.addListener(() => setState(() {}));
-    yyyyFocus.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    mmCtrl.dispose();
-    ddCtrl.dispose();
-    yyyyCtrl.dispose();
-    mmFocus.dispose();
-    ddFocus.dispose();
-    yyyyFocus.dispose();
-    super.dispose();
   }
 
   Widget _animatedItem({
@@ -123,228 +111,155 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     );
   }
 
-  Widget _dateField({
-    required String hint,
-    required TextEditingController controller,
-    required FocusNode focus,
-    required int maxLength,
-  }) {
-    final bool isActive = focus.hasFocus;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      width: 22.w,
-      height: 6.5.h,
-      padding: EdgeInsets.symmetric(horizontal: 2.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        color: isActive
-            ? const Color(0xFFD86BCF).withOpacity(0.08)
-            : Colors.transparent,
-        border: Border.all(
-          color: isActive ? const Color(0xFFD86BCF) : Colors.grey.shade300,
-          width: 1.5,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: TextField(
-        controller: controller,
-        focusNode: focus,
-        maxLength: maxLength,
-        keyboardType: TextInputType.number,
-        textAlign: TextAlign.center,
-        cursorColor: const Color(0xFFD86BCF), // ✅ purple cursor
-        style: TextStyle(
-          fontSize: 16.sp,
-          fontWeight: FontWeight.w600,
-          color: isActive
-              ? const Color(0xFFD86BCF) // ✅ purple text when active
-              : Colors.grey.shade600,
-        ),
-        decoration: InputDecoration(
-          counterText: '',
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: isActive
-                ? const Color(0xFFD86BCF).withOpacity(0.4)
-                : Colors.grey.shade400,
-            fontWeight: FontWeight.w600,
-          ),
-          border: InputBorder.none,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final age = _ageFromDob(_dob);
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
           child: SingleChildScrollView(
-            child: GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: Column(
-                children: [
-                  SizedBox(height: 1.5.h),
+            child: Column(
+              children: [
+                SizedBox(height: 1.5.h),
 
-                  // 🔙 Back + Step
-                  _animatedItem(
-                    start: 0.0,
-                    end: 0.15,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new),
-                            onPressed: () => Navigator.pop(context),
-                          ),
+                // 🔙 Back + Step (kept like your previous screen)
+                _animatedItem(
+                  start: 0.0,
+                  end: 0.15,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new),
+                          onPressed: () => Navigator.pop(context),
                         ),
-                        const TextWidget(
-                          text: 'Step 2 10',
-                          size: 14,
-                          color: Colors.grey,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  SizedBox(height: 6.h),
-
-                  // 📅 Icon
-                  _animatedItem(
-                    start: 0.15,
-                    end: 0.3,
-                    child: Container(
-                      width: 18.w,
-                      height: 18.w,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFD86BCF).withOpacity(0.12),
                       ),
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.calendar_month_rounded,
-                        color: Color(0xFFD86BCF),
-                        size: 34,
+                      const TextWidget(
+                        text: 'Step 2 10',
+                        size: 14,
+                        color: Colors.grey,
+                        textAlign: TextAlign.center,
                       ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 6.h),
+
+                // 📅 Icon (kept)
+                _animatedItem(
+                  start: 0.15,
+                  end: 0.3,
+                  child: Container(
+                    width: 18.w,
+                    height: 18.w,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFD86BCF).withOpacity(0.12),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.calendar_month_rounded,
+                      color: Color(0xFFD86BCF),
+                      size: 34,
                     ),
                   ),
+                ),
 
-                  SizedBox(height: 4.h),
+                SizedBox(height: 4.h),
 
-                  _animatedItem(
-                    start: 0.3,
-                    end: 0.45,
-                    child: const TextWidget(
-                      text: "When’s your birthday? 🎂",
-                      size: 24,
-                      weight: FontWeight.bold,
-                      textAlign: TextAlign.center,
-                    ),
+                _animatedItem(
+                  start: 0.3,
+                  end: 0.45,
+                  child: const TextWidget(
+                    text: "When’s your birthday? 🎂",
+                    size: 24,
+                    weight: FontWeight.bold,
+                    textAlign: TextAlign.center,
                   ),
+                ),
 
-                  SizedBox(height: 1.2.h),
+                SizedBox(height: 1.2.h),
 
-                  _animatedItem(
-                    start: 0.45,
-                    end: 0.6,
-                    child: TextWidget(
-                      text:
-                          "We’ll unlock your cosmic soul badges\nYour birthday is locked once you set it.",
-                      size: 15,
-                      color: Colors.grey.shade600,
-                      textAlign: TextAlign.center,
-                    ),
+                _animatedItem(
+                  start: 0.45,
+                  end: 0.6,
+                  child: TextWidget(
+                    text:
+                        "We’ll unlock your cosmic soul badges\nYour birthday is locked once you set it.",
+                    size: 15,
+                    color: Colors.grey.shade600,
+                    textAlign: TextAlign.center,
                   ),
+                ),
 
-                  SizedBox(height: 5.h),
+                SizedBox(height: 4.h),
 
-                  // 🔢 REAL INPUT FIELDS
-                  _animatedItem(
-                    start: 0.6,
-                    end: 0.75,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _dateField(
-                          hint: 'MM',
-                          controller: mmCtrl,
-                          focus: mmFocus,
-                          maxLength: 2,
-                        ),
-                        _dateField(
-                          hint: 'DD',
-                          controller: ddCtrl,
-                          focus: ddFocus,
-                          maxLength: 2,
-                        ),
-                        _dateField(
-                          hint: 'YYYY',
-                          controller: yyyyCtrl,
-                          focus: yyyyFocus,
-                          maxLength: 4,
-                        ),
-                      ],
+                // ✅ Rolodex picker (replaces MM/DD/YYYY text fields)
+                _animatedItem(
+                  start: 0.6,
+                  end: 0.78,
+                  child: RolodexDobPicker(
+                    initialDate: _dob,
+                    minYear: 1900,
+                    maxYear: DateTime.now().year,
+                    height: 24.h,
+                    itemExtent: 6.h,
+                    backgroundColor: Colors.white,
+                    highlightColor: const Color(0xFFD86BCF).withOpacity(0.08),
+                    textStyle: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFD86BCF),
                     ),
-                  ),
-
-                  SizedBox(height: 5.h),
-
-                  _animatedItem(
-                    start: 0.75,
-                    end: 1.0,
-                    child: ButtonWidget(
-                      text: '✨ Reveal My Signs',
-                      height: 7,
-                      radius: 36,
-                      variant: ButtonVariant.gradient,
-                      gradient: const [
-                        Color(0xFFFF6F7D),
-                        Color(0xFFD86BCF),
-                      ],
-                      onTap: () {
-                        FocusScope.of(context).unfocus();
-                        _continue();
-                        // Navigator.push(
-                        //   context,
-                        //   PageRouteBuilder(
-                        //     transitionDuration: const Duration(milliseconds: 450),
-                        //     pageBuilder: (_, __, ___) =>
-                        //         const VibeSelectionScreen(),
-                        //     transitionsBuilder: (_, animation, __, child) {
-                        //       final slide = Tween<Offset>(
-                        //         begin: const Offset(0, 0.08),
-                        //         end: Offset.zero,
-                        //       ).animate(
-                        //         CurvedAnimation(
-                        //           parent: animation,
-                        //           curve: Curves.easeOutCubic,
-                        //         ),
-                        //       );
-
-                        //       return FadeTransition(
-                        //         opacity: animation,
-                        //         child: SlideTransition(
-                        //           position: slide,
-                        //           child: child,
-                        //         ),
-                        //       );
-                        //     },
-                        //   ),
-                        // );
-
-                        // validate date here later
-                      },
+                    fadedTextStyle: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade400,
                     ),
+                    onChanged: (d) => setState(() => _dob = d),
                   ),
-                ],
-              ),
+                ),
+
+                SizedBox(height: 2.4.h),
+
+                _animatedItem(
+                  start: 0.72,
+                  end: 0.88,
+                  child: TextWidget(
+                    text: "You're $age.",
+                    size: 15,
+                    color: Colors.grey.shade700,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                SizedBox(height: 4.h),
+
+                // ✅ Same CTA as before + calls _continue()
+                _animatedItem(
+                  start: 0.78,
+                  end: 1.0,
+                  child: ButtonWidget(
+                    text: '✨ Reveal My Signs',
+                    height: 7,
+                    radius: 36,
+                    variant: ButtonVariant.gradient,
+                    gradient: const [
+                      Color(0xFFFF6F7D),
+                      Color(0xFFD86BCF),
+                    ],
+                    onTap: _continue,
+                  ),
+                ),
+
+                SizedBox(height: 2.h),
+              ],
             ),
           ),
         ),
