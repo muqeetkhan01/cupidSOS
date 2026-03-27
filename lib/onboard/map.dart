@@ -1,5 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/work_education_hometown_screen.dart';
+import 'package:cupid_app/onboard/looking_for_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -103,10 +103,14 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
   }
 
   Future<void> _continue() async {
-    final latLng = pickedLocation?.latLng;
+    final latLng = pickedLocation?.latLng ??
+        LatLng(
+          flow.latitude.value ?? _initialLatLng.latitude,
+          flow.longitude.value ?? _initialLatLng.longitude,
+        );
     final label = addressController.text.trim();
 
-    if (latLng == null || label.isEmpty) return;
+    if (label.isEmpty) return;
 
     flow.locationLabel.value = label;
     flow.latitude.value = latLng.latitude;
@@ -117,14 +121,15 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const WorkEducationHometownScreen()),
+      MaterialPageRoute(builder: (_) => const LookingForScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final canContinue =
-        (pickedLocation?.latLng != null) && addressController.text.isNotEmpty;
+    final canContinue = addressController.text.isNotEmpty &&
+        (pickedLocation?.latLng != null ||
+            (flow.latitude.value != null && flow.longitude.value != null));
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
@@ -146,7 +151,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
                     ),
                   ),
                   const TextWidget(
-                    text: 'Step 6 of 10',
+                    text: '12 of 19',
                     size: 14,
                     color: Colors.grey,
                   ),

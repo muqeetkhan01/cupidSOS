@@ -8,9 +8,9 @@ import 'package:get/get.dart';
 
 import '../auth/BirthdayScreen.dart';
 import '../onboard/basics_screen.dart';
-import '../onboard/religion_question_screen.dart';
 import '../onboard/ethnicity_question_screen.dart';
 import '../onboard/height.dart';
+import '../onboard/looking_for_screen.dart';
 import '../onboard/map.dart';
 import '../onboard/work_education_hometown_screen.dart';
 import '../onboard/photo_verification_screen.dart';
@@ -20,6 +20,9 @@ import '../onboard/quirk_prompt_screen.dart';
 import '../onboard/show_your_story_screen.dart';
 import '../onboard/vibe_selection_screen.dart';
 import '../onboard/voice_prompt_screen.dart';
+import '../onboard/big_three_screen.dart';
+import '../onboard/vibe_check_screen.dart';
+import '../onboard/welcome_house_rules_screen.dart';
 import '../widgets/bottomNav.dart';
 
 class AppFlowController extends GetxController {
@@ -41,6 +44,8 @@ class AppFlowController extends GetxController {
   // ONBOARDING STATE
   // -----------------------------
   final RxBool onboardingDone = false.obs;
+  final RxBool welcomeSeen = false.obs;
+  final RxBool finalRulesSeen = false.obs;
 
   final Rxn<DateTime> birthday = Rxn<DateTime>();
   final RxnString vibeType = RxnString();
@@ -48,6 +53,10 @@ class AppFlowController extends GetxController {
   final RxnString displayName = RxnString();
   final RxnString gender = RxnString();
   final RxnString religion = RxnString();
+  final RxnBool familyApprovalImportant = RxnBool();
+  final RxnBool marriageTimelineImportant = RxnBool();
+  final RxnBool culturalAlignmentImportant = RxnBool();
+  final RxList<String> interests = <String>[].obs;
 
   // Height: store numeric value in cm, but remember the user's chosen unit for UI.
   final RxString heightUnit = "cm".obs;
@@ -59,10 +68,18 @@ class AppFlowController extends GetxController {
   final RxnString ethnicity = RxnString();
   final RxnString datingGoal = RxnString();
   final RxnString sexuality = RxnString();
+  final RxnString culturalIdentity = RxnString();
+  final RxList<String> languagesSpoken = <String>[].obs;
 
   final RxnDouble heightCm = RxnDouble();
 
-  final RxnString meetPreference = RxnString();
+  final RxnString prefDatingGoal = RxnString();
+  final RxBool prefDatingGoalAny = false.obs;
+  final RxBool prefGenderAny = false.obs;
+  final RxList<String> preferredGenders = <String>[].obs;
+  final RxBool prefAgeAny = false.obs;
+  final RxDouble prefAgeMin = 18.0.obs;
+  final RxDouble prefAgeMax = 45.0.obs;
   final RxList<String> preferences = <String>[].obs;
 
   final RxBool prefHeightAny = false.obs;
@@ -73,7 +90,9 @@ class AppFlowController extends GetxController {
   final RxDouble prefDistanceMinMi = 0.0.obs;
   final RxDouble prefDistanceMaxMi = 100.0.obs;
 
+  final RxBool prefEthnicityAny = false.obs;
   final RxList<String> preferredEthnicities = <String>[].obs;
+  final RxBool prefLanguageAny = false.obs;
   final RxList<String> preferredLanguages = <String>[].obs;
 
   final RxnString quirkText = RxnString();
@@ -89,6 +108,7 @@ class AppFlowController extends GetxController {
   final RxnString educationSchool = RxnString();
   final RxnString educationLevel = RxnString();
   final RxnString hometown = RxnString();
+  final RxBool workEducationStepDone = false.obs;
 
   final RxBool photoVerified = false.obs;
   final RxnString verificationPhotoUrl = RxnString();
@@ -159,12 +179,13 @@ class AppFlowController extends GetxController {
   Future<void> hydrateFromFirestore() async {
     final user = firebaseUser;
     if (user == null) return;
-    print(user.email);
     final doc = await _firestore.collection("users_cupid").doc(user.uid).get();
     final data = doc.data();
     if (data == null) return;
 
     onboardingDone.value = data["onboardingDone"] == true;
+    welcomeSeen.value = data["welcomeSeen"] == true;
+    finalRulesSeen.value = data["finalRulesSeen"] == true;
 
     birthday.value = _tryParseDate(data["birthday"]);
     vibeType.value = data["vibeType"] as String?;
@@ -173,8 +194,17 @@ class AppFlowController extends GetxController {
     displayName.value =
         (data["displayName"] as String?) ?? (data["name"] as String?);
     gender.value = data["gender"] as String?;
-// AFTER: gender.value = data["gender"] as String?;
     religion.value = data["religion"] as String?;
+    familyApprovalImportant.value = data["familyApprovalImportant"] as bool?;
+    marriageTimelineImportant.value =
+        data["marriageTimelineImportant"] as bool?;
+    culturalAlignmentImportant.value =
+        data["culturalAlignmentImportant"] as bool?;
+
+    final savedInterests = data["interests"];
+    if (savedInterests is List) {
+      interests.assignAll(savedInterests.whereType<String>());
+    }
 
 // heightUnit saved from Height screen
     final hu = data["heightUnit"];
@@ -188,6 +218,7 @@ class AppFlowController extends GetxController {
     educationSchool.value = data["educationSchool"] as String?;
     educationLevel.value = data["educationLevel"] as String?;
     hometown.value = data["hometown"] as String?;
+    workEducationStepDone.value = data["workEducationStepDone"] == true;
 
 // Photo verification
     photoVerified.value = data["photoVerified"] == true;
@@ -202,14 +233,31 @@ class AppFlowController extends GetxController {
     ethnicity.value = data["ethnicity"] as String?;
     datingGoal.value = data["datingGoal"] as String?;
     sexuality.value = data["sexuality"] as String?;
+    culturalIdentity.value = data["culturalIdentity"] as String?;
+
+    final spoken = data["languagesSpoken"];
+    if (spoken is List) languagesSpoken.assignAll(spoken.whereType<String>());
 
     final h = data["heightCm"];
     if (h is num) heightCm.value = h.toDouble();
 
-    meetPreference.value = data["meetPreference"] as String?;
-
     final prefs = data["preferences"];
     if (prefs is List) preferences.assignAll(prefs.whereType<String>());
+
+    prefDatingGoal.value = data["prefDatingGoal"] as String?;
+    prefDatingGoalAny.value = data["prefDatingGoalAny"] == true;
+    prefGenderAny.value = data["prefGenderAny"] == true;
+    prefAgeAny.value = data["prefAgeAny"] == true;
+
+    final prefGenderList = data["preferredGenders"];
+    if (prefGenderList is List) {
+      preferredGenders.assignAll(prefGenderList.whereType<String>());
+    }
+
+    final prefAgeMinValue = data["prefAgeMin"];
+    final prefAgeMaxValue = data["prefAgeMax"];
+    if (prefAgeMinValue is num) prefAgeMin.value = prefAgeMinValue.toDouble();
+    if (prefAgeMaxValue is num) prefAgeMax.value = prefAgeMaxValue.toDouble();
 
     prefHeightAny.value = data["prefHeightAny"] == true;
     final phMin = data["prefHeightMinCm"] ?? data["prefHeightMinFt"];
@@ -223,9 +271,11 @@ class AppFlowController extends GetxController {
     if (pdMin is num) prefDistanceMinMi.value = pdMin.toDouble();
     if (pdMax is num) prefDistanceMaxMi.value = pdMax.toDouble();
 
+    prefEthnicityAny.value = data["prefEthnicityAny"] == true;
     final pe = data["preferredEthnicities"];
     if (pe is List) preferredEthnicities.assignAll(pe.whereType<String>());
 
+    prefLanguageAny.value = data["prefLanguageAny"] == true;
     final pl = data["preferredLanguages"];
     if (pl is List) preferredLanguages.assignAll(pl.whereType<String>());
 
@@ -246,36 +296,40 @@ class AppFlowController extends GetxController {
     if (photos is List) storyPhotoUrls.assignAll(photos.whereType<String>());
   }
 
-  // -----------------------------
-  // RESUME ROUTE (now includes prefs + quirk + voice + photos)
-  // -----------------------------
   Future<dynamic /* Widget */ > getPostAuthRoute() async {
     final user = firebaseUser;
     if (user == null) return const BirthdayScreen();
 
     await hydrateFromFirestore();
-    print(user.email);
     if (onboardingDone.value == true) {
       return const CustomCupidBottomNav(currentIndex: 0);
     }
 
+    if (!welcomeSeen.value) return const WelcomeHouseRulesScreen();
     if (birthday.value == null) return const BirthdayScreen();
     if (vibeType.value == null || vibeType.value!.isEmpty) {
       return const VibeSelectionScreen();
     }
+    if (familyApprovalImportant.value == null ||
+        marriageTimelineImportant.value == null ||
+        culturalAlignmentImportant.value == null) {
+      return const BigThreeScreen();
+    }
+    if (interests.length < 5) return const VibeCheckScreen();
     if (displayName.value == null ||
         displayName.value!.isEmpty ||
         gender.value == null ||
         gender.value!.isEmpty) {
       return const BasicsScreen();
     }
-    if (religion.value == null || religion.value!.isEmpty) {
-      return const ReligionQuestionScreen();
-    }
     if (heightCm.value == null) return const HeightQuestionScreen();
     if (ethnicity.value == null ||
-        datingGoal.value == null ||
-        sexuality.value == null) {
+        ethnicity.value!.trim().isEmpty ||
+        languagesSpoken.isEmpty ||
+        culturalIdentity.value == null ||
+        culturalIdentity.value!.trim().isEmpty ||
+        sexuality.value == null ||
+        sexuality.value!.trim().isEmpty) {
       return const EthnicityQuestionScreen();
     }
     if (locationLabel.value == null ||
@@ -283,25 +337,22 @@ class AppFlowController extends GetxController {
         longitude.value == null) {
       return const LocationQuestionScreen();
     }
-
-    if (workPlace.value == null ||
-        workPlace.value!.isEmpty ||
-        workRole.value == null ||
-        workRole.value!.isEmpty ||
-        educationLevel.value == null ||
-        educationLevel.value!.isEmpty ||
-        hometown.value == null ||
-        hometown.value!.isEmpty) {
+    if (datingGoal.value == null || datingGoal.value!.trim().isEmpty) {
+      return const LookingForScreen();
+    }
+    if (!workEducationStepDone.value) {
       return const WorkEducationHometownScreen();
     }
 
-    // ✅ Resume later steps
-    final prefsMissing =
-        preferredEthnicities.isEmpty || preferredLanguages.isEmpty;
+    final prefsMissing = (!prefDatingGoalAny.value &&
+            (prefDatingGoal.value == null || prefDatingGoal.value!.isEmpty)) ||
+        (!prefGenderAny.value && preferredGenders.isEmpty) ||
+        (!prefEthnicityAny.value && preferredEthnicities.isEmpty) ||
+        (!prefLanguageAny.value && preferredLanguages.isEmpty);
     if (prefsMissing) return const PreferencesScreen();
 
     if (quirkText.value == null || quirkText.value!.trim().isEmpty) {
-      return const CulturalVibeScreen();
+      return const QuirkPromptScreen();
     }
 
     if (voicePromptText.value == null ||
@@ -317,6 +368,10 @@ class AppFlowController extends GetxController {
       return const PhotoVerificationScreen();
     }
 
+    if (!finalRulesSeen.value) {
+      return const WelcomeHouseRulesScreen(isFinalStep: true);
+    }
+
     return const MatchLoadingScreen();
   }
 
@@ -330,13 +385,18 @@ class AppFlowController extends GetxController {
     final payload = <String, dynamic>{
       "uid": user.uid,
       "updatedAt": FieldValue.serverTimestamp(),
+      "welcomeSeen": welcomeSeen.value,
+      "finalRulesSeen": finalRulesSeen.value,
       "birthday": birthday.value?.toIso8601String(),
       "vibeType": vibeType.value,
-      "voicePromptText": voicePromptText.value,
       "voiceNotePath": voiceNotePath.value,
       "displayName": displayName.value,
       "gender": gender.value,
       "religion": religion.value,
+      "familyApprovalImportant": familyApprovalImportant.value,
+      "marriageTimelineImportant": marriageTimelineImportant.value,
+      "culturalAlignmentImportant": culturalAlignmentImportant.value,
+      "interests": interests.toList(),
       "heightUnit": heightUnit.value,
       "bigThree": {
         "sun": sunSign.value,
@@ -346,8 +406,16 @@ class AppFlowController extends GetxController {
       "ethnicity": ethnicity.value,
       "datingGoal": datingGoal.value,
       "sexuality": sexuality.value,
+      "culturalIdentity": culturalIdentity.value,
+      "languagesSpoken": languagesSpoken.toList(),
       "heightCm": heightCm.value,
-      "meetPreference": meetPreference.value,
+      "prefDatingGoal": prefDatingGoal.value,
+      "prefDatingGoalAny": prefDatingGoalAny.value,
+      "prefGenderAny": prefGenderAny.value,
+      "preferredGenders": preferredGenders.toList(),
+      "prefAgeAny": prefAgeAny.value,
+      "prefAgeMin": prefAgeMin.value,
+      "prefAgeMax": prefAgeMax.value,
       "preferences": preferences.toList(),
       "prefHeightAny": prefHeightAny.value,
       "prefHeightMinCm": prefHeightMinCm.value,
@@ -355,7 +423,9 @@ class AppFlowController extends GetxController {
       "prefDistanceAny": prefDistanceAny.value,
       "prefDistanceMinMi": prefDistanceMinMi.value,
       "prefDistanceMaxMi": prefDistanceMaxMi.value,
+      "prefEthnicityAny": prefEthnicityAny.value,
       "preferredEthnicities": preferredEthnicities.toList(),
+      "prefLanguageAny": prefLanguageAny.value,
       "preferredLanguages": preferredLanguages.toList(),
       "quirkText": quirkText.value,
       "storyText": storyText.value,
@@ -372,6 +442,7 @@ class AppFlowController extends GetxController {
       "educationSchool": educationSchool.value,
       "educationLevel": educationLevel.value,
       "hometown": hometown.value,
+      "workEducationStepDone": workEducationStepDone.value,
 
 // Photo verification
       "photoVerified": photoVerified.value,

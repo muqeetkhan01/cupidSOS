@@ -154,7 +154,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: 6 / 11,
+                    value: 7 / 19,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
                     valueColor: const AlwaysStoppedAnimation(
@@ -165,7 +165,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
               ),
               SizedBox(height: 0.8.h),
               const TextWidget(
-                text: '7 of 11',
+                text: '7 of 19',
                 size: 12,
                 color: Colors.grey,
               ),

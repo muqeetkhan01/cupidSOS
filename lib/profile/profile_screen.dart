@@ -1,6 +1,7 @@
 // lib/screens/profile/profile_screen.dart
 import 'package:cupid_app/onboard/cupid_splash_screen.dart';
 import 'package:cupid_app/profile/edit.dart';
+import 'package:cupid_app/profile/safety_center_screen.dart';
 import 'package:cupid_app/widgets/voice.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../../config/flow.dart';
 import '../../services/auth_service.dart';
+import '../../services/profile_display.dart';
 import '../../widgets/text_widget.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -59,18 +61,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final photoUrl = (user?.photoURL ?? "").trim();
 
     final headlineParts = <String>[
-      if (flow.gender.value != null && flow.gender.value!.trim().isNotEmpty)
-        flow.gender.value!.trim(),
+      if (visibleProfileValue(flow.gender.value).isNotEmpty)
+        visibleProfileValue(flow.gender.value),
       if (flow.heightCm.value != null) _heightPretty(flow.heightCm.value),
-      if (flow.ethnicity.value != null &&
-          flow.ethnicity.value!.trim().isNotEmpty)
-        flow.ethnicity.value!.trim(),
-      if (flow.datingGoal.value != null &&
-          flow.datingGoal.value!.trim().isNotEmpty)
-        "Goal: ${flow.datingGoal.value!.trim()}",
-      if (flow.sexuality.value != null &&
-          flow.sexuality.value!.trim().isNotEmpty)
-        flow.sexuality.value!.trim(),
+      if (visibleProfileValue(flow.ethnicity.value).isNotEmpty)
+        visibleProfileValue(flow.ethnicity.value),
+      if (visibleProfileValue(flow.datingGoal.value).isNotEmpty)
+        "Goal: ${visibleProfileValue(flow.datingGoal.value)}",
+      if (visibleProfileValue(flow.sexuality.value).isNotEmpty)
+        visibleProfileValue(flow.sexuality.value),
     ];
 
     final storyPhotos = flow.storyPhotoUrls.toList();
@@ -163,7 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 /// INTERESTS (from your persisted preferences tags if present)
                 _sectionTitle("My Interests"),
                 SizedBox(height: 1.2.h),
-                _interestChips(_deriveInterests(flow.preferences)),
+                _interestChips(_deriveInterests(flow.interests)),
                 SizedBox(height: 2.5.h),
 
                 /// OPTIONS
@@ -195,7 +194,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _optionTile(
                   icon: Icons.help_outline,
                   title: 'Help & Support',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SafetyCenterScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _optionTile(
                   icon: Icons.logout,

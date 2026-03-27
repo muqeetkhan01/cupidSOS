@@ -6,8 +6,9 @@ import 'package:cupid_app/Discover/filter.dart';
 import 'package:cupid_app/config/colors.dart';
 import 'package:cupid_app/profile/user_profile.dart';
 import 'package:cupid_app/services/auth_service.dart';
+import 'package:cupid_app/services/profile_display.dart';
+import 'package:cupid_app/services/safety_service.dart';
 import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,9 +31,6 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     with TickerProviderStateMixin {
   late AnimationController _entryController;
   late AnimationController _swipeController;
-  Map<String, dynamic>? _filters; // null => no filters
-  double? _myLat;
-  double? _myLng;
 
   Offset _dragOffset = Offset.zero;
   double _rotation = 0;
@@ -45,7 +43,6 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   final List<DiscoverUser> _profiles = [];
   int _currentIndex = 0;
 
-  bool _loading = true;
   bool _fetchingMore = false;
 
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
@@ -113,17 +110,12 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   Future<void> _loadFirstPage() async {
     setState(() {
-      _loading = true;
       _profiles.clear();
       _currentIndex = 0;
       _lastDoc = null;
     });
 
     await _fetchNextPage();
-
-    if (mounted) {
-      setState(() => _loading = false);
-    }
   }
 
   Future<void> _fetchNextPage() async {
@@ -142,9 +134,13 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       _lastDoc = snap.docs.last;
 
       final myUid = _myUid;
+      final blockedIds = myUid == null
+          ? <String>{}
+          : await SafetyService.instance.blockedUserIds(myUid);
       final batch = snap.docs
           .map((d) => DiscoverUser.fromDoc(d))
           .where((u) => myUid == null || u.uid != myUid)
+          .where((u) => !blockedIds.contains(u.uid))
           .where((u) => u.photoUrl.isNotEmpty || u.storyPhotoUrls.isNotEmpty)
           .toList();
 
@@ -848,12 +844,12 @@ class DiscoverUser {
       storyText: _asTrimmedString(d["storyText"]),
       voicePromptText: _asTrimmedString(d["voicePromptText"]),
       storyPhotoUrls: photos,
-      gender: _asTrimmedString(d["gender"]),
+      gender: visibleProfileValue(_asTrimmedString(d["gender"])),
       heightCm: heightCm,
       heightUnit: normalizedUnit,
-      ethnicity: _asTrimmedString(d["ethnicity"]),
-      sexuality: _asTrimmedString(d["sexuality"]),
-      datingGoal: _asTrimmedString(d["datingGoal"]),
+      ethnicity: visibleProfileValue(_asTrimmedString(d["ethnicity"])),
+      sexuality: visibleProfileValue(_asTrimmedString(d["sexuality"])),
+      datingGoal: visibleProfileValue(_asTrimmedString(d["datingGoal"])),
 
       // NEW fields
       workPlace: _asTrimmedString(d["workPlace"]),

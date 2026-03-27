@@ -72,6 +72,7 @@ class ChatListScreen extends StatelessWidget {
                           final threads = snap.data!.docs
                               .map((d) => ThreadItem.fromDoc(d))
                               .where((t) => t.threadId.isNotEmpty)
+                              .where((t) => !t.hiddenFor.contains(myUid))
                               .toList();
 
                           if (threads.isEmpty) {
@@ -383,6 +384,7 @@ class ThreadItem {
     required this.lastMessageAt,
     required this.lastMessageFrom,
     required this.readAtByUid,
+    required this.hiddenFor,
   });
 
   final String threadId;
@@ -394,6 +396,7 @@ class ThreadItem {
   final String? lastMessageFrom;
 
   final Map<String, DateTime> readAtByUid;
+  final List<String> hiddenFor;
 
   static ThreadItem fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? const <String, dynamic>{};
@@ -418,6 +421,9 @@ class ThreadItem {
       lastMessageAt: ts(d["lastMessageAt"]),
       lastMessageFrom: d["lastMessageFrom"] as String?,
       readAtByUid: readAt,
+      hiddenFor: (d["hiddenFor"] is List)
+          ? (d["hiddenFor"] as List).whereType<String>().toList()
+          : <String>[],
     );
   }
 

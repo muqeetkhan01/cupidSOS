@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../../services/auth_service.dart';
+import '../../services/safety_service.dart';
 import '../../widgets/text_widget.dart';
 
 class MatchesScreen extends StatelessWidget {
@@ -29,108 +30,109 @@ class MatchesScreen extends StatelessWidget {
                   weight: FontWeight.w600,
                 ),
               )
-            : StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: _db
-                    .collection("users_cupid")
-                    .doc(myUid)
-                    .collection("matches")
-                    .orderBy("lastMessageAt", descending: true)
-                    .snapshots(),
-                builder: (context, snap) {
-                  if (snap.hasError) {
-                    return _errorState("Failed to load matches.");
-                  }
-                  if (!snap.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+            : FutureBuilder<Set<String>>(
+                future: SafetyService.instance.blockedUserIds(myUid),
+                builder: (context, blockedSnap) {
+                  final blockedIds = blockedSnap.data ?? <String>{};
+                  return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: _db
+                        .collection("users_cupid")
+                        .doc(myUid)
+                        .collection("matches")
+                        .orderBy("lastMessageAt", descending: true)
+                        .snapshots(),
+                    builder: (context, snap) {
+                      if (snap.hasError) {
+                        return _errorState("Failed to load matches.");
+                      }
+                      if (!snap.hasData ||
+                          blockedSnap.connectionState ==
+                              ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                  final docs = snap.data!.docs;
-                  final matches = docs
-                      .map((d) => MatchItem.fromDoc(d))
-                      .where((m) => m.uid.isNotEmpty)
-                      .toList();
+                      final docs = snap.data!.docs;
+                      final matches = docs
+                          .map((d) => MatchItem.fromDoc(d))
+                          .where((m) => m.uid.isNotEmpty)
+                          .where((m) => !blockedIds.contains(m.uid))
+                          .toList();
 
-                  return SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: 5.w),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SizedBox(height: 2.h),
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.symmetric(horizontal: 5.w),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(height: 2.h),
 
-                        /// HEADER
-                        const TextWidget(
-                          text: 'Matches',
-                          size: 22,
-                          weight: FontWeight.bold,
-                        ),
-                        const SizedBox(height: 6),
-                        const TextWidget(
-                          text: 'Your connections await 💕',
-                          size: 18,
-                          color: Colors.grey,
-                        ),
+                            /// HEADER
+                            const TextWidget(
+                              text: 'Matches',
+                              size: 22,
+                              weight: FontWeight.bold,
+                            ),
+                            const SizedBox(height: 6),
+                            const TextWidget(
+                              text: 'Your connections await 💕',
+                              size: 18,
+                              color: Colors.grey,
+                            ),
 
-                        SizedBox(height: 3.h),
+                            SizedBox(height: 3.h),
 
-                        /// ❤️ LIKED YOU (still static placeholder)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
+                            /// ❤️ LIKED YOU (still static placeholder)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: const [
+                                TextWidget(
+                                  text: '❤️ Liked You',
+                                  size: 16,
+                                  weight: FontWeight.w500,
+                                ),
+                              ],
+                            ),
+
+                            SizedBox(height: 1.5.h),
+
+                            SizedBox(
+                              height: 10.h,
+                              child: Row(
+                                children: [
+                                  _blurCard(),
+                                  _blurCard(),
+                                  _blurCard(),
+                                  _seeAllCard(),
+                                ],
+                              ),
+                            ),
+
+                            SizedBox(height: 3.h),
+
+                            /// ✅ MUTUAL MATCHES
                             TextWidget(
-                              text: '❤️ Liked You',
+                              text: 'Mutual Matches (${matches.length})',
                               size: 16,
                               weight: FontWeight.w500,
                             ),
-                            // TextWidget(
-                            //   text: 'Upgrade to see',
-                            //   size: 14,
-                            //   color: Color(0xFFFF6F7D),
-                            // ),
+
+                            SizedBox(height: 1.5.h),
+
+                            if (matches.isEmpty) _emptyMutualState(),
+
+                            for (final m in matches) ...[
+                              _dynamicMatchTile(
+                                myUid: myUid,
+                                match: m,
+                                onTap: () {},
+                              ),
+                              SizedBox(height: 1.5.h),
+                            ],
+
+                            SizedBox(height: 12.h),
                           ],
                         ),
-
-                        SizedBox(height: 1.5.h),
-
-                        SizedBox(
-                          height: 10.h,
-                          child: Row(
-                            children: [
-                              _blurCard(),
-                              _blurCard(),
-                              _blurCard(),
-                              _seeAllCard(),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: 3.h),
-
-                        /// ✅ MUTUAL MATCHES
-                        TextWidget(
-                          text: 'Mutual Matches (${matches.length})',
-                          size: 16,
-                          weight: FontWeight.w500,
-                        ),
-
-                        SizedBox(height: 1.5.h),
-
-                        if (matches.isEmpty) _emptyMutualState(),
-
-                        for (final m in matches) ...[
-                          _dynamicMatchTile(
-                            myUid: myUid,
-                            match: m,
-                            onTap: () {
-                              // TODO: open chat screen by m.threadId
-                              // Get.to(() => ChatScreen(threadId: m.threadId, peerUid: m.uid));
-                            },
-                          ),
-                          SizedBox(height: 1.5.h),
-                        ],
-
-                        SizedBox(height: 12.h),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),

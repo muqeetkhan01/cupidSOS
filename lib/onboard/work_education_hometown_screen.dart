@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/onboard/onboarding_options.dart';
 import 'package:cupid_app/onboard/preferences_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -26,37 +27,18 @@ class _WorkEducationHometownScreenState
   final hometownCtrl = TextEditingController();
 
   String? educationLevel;
-
-  final educationLevels = const [
-    "Ph.D. or higher",
-    "Master’s Degree",
-    "Bachelor’s Degree",
-    "Apprenticeship / Trade School",
-    "High School Diploma",
-    "Some High School",
-    "Prefer not to say",
-  ];
-
-  bool get isValid =>
-      workPlaceCtrl.text.trim().isNotEmpty &&
-      workRoleCtrl.text.trim().isNotEmpty &&
-      educationLevel != null &&
-      educationLevel!.trim().isNotEmpty &&
-      hometownCtrl.text.trim().isNotEmpty;
+  String? religion;
 
   @override
   void initState() {
     super.initState();
 
-    workPlaceCtrl.text = flow.workPlace.value ?? "";
-    workRoleCtrl.text = flow.workRole.value ?? "";
-    schoolCtrl.text = flow.educationSchool.value ?? "";
-    hometownCtrl.text = flow.hometown.value ?? "";
+    workPlaceCtrl.text = flow.workPlace.value ?? '';
+    workRoleCtrl.text = flow.workRole.value ?? '';
+    schoolCtrl.text = flow.educationSchool.value ?? '';
+    hometownCtrl.text = flow.hometown.value ?? '';
     educationLevel = flow.educationLevel.value;
-
-    for (final c in [workPlaceCtrl, workRoleCtrl, schoolCtrl, hometownCtrl]) {
-      c.addListener(() => setState(() {}));
-    }
+    religion = flow.religion.value;
 
     _controller = AnimationController(
       vsync: this,
@@ -115,7 +97,7 @@ class _WorkEducationHometownScreenState
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: 8 / 11,
+                    value: 14 / 19,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
                     valueColor: const AlwaysStoppedAnimation(Color(0xFFFF3B7A)),
@@ -124,7 +106,7 @@ class _WorkEducationHometownScreenState
               ),
               SizedBox(height: 0.8.h),
               const TextWidget(
-                text: '9 of 11',
+                text: '14 of 19',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -172,13 +154,16 @@ class _WorkEducationHometownScreenState
     );
   }
 
-  Widget _levelChip(String text) {
-    final selected = educationLevel == text;
+  Widget _chip({
+    required String text,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: () => setState(() => educationLevel = text),
+      onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
+        padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.4.h),
         decoration: BoxDecoration(
           color: selected ? const Color(0xFFFFECEF) : Colors.white,
           borderRadius: BorderRadius.circular(999),
@@ -197,17 +182,21 @@ class _WorkEducationHometownScreenState
   }
 
   Future<void> _continue() async {
-    if (!isValid) return;
-
-    flow.workPlace.value = workPlaceCtrl.text.trim();
-    flow.workRole.value = workRoleCtrl.text.trim();
+    flow.workPlace.value =
+        workPlaceCtrl.text.trim().isEmpty ? null : workPlaceCtrl.text.trim();
+    flow.workRole.value =
+        workRoleCtrl.text.trim().isEmpty ? null : workRoleCtrl.text.trim();
     flow.educationSchool.value =
         schoolCtrl.text.trim().isEmpty ? null : schoolCtrl.text.trim();
-    flow.educationLevel.value = educationLevel;
-    flow.hometown.value = hometownCtrl.text.trim();
+    flow.educationLevel.value =
+        (educationLevel ?? '').trim().isEmpty ? null : educationLevel;
+    flow.hometown.value =
+        hometownCtrl.text.trim().isEmpty ? null : hometownCtrl.text.trim();
+    flow.religion.value =
+        (religion ?? '').trim().isEmpty ? null : religion?.trim();
+    flow.workEducationStepDone.value = true;
 
     await flow.saveOnboardingProgress();
-
     if (!mounted) return;
     Navigator.push(
       context,
@@ -230,29 +219,29 @@ class _WorkEducationHometownScreenState
               SizedBox(height: 3.h),
               _animated(
                 TextWidget(
-                  text: 'Work & Career 💼',
+                  text: 'Work, education, hometown, and religion',
                   size: 18.sp,
                   weight: FontWeight.w600,
                 ),
                 0.15,
-                0.25,
+                0.3,
               ),
               SizedBox(height: 0.7.h),
               _animated(
                 const TextWidget(
                   text:
-                      "Your work is part of your story. Sharing it helps create more meaningful connections.",
+                      'Everything here is optional. Add what feels useful, or skip straight through.',
                   size: 15,
                   color: Colors.grey,
                 ),
                 0.2,
-                0.3,
+                0.35,
               ),
               SizedBox(height: 2.h),
               _animated(
                 _field(
-                  label: "Where do you work?",
-                  hint: "Company / Workplace",
+                  label: 'Where do you work?',
+                  hint: 'Company / workplace',
                   controller: workPlaceCtrl,
                 ),
                 0.25,
@@ -261,8 +250,8 @@ class _WorkEducationHometownScreenState
               SizedBox(height: 1.6.h),
               _animated(
                 _field(
-                  label: "What’s your role?",
-                  hint: "Your role / title",
+                  label: 'What’s your role?',
+                  hint: 'Your role / title',
                   controller: workRoleCtrl,
                 ),
                 0.3,
@@ -271,7 +260,7 @@ class _WorkEducationHometownScreenState
               SizedBox(height: 3.2.h),
               _animated(
                 TextWidget(
-                  text: 'Education 🎓',
+                  text: 'Education',
                   size: 18.sp,
                   weight: FontWeight.w600,
                 ),
@@ -280,89 +269,91 @@ class _WorkEducationHometownScreenState
               ),
               SizedBox(height: 0.7.h),
               _animated(
-                const TextWidget(
-                  text:
-                      "Degrees don’t define you, but they can be a great conversation starter.",
-                  size: 15,
-                  color: Colors.grey,
-                ),
-                0.4,
-                0.55,
-              ),
-              SizedBox(height: 2.h),
-              _animated(
                 _field(
-                  label: "School (optional)",
-                  hint: "UCLA, Stanford, Trade School...",
+                  label: 'School',
+                  hint: 'UCLA, Stanford, Trade School...',
                   controller: schoolCtrl,
                 ),
                 0.45,
                 0.65,
-              ),
-              SizedBox(height: 1.6.h),
-              _animated(
-                const TextWidget(
-                  text: "EDUCATION LEVEL — SELECT ONE",
-                  size: 12,
-                  weight: FontWeight.w600,
-                  color: Colors.grey,
-                ),
-                0.48,
-                0.7,
               ),
               SizedBox(height: 1.2.h),
               _animated(
                 Wrap(
                   spacing: 3.w,
                   runSpacing: 1.2.h,
-                  children: educationLevels.map(_levelChip).toList(),
+                  children: kEducationLevels
+                      .map(
+                        (item) => _chip(
+                          text: item,
+                          selected: educationLevel == item,
+                          onTap: () => setState(() => educationLevel = item),
+                        ),
+                      )
+                      .toList(),
                 ),
-                0.52,
-                0.78,
+                0.5,
+                0.72,
+              ),
+              SizedBox(height: 3.2.h),
+              _animated(
+                _field(
+                  label: 'Hometown',
+                  hint: 'Phnom Penh, Bangkok, Los Angeles...',
+                  controller: hometownCtrl,
+                ),
+                0.55,
+                0.76,
               ),
               SizedBox(height: 3.2.h),
               _animated(
                 TextWidget(
-                  text: 'Hometown 🌍',
+                  text: 'Religion',
                   size: 18.sp,
                   weight: FontWeight.w600,
                 ),
                 0.6,
-                0.8,
+                0.78,
               ),
-              SizedBox(height: 0.7.h),
+              SizedBox(height: 1.2.h),
               _animated(
-                const TextWidget(
-                  text:
-                      "It’s a small detail that can lead to more meaningful connections.",
-                  size: 15,
-                  color: Colors.grey,
+                Wrap(
+                  spacing: 3.w,
+                  runSpacing: 1.2.h,
+                  children: kReligionOptions
+                      .map(
+                        (item) => _chip(
+                          text: item,
+                          selected: religion == item,
+                          onTap: () => setState(() => religion = item),
+                        ),
+                      )
+                      .toList(),
                 ),
                 0.65,
-                0.85,
-              ),
-              SizedBox(height: 2.h),
-              _animated(
-                _field(
-                  label: "Type your hometown",
-                  hint: "Phnom Penh, Bangkok, Los Angeles...",
-                  controller: hometownCtrl,
-                ),
-                0.7,
-                0.9,
+                0.88,
               ),
               SizedBox(height: 3.h),
               _animated(
-                ButtonWidget(
-                  text: 'Next',
-                  height: 7,
-                  radius: 36,
-                  variant:
-                      isValid ? ButtonVariant.gradient : ButtonVariant.solid,
-                  gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                  backgroundColor: Colors.grey.shade300,
-                  enableShadow: isValid,
-                  onTap: isValid ? _continue : () {},
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _continue,
+                      child: const Text('Skip'),
+                    ),
+                    const Spacer(),
+                    Expanded(
+                      child: ButtonWidget(
+                        text: 'Continue',
+                        height: 7,
+                        radius: 36,
+                        variant: ButtonVariant.gradient,
+                        gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                        enableShadow: true,
+                        onTap: _continue,
+                      ),
+                    ),
+                  ],
                 ),
                 0.75,
                 1,

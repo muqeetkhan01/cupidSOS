@@ -1,5 +1,7 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/basics_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -13,6 +15,7 @@ class VibeCheckScreen extends StatefulWidget {
 
 class _VibeCheckScreenState extends State<VibeCheckScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
   late final AnimationController _pageController;
 
   final List<String> vibes = [
@@ -73,6 +76,8 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _pageController.forward();
     });
+
+    selected.addAll(flow.interests.take(5));
   }
 
   @override
@@ -193,7 +198,7 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                     ),
                   ),
                   const TextWidget(
-                    text: 'Step 3 of 10',
+                    text: '5 of 19',
                     size: 14,
                     color: Colors.grey,
                   ),
@@ -297,7 +302,10 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                       isValid ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
                   enableShadow: isValid,
                   onTap: isValid
-                      ? () {
+                      ? () async {
+                          flow.interests.assignAll(selected);
+                          await flow.saveOnboardingProgress();
+                          if (!context.mounted) return;
                           Navigator.push(
                             context,
                             MaterialPageRoute(

@@ -1,14 +1,14 @@
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/religion_question_screen.dart';
+import 'package:cupid_app/onboard/height.dart';
+import 'package:cupid_app/onboard/onboarding_options.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
-import '../../widgets/text_widget.dart';
-import '../../widgets/button_widget.dart';
-import 'ethnicity_question_screen.dart';
 
-enum Gender { woman, man, other }
+import '../../widgets/button_widget.dart';
+import '../../widgets/text_widget.dart';
+
+enum Gender { male, female, nonBinary }
 
 class BasicsScreen extends StatefulWidget {
   const BasicsScreen({super.key});
@@ -19,6 +19,7 @@ class BasicsScreen extends StatefulWidget {
 
 class _BasicsScreenState extends State<BasicsScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
   late final AnimationController _controller;
 
   final TextEditingController nameCtrl = TextEditingController();
@@ -33,6 +34,19 @@ class _BasicsScreenState extends State<BasicsScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
+
+    nameCtrl.text = (flow.displayName.value ?? '').trim();
+    switch ((flow.gender.value ?? '').trim()) {
+      case 'Male':
+        gender = Gender.male;
+        break;
+      case 'Female':
+        gender = Gender.female;
+        break;
+      case 'Non-Binary':
+        gender = Gender.nonBinary;
+        break;
+    }
 
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _controller.forward();
@@ -86,7 +100,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: 3 / 22,
+                    value: 6 / 19,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
                     valueColor: const AlwaysStoppedAnimation(
@@ -97,7 +111,7 @@ class _BasicsScreenState extends State<BasicsScreen>
               ),
               SizedBox(height: 0.8.h),
               const TextWidget(
-                text: '5 of 10',
+                text: '6 of 19',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -108,29 +122,26 @@ class _BasicsScreenState extends State<BasicsScreen>
     );
   }
 
-  Widget _genderChip(Gender g, String label) {
-    final selected = gender == g;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => gender = g),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          height: 6.5.h,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            color: selected ? const Color(0xFFFFECEF) : Colors.white,
-            border: Border.all(
-              color: selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
-              width: selected ? 1.5 : 1,
-            ),
+  Widget _genderChip(Gender value, String label) {
+    final selected = gender == value;
+    return GestureDetector(
+      onTap: () => setState(() => gender = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        height: 6.5.h,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          color: selected ? const Color(0xFFFFECEF) : Colors.white,
+          border: Border.all(
+            color: selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+            width: selected ? 1.5 : 1,
           ),
-          child: TextWidget(
-            text: label,
-            weight: FontWeight.w600,
-            color: selected ? const Color(0xFFFF6F7D) : const Color(0xFF1E1E1E),
-          ),
+        ),
+        child: TextWidget(
+          text: label,
+          weight: FontWeight.w600,
+          color: selected ? const Color(0xFFFF6F7D) : const Color(0xFF1E1E1E),
         ),
       ),
     );
@@ -157,13 +168,29 @@ class _BasicsScreenState extends State<BasicsScreen>
     );
   }
 
-  DateTime? selectedDob;
+  String _genderLabel() {
+    switch (gender) {
+      case Gender.male:
+        return kGenderOptions[0];
+      case Gender.female:
+        return kGenderOptions[1];
+      case Gender.nonBinary:
+        return kGenderOptions[2];
+      case null:
+        return '';
+    }
+  }
 
-  String get dobText {
-    if (selectedDob == null) return 'Select your birthday';
-    return "${selectedDob!.day.toString().padLeft(2, '0')} / "
-        "${selectedDob!.month.toString().padLeft(2, '0')} / "
-        "${selectedDob!.year}";
+  Future<void> _continue() async {
+    if (!isValid) return;
+    flow.displayName.value = nameCtrl.text.trim();
+    flow.gender.value = _genderLabel();
+    await flow.saveOnboardingProgress();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HeightQuestionScreen()),
+    );
   }
 
   @override
@@ -191,7 +218,7 @@ class _BasicsScreenState extends State<BasicsScreen>
               SizedBox(height: 0.6.h),
               _animated(
                 const TextWidget(
-                  text: 'Just a few details to get started.',
+                  text: 'Name and gender help us set up your profile properly.',
                   size: 15,
                   color: Colors.grey,
                 ),
@@ -212,19 +239,15 @@ class _BasicsScreenState extends State<BasicsScreen>
                     SizedBox(height: 1.h),
                     _inputField(hint: 'What do friends call you?'),
                     SizedBox(height: .4.h),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 2.w,
-                        ),
-                        TextWidget(
-                          text:
-                              'This is the name others will see o n your profile.',
-                          size: 12,
-                          weight: FontWeight.w400,
-                          color: Colors.black,
-                        ),
-                      ],
+                    Padding(
+                      padding: EdgeInsets.only(left: 2.w),
+                      child: const TextWidget(
+                        text:
+                            'This is the name others will see on your profile.',
+                        size: 12,
+                        weight: FontWeight.w400,
+                        color: Colors.black,
+                      ),
                     ),
                   ],
                 ),
@@ -232,24 +255,6 @@ class _BasicsScreenState extends State<BasicsScreen>
                 0.5,
               ),
               SizedBox(height: 3.h),
-              // _animated(
-              //   Column(
-              //     crossAxisAlignment: CrossAxisAlignment.start,
-              //     children: [
-              //       const TextWidget(
-              //         text: 'BIRTHDAY',
-              //         size: 12,
-              //         weight: FontWeight.w600,
-              //         color: Colors.grey,
-              //       ),
-              //       SizedBox(height: 1.h),
-              //       _birthdayField(context),
-              //     ],
-              //   ),
-              //   0.45,
-              //   0.65,
-              // ),
-              // SizedBox(height: 3.h),
               _animated(
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,12 +268,15 @@ class _BasicsScreenState extends State<BasicsScreen>
                     SizedBox(height: 1.5.h),
                     Row(
                       children: [
-                        _genderChip(Gender.woman, 'Woman'),
+                        Expanded(child: _genderChip(Gender.female, 'Female')),
                         SizedBox(width: 3.w),
-                        _genderChip(Gender.man, 'Man'),
-                        // SizedBox(width: 3.w),
-                        // _genderChip(Gender.other, 'Other'),
+                        Expanded(child: _genderChip(Gender.male, 'Male')),
                       ],
+                    ),
+                    SizedBox(height: 1.2.h),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _genderChip(Gender.nonBinary, 'Non-Binary'),
                     ),
                   ],
                 ),
@@ -289,20 +297,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                   ],
                   backgroundColor: Colors.grey.shade300,
                   enableShadow: isValid,
-                  onTap: isValid
-                      ? () async {
-                          final flow = Get.find<AppFlowController>();
-                          flow.displayName.value = nameCtrl.text.trim();
-                          flow.gender.value = gender?.name; // woman/man/other
-                          await flow.saveOnboardingProgress();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ReligionQuestionScreen(),
-                            ),
-                          );
-                        }
-                      : () {},
+                  onTap: isValid ? _continue : () {},
                 ),
                 0.85,
                 1,

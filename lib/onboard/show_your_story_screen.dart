@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/match_loading_screen.dart';
 import 'package:cupid_app/onboard/photo_verification_screen.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -238,7 +237,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 10 of 10',
+                      text: '18 of 19',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -378,7 +377,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                     Expanded(
                       child: TextWidget(
                         text:
-                            'Real hearts only 💕\nFor trust and safety please take a moment to verify your profile.',
+                            'Let’s make it official! ✌️\nTo keep our community safe and real, please take a quick selfie mimicking the pose above.',
                         size: 15,
                       ),
                     ),

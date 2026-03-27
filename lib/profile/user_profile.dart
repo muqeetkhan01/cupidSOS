@@ -1,7 +1,10 @@
 // lib/screens/user/user_profile_screen.dart
 import 'dart:ui';
 import 'package:cupid_app/Discover/discover_screen.dart';
+import 'package:cupid_app/services/auth_service.dart';
+import 'package:cupid_app/profile/safety_center_screen.dart';
 import 'package:cupid_app/widgets/voice.dart';
+import 'package:cupid_app/widgets/safety_menu_button.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
@@ -84,6 +87,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Widget build(BuildContext context) {
     final u = widget.user;
     final hero = u.heroImageUrl;
+    final myUid = AuthService.to.currentUser?.uid;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
@@ -101,10 +105,20 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   onPressed: () => Navigator.pop(context),
                 ),
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.more_horiz_rounded),
-                    onPressed: () {},
-                  ),
+                  if (myUid != null)
+                    SafetyMenuButton(
+                      currentUid: myUid,
+                      targetUid: u.uid,
+                      showUnmatch: false,
+                      onOpenSafetyCenter: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SafetyCenterScreen(),
+                          ),
+                        );
+                      },
+                    ),
                 ],
                 expandedHeight: 52.h,
                 flexibleSpace: FlexibleSpaceBar(

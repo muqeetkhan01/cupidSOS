@@ -1,21 +1,14 @@
-import 'package:cupid_app/config/flow.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
-import '../../widgets/text_widget.dart';
-import '../../widgets/button_widget.dart';
-import 'quirk_prompt_screen.dart';
-
 import 'dart:math';
 
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/onboard/onboarding_options.dart';
+import 'package:cupid_app/onboard/quirk_prompt_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
-import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
-import 'quirk_prompt_screen.dart';
+import '../../widgets/text_widget.dart';
 
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
@@ -29,86 +22,61 @@ class _PreferencesScreenState extends State<PreferencesScreen>
   final flow = Get.find<AppFlowController>();
   late final AnimationController _controller;
 
-  bool heightAny = false;
-  bool distanceAny = false;
+  bool datingGoalAny = false;
+  String? preferredDatingGoal;
 
-  /// Always store height range in cm locally.
+  bool genderAny = false;
+  final Set<String> preferredGenders = <String>{};
+
+  bool ageAny = false;
+  RangeValues ageRange = const RangeValues(18, 45);
+
+  bool heightAny = false;
   RangeValues heightRangeCm = const RangeValues(160, 190);
 
-  /// Store distance in miles locally.
+  bool distanceAny = false;
   RangeValues distanceRange = const RangeValues(0, 200);
 
-  final Set<String> ethnicities = {};
-  final Set<String> languages = {};
+  bool ethnicityAny = false;
+  final Set<String> ethnicities = <String>{};
 
-  final ethnicityOptions = const [
-    "East Asian",
-    "Southeast Asian",
-    "South Asian",
-    "White/Caucasian",
-    "Black/African Descent",
-    "Hispanic/Latino",
-    "Middle Eastern",
-    "Pacific Islander",
-    "American Indian",
-    "Other",
-  ];
-
-  final languageOptions = const [
-    "English",
-    "Mandarin Chinese",
-    "Yue Chinese",
-    "Wu Chinese",
-    "Korean",
-    "Japanese",
-    "Khmer",
-    "Vietnamese",
-    "Thai",
-    "Filipino  (Tagalog)",
-    "Indonesian",
-    "Malay",
-    "Algerian Arabic",
-    "Amharic",
-    "Arabic",
-    "Bengali",
-    "Bhojpuri",
-    "Burmese",
-    "Farsi (Persian)",
-    "French",
-    "German",
-    "Gujarati",
-    "Hausa",
-    "Hindi",
-    "Hmong",
-    "Italian",
-    "Javanese",
-    "Kannada",
-    "Maithili",
-    "Odia",
-  ];
+  bool languageAny = false;
+  final Set<String> languages = <String>{};
 
   @override
   void initState() {
     super.initState();
 
-    heightAny = flow.prefHeightAny.value;
-    distanceAny = flow.prefDistanceAny.value;
+    datingGoalAny = flow.prefDatingGoalAny.value;
+    preferredDatingGoal = flow.prefDatingGoal.value;
 
-    // Restore (clamp to safe bounds)
+    genderAny = flow.prefGenderAny.value;
+    preferredGenders.addAll(flow.preferredGenders);
+
+    ageAny = flow.prefAgeAny.value;
+    ageRange = RangeValues(flow.prefAgeMin.value, flow.prefAgeMax.value);
+
+    heightAny = flow.prefHeightAny.value;
     heightRangeCm = _clampRange(
       RangeValues(
-          flow.prefHeightMinCm.value ?? 0.0, flow.prefHeightMaxCm.value ?? 0.0),
+        flow.prefHeightMinCm.value ?? 160,
+        flow.prefHeightMaxCm.value ?? 190,
+      ),
       min: 140,
       max: 220,
     );
 
+    distanceAny = flow.prefDistanceAny.value;
     distanceRange = _clampRange(
       RangeValues(flow.prefDistanceMinMi.value, flow.prefDistanceMaxMi.value),
       min: 0,
       max: 200,
     );
 
+    ethnicityAny = flow.prefEthnicityAny.value;
     ethnicities.addAll(flow.preferredEthnicities);
+
+    languageAny = flow.prefLanguageAny.value;
     languages.addAll(flow.preferredLanguages);
 
     _controller = AnimationController(
@@ -127,26 +95,14 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     super.dispose();
   }
 
-  RangeValues _clampRange(RangeValues v,
-      {required double min, required double max}) {
-    final a = v.start.clamp(min, max).toDouble();
-    final b = v.end.clamp(min, max).toDouble();
-    return a <= b ? RangeValues(a, b) : RangeValues(b, a);
-  }
-
-  double _cmToFtDecimal(double cm) => cm / 30.48; // 1ft=30.48cm
-
-  double _ftDecimalToCm(double ft) => ft * 30.48;
-
-  String _formatHeight(double cm) {
-    final unit = flow.heightUnit.value; // "cm" or "ft"
-    if (unit == "cm") {
-      return "${cm.round()} cm";
-    }
-    final totalInches = (cm / 2.54).round();
-    final feet = totalInches ~/ 12;
-    final inches = totalInches % 12;
-    return "$feet'$inches\"";
+  RangeValues _clampRange(
+    RangeValues values, {
+    required double min,
+    required double max,
+  }) {
+    final start = values.start.clamp(min, max).toDouble();
+    final end = values.end.clamp(min, max).toDouble();
+    return start <= end ? RangeValues(start, end) : RangeValues(end, start);
   }
 
   Widget _animated(Widget child, double from, double to) {
@@ -154,7 +110,6 @@ class _PreferencesScreenState extends State<PreferencesScreen>
       parent: _controller,
       curve: Interval(from, to, curve: Curves.easeOutCubic),
     );
-
     return AnimatedBuilder(
       animation: anim,
       builder: (_, __) => Opacity(
@@ -188,7 +143,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(
-                    value: 0.75,
+                    value: 15 / 19,
                     minHeight: 6,
                     backgroundColor: const Color(0xFFFFD6DE),
                     valueColor: const AlwaysStoppedAnimation(Color(0xFFFF3B7A)),
@@ -197,7 +152,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
               ),
               SizedBox(height: 0.8.h),
               const TextWidget(
-                text: '7 of 10',
+                text: '15 of 19',
                 size: 12,
                 color: Colors.grey,
               ),
@@ -217,7 +172,8 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextWidget(text: title, size: 17, weight: FontWeight.w600),
+        Expanded(
+            child: TextWidget(text: title, size: 17, weight: FontWeight.w600)),
         if (showToggle)
           GestureDetector(
             onTap: onToggle,
@@ -242,7 +198,6 @@ class _PreferencesScreenState extends State<PreferencesScreen>
 
   Widget _chip(String text, Set<String> selectedSet) {
     final selected = selectedSet.contains(text);
-
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -260,16 +215,8 @@ class _PreferencesScreenState extends State<PreferencesScreen>
               : null,
           color: selected ? null : Colors.white,
           border: Border.all(
-              color: selected ? Colors.transparent : Colors.grey.shade300),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFD86BCF).withOpacity(0.25),
-                    blurRadius: 14,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : [],
+            color: selected ? Colors.transparent : Colors.grey.shade300,
+          ),
         ),
         child: TextWidget(
           text: text,
@@ -281,8 +228,54 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     );
   }
 
+  Widget _singleSelectCard(String label, String? selectedValue) {
+    final selected = selectedValue == label;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => preferredDatingGoal = label),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.8.h),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFFFECEF) : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: TextWidget(
+            text: label,
+            textAlign: TextAlign.center,
+            weight: FontWeight.w600,
+            color: selected ? const Color(0xFFFF6F7D) : Colors.black87,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatHeight(double cm) {
+    final unit = flow.heightUnit.value;
+    if (unit == 'cm') return '${cm.round()} cm';
+    final totalInches = (cm / 2.54).round();
+    final feet = totalInches ~/ 12;
+    final inches = totalInches % 12;
+    return "$feet'$inches\"";
+  }
+
   Future<void> _continue() async {
-    // Save preferences in canonical units.
+    flow.prefDatingGoalAny.value = datingGoalAny;
+    flow.prefDatingGoal.value = datingGoalAny ? null : preferredDatingGoal;
+
+    flow.prefGenderAny.value = genderAny;
+    flow.preferredGenders
+        .assignAll(genderAny ? <String>[] : preferredGenders.toList());
+
+    flow.prefAgeAny.value = ageAny;
+    flow.prefAgeMin.value = ageRange.start;
+    flow.prefAgeMax.value = ageRange.end;
+
     flow.prefHeightAny.value = heightAny;
     flow.prefHeightMinCm.value = heightRangeCm.start;
     flow.prefHeightMaxCm.value = heightRangeCm.end;
@@ -291,12 +284,20 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     flow.prefDistanceMinMi.value = distanceRange.start;
     flow.prefDistanceMaxMi.value = distanceRange.end;
 
-    flow.preferredEthnicities.assignAll(ethnicities.toList());
-    flow.preferredLanguages.assignAll(languages.toList());
+    flow.prefEthnicityAny.value = ethnicityAny;
+    flow.preferredEthnicities
+        .assignAll(ethnicityAny ? <String>[] : ethnicities.toList());
+
+    flow.prefLanguageAny.value = languageAny;
+    flow.preferredLanguages
+        .assignAll(languageAny ? <String>[] : languages.toList());
 
     flow.preferences.assignAll([
-      ...ethnicities.map((e) => "ethnicity:$e"),
-      ...languages.map((l) => "language:$l"),
+      ...flow.preferredGenders.map((value) => 'gender:$value'),
+      ...flow.preferredEthnicities.map((value) => 'ethnicity:$value'),
+      ...flow.preferredLanguages.map((value) => 'language:$value'),
+      if ((flow.prefDatingGoal.value ?? '').trim().isNotEmpty)
+        'datingGoal:${flow.prefDatingGoal.value}',
     ]);
 
     await flow.saveOnboardingProgress();
@@ -304,47 +305,28 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     if (!mounted) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const CulturalVibeScreen()),
+      MaterialPageRoute(builder: (_) => const QuirkPromptScreen()),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final unit = flow.heightUnit.value; // "cm" or "ft"
+    final safeHeight = _clampRange(heightRangeCm, min: 140, max: 220);
+    final safeDistance = _clampRange(distanceRange, min: 0, max: 200);
+    final safeAge = _clampRange(ageRange, min: 18, max: 80);
 
-    // Slider bounds
-    const minCm = 140.0;
-    const maxCm = 220.0;
-
-    // Distance bounds
-    const minMi = 0.0;
-    const maxMi = 200.0;
-
-    // Keep values safe (prevents RangeSlider assertion)
-    final safeHeightCm = _clampRange(heightRangeCm, min: minCm, max: maxCm);
-    final safeDistance = _clampRange(distanceRange, min: minMi, max: maxMi);
-
-    if (safeHeightCm != heightRangeCm || safeDistance != distanceRange) {
+    if (safeHeight != heightRangeCm ||
+        safeDistance != distanceRange ||
+        safeAge != ageRange) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
-          heightRangeCm = safeHeightCm;
+          heightRangeCm = safeHeight;
           distanceRange = safeDistance;
+          ageRange = safeAge;
         });
       });
     }
-
-    // For display slider in ft: show ft-decimal but persist cm.
-    final heightSliderMin = unit == "ft" ? _cmToFtDecimal(minCm) : minCm;
-    final heightSliderMax = unit == "ft" ? _cmToFtDecimal(maxCm) : maxCm;
-
-    RangeValues heightSliderValues = unit == "ft"
-        ? RangeValues(_cmToFtDecimal(safeHeightCm.start),
-            _cmToFtDecimal(safeHeightCm.end))
-        : safeHeightCm;
-
-    heightSliderValues = _clampRange(heightSliderValues,
-        min: heightSliderMin, max: heightSliderMax);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDF7F5),
@@ -362,7 +344,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     SizedBox(height: 3.h),
                     _animated(
                       const TextWidget(
-                        text: 'Preferences',
+                        text: 'Who are you looking to meet?',
                         size: 22,
                         weight: FontWeight.bold,
                       ),
@@ -373,7 +355,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     _animated(
                       const TextWidget(
                         text:
-                            'Set your search criteria to find the perfect connection.',
+                            'Set your dating preferences now. You can always fine-tune them later.',
                         color: Colors.grey,
                       ),
                       0.2,
@@ -381,7 +363,83 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                     ),
                     SizedBox(height: 4.h),
                     _sectionHeader(
-                      'Preferred Height *',
+                      'Dating goal',
+                      showToggle: true,
+                      toggle: datingGoalAny,
+                      onToggle: () =>
+                          setState(() => datingGoalAny = !datingGoalAny),
+                    ),
+                    if (!datingGoalAny) ...[
+                      SizedBox(height: 2.h),
+                      Row(
+                        children: [
+                          _singleSelectCard(
+                              kDatingGoalOptions[0], preferredDatingGoal),
+                          SizedBox(width: 3.w),
+                          _singleSelectCard(
+                              kDatingGoalOptions[1], preferredDatingGoal),
+                          SizedBox(width: 3.w),
+                          _singleSelectCard(
+                              kDatingGoalOptions[2], preferredDatingGoal),
+                        ],
+                      ),
+                    ],
+                    SizedBox(height: 3.h),
+                    _sectionHeader(
+                      'Preferred gender',
+                      showToggle: true,
+                      toggle: genderAny,
+                      onToggle: () => setState(() => genderAny = !genderAny),
+                    ),
+                    if (!genderAny) ...[
+                      SizedBox(height: 2.h),
+                      Wrap(
+                        spacing: 3.w,
+                        runSpacing: 2.h,
+                        children: kGenderOptions
+                            .map((option) => _chip(option, preferredGenders))
+                            .toList(),
+                      ),
+                    ],
+                    SizedBox(height: 3.h),
+                    _sectionHeader(
+                      'Preferred age',
+                      showToggle: true,
+                      toggle: ageAny,
+                      onToggle: () => setState(() => ageAny = !ageAny),
+                    ),
+                    if (!ageAny) ...[
+                      SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: const Color(0xFFFF6F7D),
+                          inactiveTrackColor:
+                              const Color(0xFFFF6F7D).withOpacity(0.25),
+                          thumbColor: const Color(0xFFFF6F7D),
+                          overlayColor:
+                              const Color(0xFFFF6F7D).withOpacity(0.12),
+                        ),
+                        child: RangeSlider(
+                          min: 18,
+                          max: 80,
+                          divisions: 62,
+                          values: safeAge,
+                          onChanged: (values) =>
+                              setState(() => ageRange = values),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          TextWidget(text: '${safeAge.start.round()}'),
+                          const Spacer(),
+                          const TextWidget(text: '–'),
+                          const Spacer(),
+                          TextWidget(text: '${safeAge.end.round()}'),
+                        ],
+                      ),
+                    ],
+                    SizedBox(height: 3.h),
+                    _sectionHeader(
+                      'Preferred height',
                       showToggle: true,
                       toggle: heightAny,
                       onToggle: () => setState(() => heightAny = !heightAny),
@@ -397,37 +455,27 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                               const Color(0xFFFF6F7D).withOpacity(0.12),
                         ),
                         child: RangeSlider(
-                          min: heightSliderMin,
-                          max: heightSliderMax,
+                          min: 140,
+                          max: 220,
                           divisions: 16,
-                          values: heightSliderValues,
-                          onChanged: (values) {
-                            setState(() {
-                              // Convert back to cm for storage in state.
-                              final newCm = unit == "ft"
-                                  ? RangeValues(_ftDecimalToCm(values.start),
-                                      _ftDecimalToCm(values.end))
-                                  : values;
-
-                              heightRangeCm =
-                                  _clampRange(newCm, min: minCm, max: maxCm);
-                            });
-                          },
+                          values: safeHeight,
+                          onChanged: (values) =>
+                              setState(() => heightRangeCm = values),
                         ),
                       ),
                       Row(
                         children: [
-                          TextWidget(text: _formatHeight(heightRangeCm.start)),
+                          TextWidget(text: _formatHeight(safeHeight.start)),
                           const Spacer(),
-                          const TextWidget(text: "  –  "),
+                          const TextWidget(text: '–'),
                           const Spacer(),
-                          TextWidget(text: _formatHeight(heightRangeCm.end)),
+                          TextWidget(text: _formatHeight(safeHeight.end)),
                         ],
                       ),
                     ],
                     SizedBox(height: 3.h),
                     _sectionHeader(
-                      'Preferred Distance *',
+                      'Preferred distance',
                       showToggle: true,
                       toggle: distanceAny,
                       onToggle: () =>
@@ -444,58 +492,68 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                               const Color(0xFFFF6F7D).withOpacity(0.12),
                         ),
                         child: RangeSlider(
-                          min: minMi,
-                          max: maxMi,
+                          min: 0,
+                          max: 200,
                           divisions: 20,
                           values: safeDistance,
-                          onChanged: (values) {
-                            setState(() {
-                              distanceRange =
-                                  _clampRange(values, min: minMi, max: maxMi);
-                            });
-                          },
+                          onChanged: (values) =>
+                              setState(() => distanceRange = values),
                         ),
                       ),
                       Row(
                         children: [
                           TextWidget(
-                              text:
-                                  "${max(0, distanceRange.start.round())} mi"),
+                              text: '${max(0, safeDistance.start.round())} mi'),
                           const Spacer(),
-                          const TextWidget(text: "  –  "),
+                          const TextWidget(text: '–'),
                           const Spacer(),
                           TextWidget(
-                              text:
-                                  "${min(200, distanceRange.end.round())} mi"),
+                              text: '${min(200, safeDistance.end.round())} mi'),
                         ],
                       ),
                     ],
                     SizedBox(height: 3.h),
-                    _sectionHeader('Preferred Ethnicity *'),
-                    SizedBox(height: 2.h),
-                    Wrap(
-                      spacing: 3.w,
-                      runSpacing: 2.h,
-                      children: ethnicityOptions
-                          .map((e) => _chip(e, ethnicities))
-                          .toList(),
+                    _sectionHeader(
+                      'Preferred ethnicity',
+                      showToggle: true,
+                      toggle: ethnicityAny,
+                      onToggle: () =>
+                          setState(() => ethnicityAny = !ethnicityAny),
                     ),
+                    if (!ethnicityAny) ...[
+                      SizedBox(height: 2.h),
+                      Wrap(
+                        spacing: 3.w,
+                        runSpacing: 2.h,
+                        children: kPreferenceEthnicityOptions
+                            .map((option) => _chip(option, ethnicities))
+                            .toList(),
+                      ),
+                    ],
                     SizedBox(height: 4.h),
-                    _sectionHeader('Preferred Languages *'),
-                    const TextWidget(
-                      text:
-                          "Select the languages you’re comfortable using to chat, flirt, and connect.",
-                      size: 14,
-                      color: Colors.grey,
+                    _sectionHeader(
+                      'Preferred languages',
+                      showToggle: true,
+                      toggle: languageAny,
+                      onToggle: () =>
+                          setState(() => languageAny = !languageAny),
                     ),
-                    SizedBox(height: 2.h),
-                    Wrap(
-                      spacing: 3.w,
-                      runSpacing: 2.h,
-                      children: languageOptions
-                          .map((l) => _chip(l, languages))
-                          .toList(),
-                    ),
+                    if (!languageAny) ...[
+                      const TextWidget(
+                        text:
+                            "Select the languages you’re comfortable using to chat, flirt, and connect.",
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                      SizedBox(height: 2.h),
+                      Wrap(
+                        spacing: 3.w,
+                        runSpacing: 2.h,
+                        children: kSpokenLanguageOptions
+                            .map((option) => _chip(option, languages))
+                            .toList(),
+                      ),
+                    ],
                     SizedBox(height: 6.h),
                   ],
                 ),
@@ -504,7 +562,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.5.h),
               child: ButtonWidget(
-                text: 'Continue ✨',
+                text: 'Continue',
                 height: 7,
                 radius: 36,
                 variant: ButtonVariant.gradient,

@@ -1,4 +1,6 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -16,6 +18,7 @@ class BigThreeScreen extends StatefulWidget {
 
 class _BigThreeScreenState extends State<BigThreeScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
   late final AnimationController _pageController;
   late final AnimationController _ctaController;
 
@@ -44,6 +47,14 @@ class _BigThreeScreenState extends State<BigThreeScreen>
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _pageController.forward();
     });
+
+    family = _fromSaved(flow.familyApprovalImportant.value);
+    marriage = _fromSaved(flow.marriageTimelineImportant.value);
+    culture = _fromSaved(flow.culturalAlignmentImportant.value);
+    if (isValid) {
+      _ctaAnimated = true;
+      _ctaController.value = 1;
+    }
   }
 
   @override
@@ -53,7 +64,11 @@ class _BigThreeScreenState extends State<BigThreeScreen>
     super.dispose();
   }
 
-  // 🔥 Page entrance animation
+  Answer? _fromSaved(bool? value) {
+    if (value == null) return null;
+    return value ? Answer.yes : Answer.no;
+  }
+
   Widget _animated({
     required Widget child,
     required double from,
@@ -218,7 +233,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 2 of 10',
+                      text: '4 of 19',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -315,7 +330,15 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                       backgroundColor: Colors.grey.shade300,
                       enableShadow: isValid,
                       onTap: isValid
-                          ? () {
+                          ? () async {
+                              flow.familyApprovalImportant.value =
+                                  family == Answer.yes;
+                              flow.marriageTimelineImportant.value =
+                                  marriage == Answer.yes;
+                              flow.culturalAlignmentImportant.value =
+                                  culture == Answer.yes;
+                              await flow.saveOnboardingProgress();
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(

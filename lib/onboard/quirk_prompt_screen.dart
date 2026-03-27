@@ -1,6 +1,8 @@
+import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/show_your_story_screen.dart';
 import 'package:cupid_app/onboard/voice_prompt_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
@@ -255,8 +257,9 @@ class QuirkItem {
 }
 
 class QuirkPromptScreen extends StatefulWidget {
-  List<QuirkItem> prompts;
-  QuirkPromptScreen({super.key, required this.prompts});
+  const QuirkPromptScreen({super.key, this.prompts});
+
+  final List<QuirkItem>? prompts;
 
   @override
   State<QuirkPromptScreen> createState() => _QuirkPromptScreenState();
@@ -264,6 +267,7 @@ class QuirkPromptScreen extends StatefulWidget {
 
 class _QuirkPromptScreenState extends State<QuirkPromptScreen>
     with TickerProviderStateMixin {
+  final flow = Get.find<AppFlowController>();
   late final AnimationController _pageController;
   late final AnimationController _ctaController;
   QuirkMode mode = QuirkMode.type;
@@ -346,11 +350,21 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
 
   late final List<QuirkItem> quirks;
 
+  List<QuirkItem> _defaultPrompts() {
+    final culture = (flow.culturalIdentity.value ?? '').trim();
+    for (final vibe in culturalVibes) {
+      if (vibe.title == culture) return vibe.prompts;
+    }
+    return culturalVibes.last.prompts;
+  }
+
   @override
   void initState() {
     super.initState();
 
-    quirks = widget.prompts;
+    quirks = widget.prompts == null || widget.prompts!.isEmpty
+        ? _defaultPrompts()
+        : widget.prompts!;
 
     _pageController = AnimationController(
       vsync: this,
@@ -365,6 +379,12 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
     Future.delayed(const Duration(milliseconds: 120), () {
       if (mounted) _pageController.forward();
     });
+
+    _textCtrl.text = (flow.quirkText.value ?? '').trim();
+    if (_textCtrl.text.isNotEmpty) {
+      _ctaAnimated = true;
+      _ctaController.value = 1;
+    }
 
     _textCtrl.addListener(() {
       if (isValid && !_ctaAnimated) {
@@ -406,7 +426,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 9 of 10',
+                      text: '16 of 19',
                       size: 14,
                       color: Colors.grey,
                     ),
@@ -632,7 +652,10 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                       backgroundColor: Colors.grey.shade300,
                       enableShadow: isValid,
                       onTap: isValid
-                          ? () {
+                          ? () async {
+                              flow.quirkText.value = _textCtrl.text.trim();
+                              await flow.saveOnboardingProgress();
+                              if (!context.mounted) return;
                               Navigator.push(
                                 context,
                                 PageRouteBuilder(

@@ -7,12 +7,10 @@ import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/show_your_story_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
-import '../../widgets/button_widget.dart';
 import '../../widgets/text_widget.dart';
 
 class VoicePromptItem {
@@ -167,7 +165,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
   }
 
   Future<String> _makeOutputPath() async {
-    final dir = await getApplicationDocumentsDirectory();
+    final dir = Directory.systemTemp;
     final ts = DateTime.now().millisecondsSinceEpoch;
     return "${dir.path}/voice_prompt_$ts.m4a";
   }
@@ -348,7 +346,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                       ),
                     ),
                     const TextWidget(
-                      text: 'Step 6 of 10',
+                      text: '17 of 19',
                       size: 14,
                       color: Colors.grey,
                     ),

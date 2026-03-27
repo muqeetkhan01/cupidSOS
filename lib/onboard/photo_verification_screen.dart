@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/match_loading_screen.dart';
+import 'package:cupid_app/onboard/welcome_house_rules_screen.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -108,7 +108,9 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
 
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const MatchLoadingScreen()),
+      MaterialPageRoute(
+        builder: (_) => const WelcomeHouseRulesScreen(isFinalStep: true),
+      ),
     );
   }
 
@@ -166,112 +168,135 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 1.h),
-              _animated(
-                SizedBox(
-                  height: 7.h,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new),
-                          onPressed: () => Navigator.pop(context),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 1.h),
+                _animated(
+                  SizedBox(
+                    height: 7.h,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                         ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 62.w,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(999),
-                              child: LinearProgressIndicator(
-                                value: 10 / 11,
-                                minHeight: 6,
-                                backgroundColor: const Color(0xFFFFD6DE),
-                                valueColor: const AlwaysStoppedAnimation(
-                                    Color(0xFFFF3B7A)),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 62.w,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(999),
+                                child: LinearProgressIndicator(
+                                  value: 19 / 20,
+                                  minHeight: 6,
+                                  backgroundColor: const Color(0xFFFFD6DE),
+                                  valueColor: const AlwaysStoppedAnimation(
+                                      Color(0xFFFF3B7A)),
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(height: 0.8.h),
-                          const TextWidget(
-                              text: '11 of 11', size: 12, color: Colors.grey),
-                        ],
+                            SizedBox(height: 0.8.h),
+                            const TextWidget(
+                                text: '19 of 20', size: 12, color: Colors.grey),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  0,
+                  0.15,
+                ),
+                SizedBox(height: 3.h),
+                _animated(
+                  TextWidget(
+                    text: 'Photo Verification',
+                    size: 18.sp,
+                    weight: FontWeight.w600,
+                  ),
+                  0.15,
+                  0.3,
+                ),
+                SizedBox(height: 0.8.h),
+                _animated(
+                  const TextWidget(
+                    text:
+                        "It won't be shown on your profile. It's just for our team to verify it's really you.",
+                    size: 15,
+                    color: Colors.grey,
+                  ),
+                  0.2,
+                  0.35,
+                ),
+                SizedBox(height: 1.5.h),
+                _animated(
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: const TextWidget(
+                      text:
+                          "Keep it real.\nMake sure your profile reflects who you truly are.\n\nStay safe.\nDon’t share personal information too quickly.\n\nLead with kindness.\nTreat others with respect.\n\nBe genuine.\nConnect with honesty and real intentions.\n\nHonor connection.\nValue culture and meaningful relationships.\n\nSpeak up.\nReport bad behavior.",
+                      size: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  0.25,
+                  0.5,
+                ),
+                SizedBox(height: 3.h),
+                _animated(_previewCard(), 0.3, 0.65),
+                SizedBox(height: 2.h),
+                _animated(
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ButtonWidget(
+                          text: 'Take Selfie',
+                          height: 6.6,
+                          radius: 36,
+                          variant: ButtonVariant.solid,
+                          backgroundColor: Colors.white,
+                          borderColor: Colors.grey.shade300,
+                          textColor: Colors.black,
+                          onTap: _takeSelfie,
+                        ),
                       ),
                     ],
                   ),
+                  0.45,
+                  0.75,
                 ),
-                0,
-                0.15,
-              ),
-              SizedBox(height: 3.h),
-              _animated(
-                TextWidget(
-                  text: 'Photo Verification',
-                  size: 18.sp,
-                  weight: FontWeight.w600,
+                SizedBox(height: 2.h),
+                // const Spacer(),
+                _animated(
+                  ButtonWidget(
+                    text: _uploading ? 'Uploading…' : 'Finish',
+                    height: 7,
+                    radius: 36,
+                    variant:
+                        isValid ? ButtonVariant.gradient : ButtonVariant.solid,
+                    gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                    backgroundColor: Colors.grey.shade300,
+                    enableShadow: isValid,
+                    onTap: isValid ? _uploadAndFinish : () {},
+                  ),
+                  0.75,
+                  1,
                 ),
-                0.15,
-                0.3,
-              ),
-              SizedBox(height: 0.8.h),
-              _animated(
-                const TextWidget(
-                  text:
-                      "This is the final step. You must complete it to finish onboarding.",
-                  size: 15,
-                  color: Colors.grey,
-                ),
-                0.2,
-                0.35,
-              ),
-              SizedBox(height: 3.h),
-              _animated(_previewCard(), 0.3, 0.65),
-              SizedBox(height: 2.h),
-              _animated(
-                Row(
-                  children: [
-                    Expanded(
-                      child: ButtonWidget(
-                        text: 'Take Selfie',
-                        height: 6.6,
-                        radius: 36,
-                        variant: ButtonVariant.solid,
-                        backgroundColor: Colors.white,
-                        borderColor: Colors.grey.shade300,
-                        textColor: Colors.black,
-                        onTap: _takeSelfie,
-                      ),
-                    ),
-                  ],
-                ),
-                0.45,
-                0.75,
-              ),
-              const Spacer(),
-              _animated(
-                ButtonWidget(
-                  text: _uploading ? 'Uploading…' : 'Finish',
-                  height: 7,
-                  radius: 36,
-                  variant:
-                      isValid ? ButtonVariant.gradient : ButtonVariant.solid,
-                  gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                  backgroundColor: Colors.grey.shade300,
-                  enableShadow: isValid,
-                  onTap: isValid ? _uploadAndFinish : () {},
-                ),
-                0.75,
-                1,
-              ),
-              SizedBox(height: 3.h),
-            ],
+                SizedBox(height: 3.h),
+              ],
+            ),
           ),
         ),
       ),

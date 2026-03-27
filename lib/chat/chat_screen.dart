@@ -10,7 +10,9 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:videosdk/videosdk.dart';
 
+import '../../profile/safety_center_screen.dart';
 import '../../widgets/text_widget.dart';
+import '../../widgets/safety_menu_button.dart';
 
 /// =======================================================
 /// VideoSDK API (kept in-file per your request)
@@ -606,20 +608,22 @@ class _ChatScreenState extends State<ChatScreen> {
                       SizedBox(width: 2.w),
 
                       /// More menu
-                      PopupMenuButton<String>(
-                        icon: const Icon(Icons.more_horiz_rounded,
-                            color: Colors.black87),
-                        onSelected: (v) {
-                          if (v == "report") {
-                            Get.snackbar("Report", "Coming soon");
-                          } else if (v == "block") {
-                            Get.snackbar("Block", "Coming soon");
-                          }
+                      SafetyMenuButton(
+                        currentUid: widget.myUid,
+                        targetUid: widget.peerUid,
+                        threadId: widget.threadId,
+                        showUnmatch: true,
+                        onOpenSafetyCenter: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SafetyCenterScreen(),
+                            ),
+                          );
                         },
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: "report", child: Text("Report")),
-                          PopupMenuItem(value: "block", child: Text("Block")),
-                        ],
+                        onCompleted: () {
+                          if (context.mounted) Navigator.pop(context);
+                        },
                       ),
                     ],
                   );
