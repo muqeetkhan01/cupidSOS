@@ -413,8 +413,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+// lib/screens/profile/edit_profile_screen.dart
+// Replace ONLY the _storyPhotosEditor() method with this version.
+
   Widget _storyPhotosEditor() {
-    // 6 slots visual editor, uses existing urls + picked files.
+    const labels = <String>[
+      "Hero Shot",
+      "Your Hobby",
+      "Heritage",
+      "Lifestyle",
+      "Lifestyle",
+      "Lifestyle",
+    ];
+
+    const icons = <IconData>[
+      Icons.camera_alt,
+      Icons.sports_esports,
+      Icons.diversity_3,
+      Icons.star,
+      Icons.star,
+      Icons.star,
+    ];
+
     return Wrap(
       spacing: 3.w,
       runSpacing: 2.h,
@@ -427,8 +447,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onLongPress: saving
               ? null
               : () {
-                  // remove existing slot url (if any)
                   setState(() {
+                    // remove existing slot url (if any)
                     if (i < storyPhotoUrls.length) {
                       storyPhotoUrls.removeAt(i);
                     }
@@ -445,10 +465,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   Positioned.fill(
                     child: has
-                        ? Image(
-                            image: provider,
-                            fit: BoxFit.cover,
-                          )
+                        ? Image(image: provider, fit: BoxFit.cover)
                         : Container(
                             color: Colors.white,
                             child: Column(
@@ -465,24 +482,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           ),
                   ),
-                  Positioned(
-                    left: 10,
-                    top: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.35),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: TextWidget(
-                        text: "Slot ${i + 1}",
-                        size: 12,
-                        color: Colors.white,
-                        weight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
+
+                  // ✅ Top-right edit bubble (keep)
                   Positioned(
                     right: 10,
                     top: 10,
@@ -497,9 +498,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           const Icon(Icons.edit, size: 16, color: Colors.white),
                     ),
                   ),
+
+                  // ✅ Top-left label chip (Hero Shot / Heritage etc.)
+                  Positioned(
+                    left: 10,
+                    top: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icons[i], size: 14, color: Colors.white),
+                          const SizedBox(width: 6),
+                          TextWidget(
+                            text: labels[i],
+                            size: 12,
+                            color: Colors.white,
+                            weight: FontWeight.w700,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ✅ Checkmark when slot has an image
                   if (has)
                     Positioned(
-                      right: 10,
+                      top: 10,
+                      right:
+                          10 + 28 + 8, // keep check separate from edit bubble
+                      child: Container(
+                        width: 26,
+                        height: 26,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF4CAF50),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check,
+                            size: 16, color: Colors.white),
+                      ),
+                    ),
+
+                  // ✅ Bottom-left label on the photo (like the video)
+                  if (has)
+                    Positioned(
+                      left: 10,
                       bottom: 10,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -508,9 +556,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           color: Colors.black.withOpacity(0.35),
                           borderRadius: BorderRadius.circular(999),
                         ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(icons[i], size: 14, color: Colors.white),
+                            const SizedBox(width: 6),
+                            TextWidget(
+                              text: labels[i],
+                              size: 12,
+                              color: Colors.white,
+                              weight: FontWeight.w700,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // ✅ Hold to remove (only when has image)
+                  if (has)
+                    Positioned(
+                      right: 4,
+                      bottom: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                         child: const TextWidget(
                           text: "Hold to remove",
-                          size: 11,
+                          size: 10,
                           color: Colors.white,
                           weight: FontWeight.w700,
                         ),

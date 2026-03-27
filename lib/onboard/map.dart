@@ -1,15 +1,14 @@
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/work_education_hometown_screen.dart';
-import 'package:cupid_app/onboard/preferences_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:place_picker_google/place_picker_google.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
 
-import '../../widgets/text_widget.dart';
-import '../../widgets/button_widget.dart';
 import '../../config/colors.dart';
+import '../../widgets/button_widget.dart';
+import '../../widgets/text_widget.dart';
 
 class LocationQuestionScreen extends StatefulWidget {
   const LocationQuestionScreen({super.key});
