@@ -2,6 +2,7 @@
 // Fix: Remove hardcoded Taurus/Tiger and show computed Western + Chinese from birthday.
 
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/widgets/zodiac.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -121,7 +122,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
               border: Border.all(
                 color: isSelected
                     ? Colors.transparent
-                    : const Color(0xFFD86BCF).withOpacity(0.3),
+                    : CupidColors.border(context),
                 width: 1.5,
               ),
             ),
@@ -159,7 +160,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                             borderRadius: BorderRadius.circular(18),
                             color: isSelected
                                 ? Colors.white.withOpacity(0.25)
-                                : Colors.white,
+                                : CupidColors.surface(context),
                           ),
                           alignment: Alignment.center,
                           child: Text(emoji, style: TextStyle(fontSize: 26.sp)),
@@ -174,7 +175,9 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                                 text: title,
                                 size: 17,
                                 weight: FontWeight.bold,
-                                color: isSelected ? Colors.white : Colors.black,
+                                color: isSelected
+                                    ? Colors.white
+                                    : CupidColors.textPrimary(context),
                               ),
                               SizedBox(height: 0.4.h),
                               TextWidget(
@@ -182,7 +185,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                                 size: 14,
                                 color: isSelected
                                     ? Colors.white.withOpacity(0.9)
-                                    : Colors.grey.shade700,
+                                    : CupidColors.textSecondary(context),
                               ),
                               SizedBox(height: 0.2.h),
                               TextWidget(
@@ -190,7 +193,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                                 size: 13,
                                 color: isSelected
                                     ? Colors.white.withOpacity(0.8)
-                                    : Colors.grey.shade500,
+                                    : CupidColors.textSecondary(context),
                               ),
                             ],
                           ),
@@ -223,7 +226,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
     final ready = flow.birthday.value != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -246,7 +249,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                     const TextWidget(
                       text: 'Step 3 of 10',
                       size: 14,
-                      color: Colors.grey,
+                      color: null,
                     ),
                   ],
                 ),
@@ -258,7 +261,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                 child: TextWidget(
                   text: '✨ YOUR COSMIC BADGES ✨',
                   size: 15,
-                  color: Colors.grey.shade600,
+                  color: CupidColors.textSecondary(context),
                 ),
               ),
               SizedBox(height: 1.5.h),
@@ -281,7 +284,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                       ? 'Pick the badge you want on your profile'
                       : 'Go back and enter your birthday',
                   size: 14,
-                  color: Colors.grey.shade600,
+                  color: CupidColors.textSecondary(context),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -330,7 +333,7 @@ class _VibeSelectionScreenState extends State<VibeSelectionScreen>
                   gradient: selectedKey != null
                       ? const [Color(0xFFFF6F7D), Color(0xFFD86BCF)]
                       : null,
-                  backgroundColor: Colors.grey.shade300,
+                  backgroundColor: CupidColors.border(context),
                   enableShadow: selectedKey != null,
                   onTap: selectedKey == null
                       ? () {}

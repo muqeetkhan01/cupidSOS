@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/show_your_story_screen.dart';
 import 'package:flutter/material.dart';
@@ -323,7 +324,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
     final hasRecording = _recordedPath != null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -348,7 +349,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                     const TextWidget(
                       text: '17 of 19',
                       size: 14,
-                      color: Colors.grey,
+                      color: null,
                     ),
                   ],
                 ),
@@ -360,7 +361,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
               _animated(
                 from: 0.15,
                 to: 0.3,
-                child: const Column(
+                child: Column(
                   children: [
                     TextWidget(
                       text: 'Your Voice Prompt 🎙️',
@@ -371,7 +372,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                     TextWidget(
                       text: 'Choose one question and record your voice answer.',
                       size: 15,
-                      color: Color(0xFF1E1E1E),
+                      color: CupidColors.textPrimary(context),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -396,9 +397,12 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: i == activeIndex
-                              ? const Color(0xFFFFECEF)
-                              : Colors.white,
-                          border: Border.all(color: Colors.grey.shade300),
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF30212B)
+                                  : const Color(0xFFFFECEF))
+                              : CupidColors.surface(context),
+                          border:
+                              Border.all(color: CupidColors.border(context)),
                         ),
                         child: Text(
                           voicePrompts[i].emoji,
@@ -420,11 +424,11 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                   width: double.infinity,
                   padding: EdgeInsets.all(5.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: CupidColors.surface(context),
                     borderRadius: BorderRadius.circular(26),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: CupidColors.shadow(context),
                         blurRadius: 22,
                       ),
                     ],
@@ -441,7 +445,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                       TextWidget(
                         text: current.question,
                         size: 15,
-                        color: Colors.grey.shade700,
+                        color: CupidColors.textSecondary(context),
                       ),
                     ],
                   ),
@@ -458,16 +462,16 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                   width: double.infinity,
                   padding: EdgeInsets.symmetric(vertical: 3.h, horizontal: 4.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: CupidColors.surface(context),
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: CupidColors.border(context)),
                   ),
                   child: Column(
                     children: [
                       TextWidget(
                         text: "${_format(_elapsedSec)} / ${_format(_maxSec)}",
                         size: 14,
-                        color: Colors.grey,
+                        color: CupidColors.textSecondary(context),
                       ),
                       SizedBox(height: 1.h),
                       TextWidget(
@@ -477,7 +481,7 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                                 ? "Recorded. Tap play to preview"
                                 : "Tap to start recording",
                         size: 14,
-                        color: Colors.grey,
+                        color: CupidColors.textSecondary(context),
                       ),
                       SizedBox(height: 2.5.h),
                       Row(
@@ -533,9 +537,10 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                                 height: 14.w,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.grey.shade100,
-                                  border:
-                                      Border.all(color: Colors.grey.shade300),
+                                  color: CupidColors.surfaceMuted(context),
+                                  border: Border.all(
+                                    color: CupidColors.border(context),
+                                  ),
                                 ),
                                 child: Icon(
                                   _playerState == PlayerState.playing
@@ -554,9 +559,10 @@ class _VoicePromptScreenState extends State<VoicePromptScreen>
                                 height: 14.w,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.grey.shade100,
-                                  border:
-                                      Border.all(color: Colors.grey.shade300),
+                                  color: CupidColors.surfaceMuted(context),
+                                  border: Border.all(
+                                    color: CupidColors.border(context),
+                                  ),
                                 ),
                                 child: const Icon(
                                   Icons.delete_outline_rounded,

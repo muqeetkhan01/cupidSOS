@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/onboarding_options.dart';
 import 'package:cupid_app/onboard/work_education_hometown_screen.dart';
 import 'package:flutter/material.dart';
@@ -66,10 +67,16 @@ class _LookingForScreenState extends State<LookingForScreen>
           duration: const Duration(milliseconds: 220),
           padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 2.h),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFFFECEF) : Colors.white,
+            color: selected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF30212B)
+                    : const Color(0xFFFFECEF))
+                : CupidColors.surface(context),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+              color: selected
+                  ? const Color(0xFFFF6F7D)
+                  : CupidColors.border(context),
               width: selected ? 1.5 : 1,
             ),
           ),
@@ -78,14 +85,18 @@ class _LookingForScreenState extends State<LookingForScreen>
               Icon(
                 icon,
                 size: 26,
-                color: selected ? const Color(0xFFFF6F7D) : Colors.black87,
+                color: selected
+                    ? const Color(0xFFFF6F7D)
+                    : CupidColors.textPrimary(context),
               ),
               SizedBox(height: 1.2.h),
               TextWidget(
                 text: label,
                 weight: FontWeight.w600,
                 textAlign: TextAlign.center,
-                color: selected ? const Color(0xFFFF6F7D) : Colors.black87,
+                color: selected
+                    ? const Color(0xFFFF6F7D)
+                    : CupidColors.textPrimary(context),
               ),
             ],
           ),
@@ -110,7 +121,7 @@ class _LookingForScreenState extends State<LookingForScreen>
     final canContinue = selectedGoal != null && selectedGoal!.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -132,7 +143,7 @@ class _LookingForScreenState extends State<LookingForScreen>
                     const TextWidget(
                       text: '13 of 19',
                       size: 14,
-                      color: Colors.grey,
+                      color: null,
                     ),
                   ],
                 ),
@@ -155,7 +166,7 @@ class _LookingForScreenState extends State<LookingForScreen>
                   text:
                       'Tell us what feels right right now so we can guide your matches with more intention.',
                   size: 15,
-                  color: Colors.grey,
+                  color: null,
                 ),
                 0.2,
                 0.35,
@@ -185,7 +196,7 @@ class _LookingForScreenState extends State<LookingForScreen>
                       ? ButtonVariant.gradient
                       : ButtonVariant.solid,
                   gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                  backgroundColor: Colors.grey.shade300,
+                  backgroundColor: CupidColors.border(context),
                   enableShadow: canContinue,
                   onTap: canContinue ? _continue : () {},
                 ),

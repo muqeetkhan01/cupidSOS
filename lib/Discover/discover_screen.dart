@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cupid_app/Discover/filter.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/colors.dart';
 import 'package:cupid_app/profile/user_profile.dart';
 import 'package:cupid_app/services/auth_service.dart';
@@ -220,12 +221,9 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFFFDF7F5),
-              Color(0xFFFBEFF3),
-            ],
+            colors: CupidColors.pageGradient(context),
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -286,7 +284,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                 decoration: BoxDecoration(
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colors.white),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withOpacity(0.18)
+                        : Colors.white,
+                  ),
                 ),
                 child: Row(
                   children: const [
@@ -497,7 +499,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               text:
                   "Try again later or adjust your filters.\nPull to refresh from the top.",
               size: 14,
-              color: Colors.grey.shade700,
+              color: CupidColors.textSecondary(context),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 3.h),

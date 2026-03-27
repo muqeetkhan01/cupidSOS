@@ -1,6 +1,7 @@
 // ==============================
 // lib/Discover/filter.dart (PATCH)
 // ==============================
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
@@ -117,12 +118,14 @@ class _FilterScreenState extends State<FilterScreen> {
                 const TextWidget(
                   text: "Doesn't matter",
                   size: 14,
-                  color: Colors.grey,
+                  color: null,
                 ),
                 SizedBox(width: 2.w),
                 Icon(
                   toggle ? Icons.radio_button_checked : Icons.radio_button_off,
-                  color: toggle ? const Color(0xFFFF6F7D) : Colors.grey,
+                  color: toggle
+                      ? const Color(0xFFFF6F7D)
+                      : CupidColors.textSecondary(context),
                 ),
               ],
             ),
@@ -150,9 +153,9 @@ class _FilterScreenState extends State<FilterScreen> {
                   colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 )
               : null,
-          color: selected ? null : Colors.white,
+          color: selected ? null : CupidColors.surface(context),
           border: Border.all(
-            color: selected ? Colors.transparent : Colors.grey.shade300,
+            color: selected ? Colors.transparent : CupidColors.border(context),
           ),
           boxShadow: selected
               ? [
@@ -168,7 +171,7 @@ class _FilterScreenState extends State<FilterScreen> {
           text: text,
           size: 14,
           weight: FontWeight.w600,
-          color: selected ? Colors.white : Colors.black,
+          color: selected ? Colors.white : CupidColors.textPrimary(context),
         ),
       ),
     );
@@ -189,7 +192,7 @@ class _FilterScreenState extends State<FilterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

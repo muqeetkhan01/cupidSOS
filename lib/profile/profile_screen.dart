@@ -1,5 +1,7 @@
 // lib/screens/profile/profile_screen.dart
 import 'package:cupid_app/onboard/cupid_splash_screen.dart';
+import 'package:cupid_app/config/app_theme.dart';
+import 'package:cupid_app/config/theme_controller.dart';
 import 'package:cupid_app/profile/edit.dart';
 import 'package:cupid_app/profile/safety_center_screen.dart';
 import 'package:cupid_app/widgets/voice.dart';
@@ -21,6 +23,84 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final flow = Get.find<AppFlowController>();
+  final theme = Get.find<ThemeController>();
+
+  void _openSettingsSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: CupidColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(6.w, 2.h, 6.w, 3.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const TextWidget(
+                text: 'Settings',
+                size: 18,
+                weight: FontWeight.w700,
+              ),
+              SizedBox(height: 2.h),
+              Obx(
+                () => Row(
+                  children: [
+                    Icon(
+                      theme.isDarkMode
+                          ? Icons.dark_mode_rounded
+                          : Icons.light_mode_rounded,
+                      color: CupidColors.textPrimary(sheetContext),
+                    ),
+                    SizedBox(width: 3.w),
+                    const Expanded(
+                      child: TextWidget(
+                        text: 'Dark Mode',
+                        size: 15,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: theme.isDarkMode,
+                      onChanged: (value) {
+                        theme.toggleDark(value);
+                        Get.back();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 1.h),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  Icons.edit_outlined,
+                  color: CupidColors.textPrimary(sheetContext),
+                ),
+                title: const TextWidget(
+                  text: 'Edit Profile',
+                  size: 15,
+                  weight: FontWeight.w600,
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const EditProfileScreen(),
+                    ),
+                  ).then((_) => _refresh());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -75,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final storyPhotos = flow.storyPhotoUrls.toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
@@ -96,15 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.settings_outlined),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const EditProfileScreen()),
-                        ).then((_) => _refresh());
-
-                        // TODO: route to settings screen if you have one
-                      },
+                      onPressed: _openSettingsSheet,
                     ),
                   ],
                 ),
@@ -203,6 +275,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   },
                 ),
+                Obx(
+                  () => _optionTile(
+                    icon: theme.isDarkMode
+                        ? Icons.dark_mode_rounded
+                        : Icons.light_mode_rounded,
+                    title: 'Dark Mode',
+                    trailingWidget: Switch.adaptive(
+                      value: theme.isDarkMode,
+                      onChanged: (value) {
+                        theme.toggleDark(value);
+                      },
+                    ),
+                    hideChevron: true,
+                    onTap: () {
+                      theme.toggleDark(!theme.isDarkMode);
+                    },
+                  ),
+                ),
                 _optionTile(
                   icon: Icons.logout,
                   title: 'Log out',
@@ -249,11 +339,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: CupidColors.shadow(context),
             blurRadius: 14,
             offset: const Offset(0, 8),
           ),
@@ -268,7 +358,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFECEF),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF30212B)
+                      : const Color(0xFFFFECEF),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextWidget(
@@ -296,9 +388,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: CupidColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +398,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextWidget(
             text: title,
             size: 13,
-            color: Colors.grey.shade600,
+            color: CupidColors.textSecondary(context),
             weight: FontWeight.w600,
           ),
           SizedBox(height: 0.8.h),
@@ -323,7 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextWidget(
               text: "No voice note recorded",
               size: 13,
-              color: Colors.grey.shade600,
+              color: CupidColors.textSecondary(context),
             ),
           ],
         ],
@@ -337,9 +429,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: CupidColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -347,7 +439,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextWidget(
             text: title,
             size: 13,
-            color: Colors.grey.shade600,
+            color: CupidColors.textSecondary(context),
             weight: FontWeight.w600,
           ),
           SizedBox(height: 0.8.h),
@@ -367,14 +459,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         width: double.infinity,
         padding: EdgeInsets.all(4.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: CupidColors.surface(context),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.grey.shade200),
+          border: Border.all(color: CupidColors.border(context)),
         ),
         child: TextWidget(
           text: "No photos yet. Add them in Edit Profile.",
           size: 14,
-          color: Colors.grey.shade700,
+          color: CupidColors.textSecondary(context),
         ),
       );
     }
@@ -392,14 +484,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               u,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: Colors.grey.shade200,
+                color: CupidColors.surfaceMuted(context),
                 alignment: Alignment.center,
                 child: const Icon(Icons.broken_image_outlined),
               ),
               loadingBuilder: (_, child, progress) {
                 if (progress == null) return child;
                 return Container(
-                  color: Colors.grey.shade100,
+                  color: CupidColors.surfaceMuted(context),
                   alignment: Alignment.center,
                   child: const CircularProgressIndicator(),
                 );
@@ -420,7 +512,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             (e) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFECEF),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF30212B)
+                    : const Color(0xFFFFECEF),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: TextWidget(
@@ -447,11 +541,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: CupidColors.shadow(context),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -463,7 +557,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               CircleAvatar(
                 radius: 44,
-                backgroundColor: Colors.grey.shade200,
+                backgroundColor: CupidColors.surfaceMuted(context),
                 backgroundImage:
                     photoUrl == null ? null : NetworkImage(photoUrl),
                 child: photoUrl == null
@@ -503,7 +597,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 TextWidget(
                   text: location,
                   size: 14,
-                  color: Colors.grey.shade600,
+                  color: CupidColors.textSecondary(context),
                   weight: FontWeight.w500,
                 ),
               ],
@@ -528,6 +622,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String title,
     String? trailing,
     Color? trailingColor,
+    Widget? trailingWidget,
+    bool hideChevron = false,
     required VoidCallback onTap,
   }) {
     return Padding(
@@ -538,11 +634,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Container(
           padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.3.h),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: CupidColors.surface(context),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: CupidColors.shadow(context),
                 blurRadius: 14,
                 offset: const Offset(0, 8),
               ),
@@ -551,8 +647,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor: Colors.grey.shade100,
-                child: Icon(icon, color: Colors.black87, size: 24),
+                backgroundColor: CupidColors.surfaceMuted(context),
+                child: Icon(icon,
+                    color: CupidColors.textPrimary(context), size: 24),
               ),
               SizedBox(width: 4.w),
               Expanded(
@@ -566,11 +663,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 TextWidget(
                   text: trailing,
                   size: 13,
-                  color: trailingColor ?? Colors.grey,
+                  color: trailingColor ?? CupidColors.textSecondary(context),
                   weight: FontWeight.w600,
                 ),
-              const SizedBox(width: 6),
-              const Icon(Icons.chevron_right),
+              if (trailingWidget != null) trailingWidget,
+              if (!hideChevron) ...[
+                const SizedBox(width: 6),
+                const Icon(Icons.chevron_right),
+              ],
             ],
           ),
         ),

@@ -1,5 +1,6 @@
 // lib/Matches/matches_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -20,7 +21,7 @@ class MatchesScreen extends StatelessWidget {
     final myUid = _myUid;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: myUid == null
             ? const Center(
@@ -75,7 +76,7 @@ class MatchesScreen extends StatelessWidget {
                             const TextWidget(
                               text: 'Your connections await 💕',
                               size: 18,
-                              color: Colors.grey,
+                              color: null,
                             ),
 
                             SizedBox(height: 3.h),
@@ -117,7 +118,7 @@ class MatchesScreen extends StatelessWidget {
 
                             SizedBox(height: 1.5.h),
 
-                            if (matches.isEmpty) _emptyMutualState(),
+                            if (matches.isEmpty) _emptyMutualState(context),
 
                             for (final m in matches) ...[
                               _dynamicMatchTile(
@@ -167,6 +168,7 @@ class MatchesScreen extends StatelessWidget {
         final hasMessage = match.lastMessage?.trim().isNotEmpty == true;
 
         return _matchTile(
+          context: context,
           name: name,
           percent: match.matchPercentLabel ?? "",
           subtitle: subtitle,
@@ -179,33 +181,33 @@ class MatchesScreen extends StatelessWidget {
     );
   }
 
-  Widget _emptyMutualState() {
+  Widget _emptyMutualState(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: CupidColors.shadow(context),
             blurRadius: 12,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          TextWidget(
+        children: [
+          const TextWidget(
             text: "No mutual matches yet",
             size: 16,
             weight: FontWeight.w700,
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           TextWidget(
             text: "Keep swiping — when it’s mutual, it’ll show here.",
             size: 13,
-            color: Colors.grey,
+            color: CupidColors.textSecondary(context),
           ),
         ],
       ),
@@ -277,7 +279,8 @@ class MatchesScreen extends StatelessWidget {
     );
   }
 
-  static Widget _matchTile({
+  Widget _matchTile({
+    required BuildContext context,
     required String name,
     required String percent,
     required String subtitle,
@@ -292,11 +295,11 @@ class MatchesScreen extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(3.5.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: CupidColors.surface(context),
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: CupidColors.shadow(context),
               blurRadius: 12,
             ),
           ],
@@ -386,7 +389,7 @@ class MatchesScreen extends StatelessWidget {
                   TextWidget(
                     text: subtitle,
                     size: 13,
-                    color: Colors.grey,
+                    color: CupidColors.textSecondary(context),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -409,7 +412,6 @@ class MatchesScreen extends StatelessWidget {
                   const TextWidget(
                     text: 'spark left',
                     size: 11,
-                    color: Colors.grey,
                   ),
                 ],
               ),

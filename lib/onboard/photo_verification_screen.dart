@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/welcome_house_rules_screen.dart';
 import 'package:cupid_app/services/auth_service.dart';
@@ -139,21 +140,22 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                 width: double.infinity,
                 height: 32.h,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: CupidColors.surface(context),
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: CupidColors.border(context)),
                 ),
                 alignment: Alignment.center,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.camera_alt_outlined,
-                        size: 42, color: Colors.grey),
+                  children: [
+                    Icon(
+                      Icons.camera_alt_outlined,
+                      size: 42,
+                      color: CupidColors.textSecondary(context),
+                    ),
                     SizedBox(height: 10),
                     TextWidget(
-                        text: "Take a selfie to verify",
-                        size: 15,
-                        color: Colors.grey),
+                        text: "Take a selfie to verify", size: 15, color: null),
                   ],
                 ),
               );
@@ -164,7 +166,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -204,7 +206,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                             ),
                             SizedBox(height: 0.8.h),
                             const TextWidget(
-                                text: '19 of 20', size: 12, color: Colors.grey),
+                                text: '19 of 20', size: 12, color: null),
                           ],
                         ),
                       ],
@@ -229,7 +231,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                     text:
                         "It won't be shown on your profile. It's just for our team to verify it's really you.",
                     size: 15,
-                    color: Colors.grey,
+                    color: null,
                   ),
                   0.2,
                   0.35,
@@ -240,15 +242,15 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                     width: double.infinity,
                     padding: EdgeInsets.all(4.w),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: CupidColors.surface(context),
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: CupidColors.border(context)),
                     ),
-                    child: const TextWidget(
+                    child: TextWidget(
                       text:
                           "Keep it real.\nMake sure your profile reflects who you truly are.\n\nStay safe.\nDon’t share personal information too quickly.\n\nLead with kindness.\nTreat others with respect.\n\nBe genuine.\nConnect with honesty and real intentions.\n\nHonor connection.\nValue culture and meaningful relationships.\n\nSpeak up.\nReport bad behavior.",
                       size: 14,
-                      color: Colors.black87,
+                      color: CupidColors.textPrimary(context),
                     ),
                   ),
                   0.25,
@@ -266,9 +268,9 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                           height: 6.6,
                           radius: 36,
                           variant: ButtonVariant.solid,
-                          backgroundColor: Colors.white,
-                          borderColor: Colors.grey.shade300,
-                          textColor: Colors.black,
+                          backgroundColor: CupidColors.surface(context),
+                          borderColor: CupidColors.border(context),
+                          textColor: CupidColors.textPrimary(context),
                           onTap: _takeSelfie,
                         ),
                       ),
@@ -287,9 +289,19 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                     variant:
                         isValid ? ButtonVariant.gradient : ButtonVariant.solid,
                     gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                    backgroundColor: Colors.grey.shade300,
+                    backgroundColor: CupidColors.border(context),
                     enableShadow: isValid,
-                    onTap: isValid ? _uploadAndFinish : () {},
+                    onTap: isValid
+                        ? _uploadAndFinish
+                        : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const WelcomeHouseRulesScreen(
+                                    isFinalStep: true),
+                              ),
+                            );
+                          },
                   ),
                   0.75,
                   1,

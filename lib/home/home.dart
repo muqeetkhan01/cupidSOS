@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
+import '../../config/app_theme.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 
@@ -49,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 5.w),
@@ -66,11 +67,11 @@ class _HomeScreenState extends State<HomeScreen>
                       // ✅ prevents overflow
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           TextWidget(
                             text: 'Good evening 👋',
                             size: 16,
-                            color: Colors.grey,
+                            color: CupidColors.textSecondary(context),
                           ),
                           SizedBox(height: 2),
                           TextWidget(
@@ -181,10 +182,10 @@ class _HomeScreenState extends State<HomeScreen>
             weight: FontWeight.bold,
           ),
           const SizedBox(height: 6),
-          const TextWidget(
+          TextWidget(
             text: 'Your daily cosmic match is ready!',
             size: 14,
-            color: Colors.grey,
+            color: CupidColors.textSecondary(context),
           ),
           SizedBox(height: 2.h),
           ButtonWidget(
@@ -252,14 +253,14 @@ class _HomeScreenState extends State<HomeScreen>
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10),
+          BoxShadow(color: CupidColors.shadow(context), blurRadius: 10),
         ],
       ),
       child: Row(
-        children: const [
+        children: [
           CircleAvatar(radius: 22),
           SizedBox(width: 12),
           Expanded(
@@ -270,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen>
                 TextWidget(
                   text: 'Waiting for your reply...',
                   size: 13,
-                  color: Colors.grey,
+                  color: CupidColors.textSecondary(context),
                 ),
               ],
             ),
@@ -373,11 +374,11 @@ class _ActionCard extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: CupidColors.border(context)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10),
+          BoxShadow(color: CupidColors.shadow(context), blurRadius: 10),
         ],
       ),
       child: Column(
@@ -389,7 +390,11 @@ class _ActionCard extends StatelessWidget {
           ),
           SizedBox(height: 1.h),
           TextWidget(text: title, weight: FontWeight.bold),
-          TextWidget(text: subtitle, size: 13, color: Colors.grey),
+          TextWidget(
+            text: subtitle,
+            size: 13,
+            color: CupidColors.textSecondary(context),
+          ),
         ],
       ),
     );
@@ -454,7 +459,7 @@ class _FunCard extends StatelessWidget {
           TextWidget(
             text: subtitle,
             size: 13,
-            color: Colors.grey,
+            color: CupidColors.textSecondary(context),
           ),
         ],
       ),

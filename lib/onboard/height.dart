@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/ethnicity_question_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -167,7 +168,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
               const TextWidget(
                 text: '7 of 19',
                 size: 12,
-                color: Colors.grey,
+                color: null,
               ),
             ],
           ),
@@ -186,19 +187,25 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
             height: 5.6.h,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? const Color(0xFFFFECEF) : Colors.white,
+              color: selected
+                  ? (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF30212B)
+                      : const Color(0xFFFFECEF))
+                  : CupidColors.surface(context),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color:
-                    selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+                color: selected
+                    ? const Color(0xFFFF6F7D)
+                    : CupidColors.border(context),
                 width: selected ? 1.5 : 1,
               ),
             ),
             child: TextWidget(
               text: label,
               weight: FontWeight.w600,
-              color:
-                  selected ? const Color(0xFFFF6F7D) : const Color(0xFF1E1E1E),
+              color: selected
+                  ? const Color(0xFFFF6F7D)
+                  : CupidColors.textPrimary(context),
             ),
           ),
         ),
@@ -223,7 +230,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
         height: 32.h,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: CupidColors.surface(context),
           borderRadius: BorderRadius.circular(28),
         ),
         child: Stack(
@@ -233,7 +240,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
               height: itemExtent,
               margin: EdgeInsets.symmetric(horizontal: 4.w),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                color: CupidColors.surfaceMuted(context),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
@@ -269,7 +276,9 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
                       text: label,
                       size: isSelected ? 20 : 16,
                       weight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                      color: isSelected ? Colors.black : Colors.grey.shade400,
+                      color: isSelected
+                          ? CupidColors.textPrimary(context)
+                          : CupidColors.textSecondary(context),
                     ),
                   );
                 },
@@ -284,7 +293,7 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -305,11 +314,11 @@ class _HeightQuestionScreenState extends State<HeightQuestionScreen>
               ),
               SizedBox(height: 0.8.h),
               _animated(
-                const TextWidget(
+                TextWidget(
                   text:
                       "Pick one unit — we’ll use it everywhere across the app.",
                   size: 15,
-                  color: Colors.grey,
+                  color: CupidColors.textSecondary(context),
                 ),
                 0.2,
                 0.35,

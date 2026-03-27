@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
+import '../../config/app_theme.dart';
 import '../../widgets/text_widget.dart';
 
 class SafetyCenterScreen extends StatelessWidget {
@@ -9,9 +10,9 @@ class SafetyCenterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7F5),
+        backgroundColor: CupidColors.scaffold(context),
         elevation: 0,
         title: const TextWidget(
           text: 'Safety on Cupid SOS',
@@ -67,16 +68,20 @@ class _SafetyCard extends StatelessWidget {
       margin: EdgeInsets.only(bottom: 2.h),
       padding: EdgeInsets.all(4.5.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: CupidColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextWidget(text: title, size: 16, weight: FontWeight.w700),
           SizedBox(height: 0.8.h),
-          TextWidget(text: body, size: 14, color: Colors.grey.shade700),
+          TextWidget(
+            text: body,
+            size: 14,
+            color: CupidColors.textSecondary(context),
+          ),
         ],
       ),
     );

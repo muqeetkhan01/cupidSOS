@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -447,14 +448,14 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       // Replace your current appBar: AppBar(...) with this.
 
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(9.h),
         child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFDF7F5),
+          decoration: BoxDecoration(
+            color: CupidColors.scaffold(context),
           ),
           child: SafeArea(
             bottom: false,
@@ -489,20 +490,20 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Container(
                           padding: EdgeInsets.all(2.8.w),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: CupidColors.surface(context),
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: CupidColors.shadow(context),
                                 blurRadius: 14,
                                 offset: const Offset(0, 8),
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.arrow_back_ios_new_rounded,
                             size: 18,
-                            color: Colors.black87,
+                            color: CupidColors.textPrimary(context),
                           ),
                         ),
                       ),
@@ -526,7 +527,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 color: const Color(0xFF3DDC84),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                    color: const Color(0xFFFDF7F5), width: 2),
+                                  color: CupidColors.scaffold(context),
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),
@@ -545,10 +548,10 @@ class _ChatScreenState extends State<ChatScreen> {
                               name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w800,
-                                color: Colors.black87,
+                                color: CupidColors.textPrimary(context),
                               ),
                             ),
                             SizedBox(height: 0.4.h),
@@ -559,7 +562,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               style: TextStyle(
                                 fontSize: 12.5,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade600,
+                                color: CupidColors.textSecondary(context),
                               ),
                             ),
                           ],
@@ -688,7 +691,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     decoration: InputDecoration(
                       hintText: "Message...",
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: CupidColors.surface(context),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 4.w,
                         vertical: 1.4.h,
@@ -746,14 +749,14 @@ class _ChatScreenState extends State<ChatScreen> {
       child: TextWidget(
         text: text,
         size: 14.5,
-        color: Colors.grey.shade600,
+        color: CupidColors.textSecondary(context),
       ),
     );
   }
 
   Widget _bubble(String text, {required bool isMe}) {
-    final bg = isMe ? const Color(0xFFFF6F7D) : Colors.white;
-    final fg = isMe ? Colors.white : Colors.black87;
+    final bg = isMe ? const Color(0xFFFF6F7D) : CupidColors.surface(context);
+    final fg = isMe ? Colors.white : CupidColors.textPrimary(context);
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -766,7 +769,7 @@ class _ChatScreenState extends State<ChatScreen> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: CupidColors.shadow(context),
               blurRadius: 10,
               offset: const Offset(0, 6),
             ),
@@ -831,7 +834,7 @@ class _IncomingCallDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: CupidColors.surface(context),
       insetPadding: EdgeInsets.all(6.w),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
       child: Padding(
@@ -861,7 +864,7 @@ class _IncomingCallDialog extends StatelessWidget {
             TextWidget(
               text: name,
               size: 15,
-              color: Colors.grey.shade700,
+              color: CupidColors.textSecondary(context),
             ),
             SizedBox(height: 2.2.h),
             Row(
@@ -1187,13 +1190,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     final remote = _remoteParticipant;
     final roomReady = _room != null;
     if (!roomReady) {
-      return const Scaffold(
-        backgroundColor: Color(0xFFFDF7F5),
+      return Scaffold(
+        backgroundColor: CupidColors.scaffold(context),
         body: Center(child: CircularProgressIndicator()),
       );
     }
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Stack(
           children: [
@@ -1202,9 +1205,9 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             // -------------------------
             Positioned.fill(
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFFDF7F5), Color(0xFFFBEFF3)],
+                    colors: CupidColors.pageGradient(context),
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
@@ -1296,11 +1299,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                       width: 12.w,
                       height: 12.w,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: CupidColors.surface(context),
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
+                            color: CupidColors.shadow(context),
                             blurRadius: 14,
                             offset: const Offset(0, 8),
                           ),
@@ -1329,11 +1332,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                     padding:
                         EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.4.h),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: CupidColors.surface(context),
                       borderRadius: BorderRadius.circular(26),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: CupidColors.shadow(context),
                           blurRadius: 18,
                           offset: const Offset(0, 10),
                         ),
@@ -1422,11 +1425,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.9.h),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.92),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF181B22).withOpacity(0.92)
+            : Colors.white.withOpacity(0.92),
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: CupidColors.shadow(context),
             blurRadius: 12,
             offset: const Offset(0, 7),
           ),
@@ -1480,7 +1485,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             TextWidget(
               text: label,
               size: 10.5,
-              color: Colors.grey.shade700,
+              color: CupidColors.textSecondary(context),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1508,7 +1513,7 @@ class _WaitingRemote extends StatelessWidget {
           Text(
             isCaller ? "Calling..." : "Connecting...",
             style: TextStyle(
-              color: Colors.grey.shade700,
+              color: CupidColors.textSecondary(context),
               fontWeight: FontWeight.w600,
             ),
           ),

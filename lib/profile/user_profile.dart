@@ -1,6 +1,7 @@
 // lib/screens/user/user_profile_screen.dart
 import 'dart:ui';
 import 'package:cupid_app/Discover/discover_screen.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:cupid_app/profile/safety_center_screen.dart';
 import 'package:cupid_app/widgets/voice.dart';
@@ -47,7 +48,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             child: TextWidget(
               text: label,
               size: 12.5,
-              color: Colors.grey.shade600,
+              color: CupidColors.textSecondary(context),
               weight: FontWeight.w700,
             ),
           ),
@@ -56,7 +57,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               text: v,
               size: 14.5,
               weight: FontWeight.w700,
-              color: Colors.black87,
+              color: CupidColors.textPrimary(context),
             ),
           ),
         ],
@@ -72,9 +73,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: CupidColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +91,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     final myUid = AuthService.to.currentUser?.uid;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: Stack(
         children: [
           /// Scroll content
@@ -99,7 +100,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               SliverAppBar(
                 pinned: true,
                 elevation: 0,
-                backgroundColor: const Color(0xFFFDF7F5),
+                backgroundColor: CupidColors.scaffold(context),
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back_ios_new_rounded),
                   onPressed: () => Navigator.pop(context),
@@ -251,9 +252,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: CupidColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +262,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           TextWidget(
             text: "Voice prompt",
             size: 12.5,
-            color: Colors.grey.shade600,
+            color: CupidColors.textSecondary(context),
             weight: FontWeight.w700,
           ),
           SizedBox(height: 0.8.h),
@@ -269,7 +270,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             text: hasPrompt ? promptText : "Not set",
             size: 14.5,
             weight: FontWeight.w600,
-            color: Colors.black87,
+            color: CupidColors.textPrimary(context),
           ),
           if (hasAudio) ...[
             SizedBox(height: 1.4.h),
@@ -279,7 +280,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             TextWidget(
               text: "No voice note available",
               size: 13,
-              color: Colors.grey.shade600,
+              color: CupidColors.textSecondary(context),
             ),
           ],
         ],
@@ -292,11 +293,11 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: CupidColors.shadow(context),
             blurRadius: 16,
             offset: const Offset(0, 10),
           ),
@@ -305,7 +306,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       child: TextWidget(
         text: text,
         size: 14.5,
-        color: Colors.black87,
+        color: CupidColors.textPrimary(context),
       ),
     );
   }
@@ -315,9 +316,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: CupidColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,7 +326,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           TextWidget(
             text: title,
             size: 12.5,
-            color: Colors.grey.shade600,
+            color: CupidColors.textSecondary(context),
             weight: FontWeight.w700,
           ),
           SizedBox(height: 0.8.h),
@@ -333,7 +334,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             text: value,
             size: 14.5,
             weight: FontWeight.w600,
-            color: Colors.black87,
+            color: CupidColors.textPrimary(context),
           ),
         ],
       ),
@@ -354,14 +355,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               u,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
-                color: Colors.grey.shade200,
+                color: CupidColors.surfaceMuted(context),
                 alignment: Alignment.center,
                 child: const Icon(Icons.broken_image_outlined),
               ),
               loadingBuilder: (_, child, progress) {
                 if (progress == null) return child;
                 return Container(
-                  color: Colors.grey.shade100,
+                  color: CupidColors.surfaceMuted(context),
                   alignment: Alignment.center,
                   child: const CircularProgressIndicator(strokeWidth: 2),
                 );
@@ -403,14 +404,14 @@ class _HeroHeader extends StatelessWidget {
             imageUrl,
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
-              color: Colors.grey.shade300,
+              color: CupidColors.surfaceMuted(context),
               alignment: Alignment.center,
               child: const Icon(Icons.person, size: 64),
             ),
             loadingBuilder: (_, child, progress) {
               if (progress == null) return child;
               return Container(
-                color: Colors.grey.shade200,
+                color: CupidColors.surfaceMuted(context),
                 alignment: Alignment.center,
                 child: const CircularProgressIndicator(strokeWidth: 2),
               );

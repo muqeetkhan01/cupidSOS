@@ -2,6 +2,7 @@
 
 import 'package:cupid_app/Discover/discover_screen.dart';
 import 'package:cupid_app/chat/chat_list_screen.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/match/matches_screen.dart';
 import 'package:cupid_app/profile/profile_screen.dart';
 import 'package:cupid_app/services/auth_service.dart';
@@ -63,11 +64,11 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
           height: 9.h,
           padding: EdgeInsets.symmetric(horizontal: 2.w),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: CupidColors.navBar(context),
             borderRadius: BorderRadius.circular(28),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: CupidColors.shadow(context),
                 blurRadius: 24,
                 offset: const Offset(0, 12),
               ),
@@ -167,7 +168,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
                               size: 20.sp,
                               color: isSelected
                                   ? const Color(0xFFFF6F7D)
-                                  : Colors.grey.shade500,
+                                  : CupidColors.textSecondary(context),
                             ),
                     ),
                   ),
@@ -203,7 +204,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
                   weight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   color: isSelected
                       ? const Color(0xFFFF6F7D)
-                      : Colors.grey.shade600,
+                      : CupidColors.textSecondary(context),
                 ),
               ),
             ],
@@ -223,7 +224,9 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
 
     if (url.isEmpty) {
       return CircleAvatar(
-        backgroundColor: !isSelected ? const Color(0xFFFF6F7D) : Colors.white,
+        backgroundColor: !isSelected
+            ? const Color(0xFFFF6F7D)
+            : CupidColors.surface(context),
         radius: 15.sp,
         child: Icon(
           isSelected ? activeIcon : inactiveIcon,
@@ -236,7 +239,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
     return CircleAvatar(
       radius: 15.sp,
       backgroundImage: NetworkImage(url),
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: CupidColors.surfaceMuted(context),
       onBackgroundImageError: (_, __) {},
     );
   }

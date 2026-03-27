@@ -1,6 +1,7 @@
 // lib/screens/profile/edit_profile_screen.dart
 import 'dart:io';
 
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -193,12 +194,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: CupidColors.surface(context),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.shade200),
+        borderSide: BorderSide(color: CupidColors.border(context)),
       ),
+      labelStyle: TextStyle(color: CupidColors.textSecondary(context)),
     );
   }
 
@@ -208,9 +210,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final currentPhoto = (user?.photoURL ?? "").trim();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFDF7F5),
+        backgroundColor: CupidColors.scaffold(context),
         elevation: 0,
         title: const TextWidget(
             text: "Edit Profile", size: 18, weight: FontWeight.w700),
@@ -245,7 +247,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 44,
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: CupidColors.surfaceMuted(context),
                         backgroundImage: pickedProfilePhoto != null
                             ? FileImage(pickedProfilePhoto!)
                             : (currentPhoto.isNotEmpty
@@ -282,7 +284,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       text:
                           "Tap the edit icon to change your profile photo.\nUploads to Cloudinary.",
                       size: 13,
-                      color: Colors.grey.shade700,
+                      color: CupidColors.textSecondary(context),
                     ),
                   )
                 ],
@@ -324,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 text:
                     "Note: this edits the saved label only. If you want, I can add a 'Pick on map' button here too.",
                 size: 12,
-                color: Colors.grey.shade600,
+                color: CupidColors.textSecondary(context),
               ),
               SizedBox(height: 2.5.h),
               _sectionTitle("Prompts"),
@@ -393,9 +395,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: CupidColors.border(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,14 +462,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Container(
               width: (100.w - (5.w * 2) - 3.w) / 2,
               height: 20.h,
-              color: Colors.grey.shade200,
+              color: CupidColors.surfaceMuted(context),
               child: Stack(
                 children: [
                   Positioned.fill(
                     child: has
                         ? Image(image: provider, fit: BoxFit.cover)
                         : Container(
-                            color: Colors.white,
+                            color: CupidColors.surface(context),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -476,7 +478,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 TextWidget(
                                   text: "Add photo",
                                   size: 13,
-                                  color: Colors.grey.shade700,
+                                  color: CupidColors.textSecondary(context),
                                 ),
                               ],
                             ),

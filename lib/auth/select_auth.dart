@@ -1,5 +1,6 @@
 // ===============================
 import 'package:cupid_app/auth/auth_screen.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -94,7 +95,7 @@ class _SignupScreenState extends State<SignupScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -117,7 +118,7 @@ class _SignupScreenState extends State<SignupScreen>
                     const TextWidget(
                       text: 'Step 1 of 10',
                       size: 14,
-                      color: Colors.grey,
+                      color: null,
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -157,7 +158,7 @@ class _SignupScreenState extends State<SignupScreen>
                 child: TextWidget(
                   text: 'One tap to start your love story ✨',
                   size: 16,
-                  color: Colors.grey.shade600,
+                  color: CupidColors.textSecondary(context),
                 ),
               ),
               SizedBox(height: 6.h),
@@ -168,8 +169,14 @@ class _SignupScreenState extends State<SignupScreen>
                 end: 0.6,
                 child: ButtonWidget(
                   text: _busy ? "Please wait..." : 'Continue with Apple',
-                  backgroundColor: Colors.black,
+                  backgroundColor:
+                      Theme.of(context).brightness == Brightness.dark
+                          ? CupidColors.surface(context)
+                          : Colors.black,
                   iconAsset: 'assets/images/apple.png',
+                  textColor: Theme.of(context).brightness == Brightness.dark
+                      ? CupidColors.textPrimary(context)
+                      : Colors.white,
                   onTap: _busy
                       ? () {}
                       : () => _oauthAndRoute(AuthService.to.signInWithApple),
@@ -185,8 +192,8 @@ class _SignupScreenState extends State<SignupScreen>
                 child: ButtonWidget(
                   text: _busy ? "Please wait..." : 'Continue with Google',
                   variant: ButtonVariant.outline,
-                  borderColor: Colors.grey.shade300,
-                  textColor: Colors.black,
+                  borderColor: CupidColors.border(context),
+                  textColor: CupidColors.textPrimary(context),
                   enableShadow: false,
                   iconAsset: 'assets/images/google.png',
                   onTap: _busy

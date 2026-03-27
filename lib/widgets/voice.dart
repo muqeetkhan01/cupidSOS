@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class VoiceNotePlayer extends StatefulWidget {
@@ -160,7 +161,7 @@ class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
                     _fmt(_pos),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade700,
+                      color: CupidColors.textSecondary(context),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -168,7 +169,7 @@ class _VoiceNotePlayerState extends State<VoiceNotePlayer> {
                     _fmt(_dur),
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade700,
+                      color: CupidColors.textSecondary(context),
                       fontWeight: FontWeight.w600,
                     ),
                   ),

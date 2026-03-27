@@ -1,5 +1,6 @@
 import 'package:cupid_app/home/home.dart';
 import 'package:cupid_app/onboard/match_loading_screen.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/widgets/bottomNav.dart';
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -49,11 +50,11 @@ class _MatchResultScreenState extends State<MatchResultScreen>
       margin: EdgeInsets.only(bottom: 1.2.h),
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: CupidColors.shadow(context),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -89,7 +90,6 @@ class _MatchResultScreenState extends State<MatchResultScreen>
           const TextWidget(
             text: '0:12',
             size: 12,
-            color: Colors.grey,
           ),
         ],
       ),
@@ -152,7 +152,7 @@ class _MatchResultScreenState extends State<MatchResultScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 5.w),
@@ -216,7 +216,7 @@ class _MatchResultScreenState extends State<MatchResultScreen>
 
               /// ================= MATCH CARD =================
               _animated(
-                _matchCard(),
+                _matchCard(context),
                 0.25,
                 0.6,
               ),
@@ -224,7 +224,7 @@ class _MatchResultScreenState extends State<MatchResultScreen>
               SizedBox(height: 2.h),
 
               /// 24H SPARK
-              _animated(_sparkTimer(), 0.6, 0.7),
+              _animated(_sparkTimer(context), 0.6, 0.7),
 
               SizedBox(height: 2.h),
               SizedBox(height: 2.h),
@@ -296,10 +296,10 @@ class _MatchResultScreenState extends State<MatchResultScreen>
               SizedBox(height: 2.h),
 
               Center(
-                child: const TextWidget(
+                child: TextWidget(
                   text: "Don't let this spark fade ✨",
                   size: 14,
-                  color: Colors.grey,
+                  color: CupidColors.textSecondary(context),
                 ),
               ),
 
@@ -314,14 +314,14 @@ class _MatchResultScreenState extends State<MatchResultScreen>
 
 /// ================= MATCH CARD =================
 
-Widget _matchCard() {
+Widget _matchCard(BuildContext context) {
   return Container(
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: CupidColors.surface(context),
       borderRadius: BorderRadius.circular(28),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.08),
+          color: CupidColors.shadow(context),
           blurRadius: 22,
           offset: const Offset(0, 12),
         ),
@@ -404,13 +404,13 @@ Widget _tag(String text) => Container(
       child: TextWidget(text: text, size: 12, color: Colors.white),
     );
 
-Widget _sparkTimer() => Container(
+Widget _sparkTimer(BuildContext context) => Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12),
+          BoxShadow(color: CupidColors.shadow(context), blurRadius: 12),
         ],
       ),
       child: Row(
@@ -446,7 +446,7 @@ Widget _openingMove() => Container(
     );
 
 /// 🎧 VOICE NOTE WITH WAVEFORM
-Widget _voiceNote() {
+Widget _voiceNote(BuildContext context) {
   final bars = List.generate(
     20,
     (i) => Container(
@@ -464,10 +464,10 @@ Widget _voiceNote() {
     margin: EdgeInsets.only(bottom: 1.h),
     padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: CupidColors.surface(context),
       borderRadius: BorderRadius.circular(18),
       boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8),
+        BoxShadow(color: CupidColors.shadow(context), blurRadius: 8),
       ],
     ),
     child: Row(
@@ -484,7 +484,6 @@ Widget _voiceNote() {
         const TextWidget(
           text: '0:12',
           size: 12,
-          color: Colors.grey,
         ),
       ],
     ),

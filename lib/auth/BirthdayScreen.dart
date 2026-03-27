@@ -1,4 +1,5 @@
 // lib/onboard/birthday_screen.dart
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/vibe_selection_screen.dart';
 import 'package:cupid_app/widgets/roldex.dart';
@@ -116,7 +117,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
     final age = _ageFromDob(_dob);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -142,7 +143,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                       const TextWidget(
                         text: 'Step 2 10',
                         size: 14,
-                        color: Colors.grey,
+                        color: null,
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -193,7 +194,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                     text:
                         "We’ll unlock your cosmic soul badges\nYour birthday is locked once you set it.",
                     size: 15,
-                    color: Colors.grey.shade600,
+                    color: CupidColors.textSecondary(context),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -210,7 +211,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                     maxYear: DateTime.now().year,
                     height: 24.h,
                     itemExtent: 6.h,
-                    backgroundColor: Colors.white,
+                    backgroundColor: CupidColors.surface(context),
                     highlightColor: const Color(0xFFD86BCF).withOpacity(0.08),
                     textStyle: TextStyle(
                       fontSize: 18.sp,
@@ -220,7 +221,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                     fadedTextStyle: TextStyle(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade400,
+                      color: CupidColors.textSecondary(context),
                     ),
                     onChanged: (d) => setState(() => _dob = d),
                   ),
@@ -234,7 +235,7 @@ class _BirthdayScreenState extends State<BirthdayScreen>
                   child: TextWidget(
                     text: "You're $age.",
                     size: 15,
-                    color: Colors.grey.shade700,
+                    color: CupidColors.textSecondary(context),
                     textAlign: TextAlign.center,
                   ),
                 ),

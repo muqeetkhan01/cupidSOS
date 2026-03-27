@@ -1,3 +1,4 @@
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/show_your_story_screen.dart';
 import 'package:cupid_app/onboard/voice_prompt_screen.dart';
@@ -20,7 +21,7 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -34,11 +35,11 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                 weight: FontWeight.w500,
               ),
               SizedBox(height: 1.h),
-              const TextWidget(
+              TextWidget(
                 text:
                     "Choose the label that defines “home” for you so matches know what you’re about.",
                 size: 15,
-                color: Colors.grey,
+                color: CupidColors.textSecondary(context),
               ),
               SizedBox(height: 4.h),
               Expanded(
@@ -55,13 +56,16 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                         duration: const Duration(milliseconds: 220),
                         padding: EdgeInsets.all(4.w),
                         decoration: BoxDecoration(
-                          color:
-                              selected ? const Color(0xFFFFECEF) : Colors.white,
+                          color: selected
+                              ? (Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF30212B)
+                                  : const Color(0xFFFFECEF))
+                              : CupidColors.surface(context),
                           borderRadius: BorderRadius.circular(22),
                           border: Border.all(
                             color: selected
                                 ? const Color(0xFFFF6F7D)
-                                : Colors.grey.shade300,
+                                : CupidColors.border(context),
                           ),
                         ),
                         child: Row(
@@ -81,7 +85,7 @@ class _CulturalVibeScreenState extends State<CulturalVibeScreen> {
                                   TextWidget(
                                     text: vibe.description,
                                     size: 13,
-                                    color: Colors.grey,
+                                    color: CupidColors.textSecondary(context),
                                   ),
                                 ],
                               ),
@@ -331,8 +335,8 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                   colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 )
               : null,
-          color: selected ? null : Colors.white,
-          border: Border.all(color: Colors.grey.shade300),
+          color: selected ? null : CupidColors.surface(context),
+          border: Border.all(color: CupidColors.border(context)),
           boxShadow: selected
               ? [
                   BoxShadow(
@@ -404,7 +408,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
     final current = quirks[activeEmoji];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -425,11 +429,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                         onPressed: () => Navigator.pop(context),
                       ),
                     ),
-                    const TextWidget(
-                      text: '16 of 19',
-                      size: 14,
-                      color: Colors.grey,
-                    ),
+                    const TextWidget(text: '16 of 19', size: 14, color: null),
                   ],
                 ),
               ),
@@ -439,7 +439,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
               _animated(
                 from: 0.15,
                 to: 0.3,
-                child: const Column(
+                child: Column(
                   children: [
                     TextWidget(
                       text: 'Your Quik Prompt 💬',
@@ -450,7 +450,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                     TextWidget(
                       text: 'This becomes your "Opening Move" icebreaker',
                       size: 15,
-                      color: Color(0xFF1E1E1E),
+                      color: CupidColors.textPrimary(context),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -490,7 +490,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                         size: 14,
                         color: activeEmoji > 0
                             ? const Color(0xFFFF6F7D)
-                            : Colors.grey.shade400,
+                            : CupidColors.textSecondary(context),
                       ),
                     ),
                     GestureDetector(
@@ -502,7 +502,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                         size: 14,
                         color: activeEmoji < quirks.length - 1
                             ? const Color(0xFFFF6F7D)
-                            : Colors.grey.shade400,
+                            : CupidColors.textSecondary(context),
                       ),
                     ),
                   ],
@@ -518,11 +518,11 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                 child: Container(
                   padding: EdgeInsets.all(5.w),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: CupidColors.surface(context),
                     borderRadius: BorderRadius.circular(26),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: CupidColors.shadow(context),
                         blurRadius: 22,
                       ),
                     ],
@@ -569,7 +569,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                           border: Border.all(
                             color: isValid
                                 ? const Color(0xFFFF6F7D)
-                                : Colors.grey.shade300,
+                                : CupidColors.border(context),
                           ),
                         ),
                         child: Column(
@@ -590,7 +590,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                                 TextWidget(
                                   text: '${_textCtrl.text.length}/150',
                                   size: 13,
-                                  color: Colors.grey,
+                                  color: CupidColors.textSecondary(context),
                                 ),
                                 if (_textCtrl.text.isNotEmpty)
                                   GestureDetector(
@@ -649,7 +649,7 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
                           ? ButtonVariant.gradient
                           : ButtonVariant.solid,
                       gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                      backgroundColor: Colors.grey.shade300,
+                      backgroundColor: CupidColors.border(context),
                       enableShadow: isValid,
                       onTap: isValid
                           ? () async {
@@ -711,7 +711,11 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
           height: 5.5.h,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            color: selected ? const Color(0xFFFFECEF) : const Color(0xFFF1F1F1),
+            color: selected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF30212B)
+                    : const Color(0xFFFFECEF))
+                : CupidColors.surfaceMuted(context),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -719,14 +723,18 @@ class _QuirkPromptScreenState extends State<QuirkPromptScreen>
               Icon(
                 icon,
                 size: 18,
-                color: selected ? const Color(0xFFFF6F7D) : Colors.grey,
+                color: selected
+                    ? const Color(0xFFFF6F7D)
+                    : CupidColors.textSecondary(context),
               ),
               SizedBox(width: 1.w),
               TextWidget(
                 text: label,
                 size: 14,
                 weight: FontWeight.w600,
-                color: selected ? const Color(0xFFFF6F7D) : Colors.grey,
+                color: selected
+                    ? const Color(0xFFFF6F7D)
+                    : CupidColors.textSecondary(context),
               ),
             ],
           ),

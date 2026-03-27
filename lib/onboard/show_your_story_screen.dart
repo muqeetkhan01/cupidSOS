@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/photo_verification_screen.dart';
 import 'package:cupid_app/services/auth_service.dart';
@@ -122,17 +123,27 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
               image: hasImage
                   ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                   : null,
-              color: hasImage ? null : const Color(0xFFF7F7F7),
-              border: hasImage ? null : Border.all(color: Colors.grey.shade300),
+              color: hasImage ? null : CupidColors.surfaceMuted(context),
+              border: hasImage
+                  ? null
+                  : Border.all(color: CupidColors.border(context)),
             ),
             child: !hasImage
                 ? Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.add, size: 30, color: Colors.grey),
+                        Icon(
+                          Icons.add,
+                          size: 30,
+                          color: CupidColors.textSecondary(context),
+                        ),
                         SizedBox(height: 1.h),
-                        TextWidget(text: label, size: 13, color: Colors.grey),
+                        TextWidget(
+                          text: label,
+                          size: 13,
+                          color: CupidColors.textSecondary(context),
+                        ),
                       ],
                     ),
                   )
@@ -216,7 +227,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -239,7 +250,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                     const TextWidget(
                       text: '18 of 19',
                       size: 14,
-                      color: Colors.grey,
+                      color: null,
                     ),
                   ],
                 ),
@@ -263,7 +274,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                     TextWidget(
                       text: 'Add photos that tell your cultural journey',
                       size: 15,
-                      color: Colors.grey,
+                      color: CupidColors.textSecondary(context),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -391,7 +402,7 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                 radius: 36,
                 variant: isValid ? ButtonVariant.gradient : ButtonVariant.solid,
                 gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                backgroundColor: Colors.grey.shade300,
+                backgroundColor: CupidColors.border(context),
                 enableShadow: isValid,
                 onTap: uploadedCount >= 3
                     ? _uploadAndContinue

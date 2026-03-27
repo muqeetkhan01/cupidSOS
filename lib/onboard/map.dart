@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/looking_for_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -54,13 +55,18 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
     final result = await Navigator.of(context).push<LocationResult>(
       MaterialPageRoute(
         builder: (context) => Theme(
-          data: ThemeData(
-            scaffoldBackgroundColor: Colors.white,
+          data: Theme.of(context).copyWith(
+            scaffoldBackgroundColor: CupidColors.scaffold(context),
             primaryColor: const Color(0xFFFF6F7D),
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFFFF6F7D),
-              secondary: Color(0xFFFF6F7D),
-            ),
+            colorScheme: Theme.of(context).brightness == Brightness.dark
+                ? const ColorScheme.dark(
+                    primary: Color(0xFFFF6F7D),
+                    secondary: Color(0xFFFF6F7D),
+                  )
+                : const ColorScheme.light(
+                    primary: Color(0xFFFF6F7D),
+                    secondary: Color(0xFFFF6F7D),
+                  ),
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFFFF6F7D),
               foregroundColor: Colors.white,
@@ -132,7 +138,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
             (flow.latitude.value != null && flow.longitude.value != null));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -153,7 +159,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
                   const TextWidget(
                     text: '12 of 19',
                     size: 14,
-                    color: Colors.grey,
+                    color: null,
                   ),
                 ],
               ),
@@ -167,7 +173,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
               const TextWidget(
                 text: "We’ll use this to show you better matches near you.",
                 size: 15,
-                color: Colors.grey,
+                color: null,
               ),
               SizedBox(height: 3.h),
               GestureDetector(
@@ -176,9 +182,9 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
                   padding:
                       EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.6.h),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: CupidColors.surface(context),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: CupidColors.border(context)),
                   ),
                   child: Row(
                     children: [
@@ -191,11 +197,14 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
                               : addressController.text,
                           size: 15,
                           color: addressController.text.isEmpty
-                              ? Colors.grey
-                              : Colors.black,
+                              ? CupidColors.textSecondary(context)
+                              : CupidColors.textPrimary(context),
                         ),
                       ),
-                      const Icon(Icons.chevron_right, color: Colors.grey),
+                      Icon(
+                        Icons.chevron_right,
+                        color: CupidColors.textSecondary(context),
+                      ),
                     ],
                   ),
                 ),
@@ -229,7 +238,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
                 radius: 36,
                 variant:
                     canContinue ? ButtonVariant.gradient : ButtonVariant.solid,
-                backgroundColor: Colors.grey.shade300,
+                backgroundColor: CupidColors.border(context),
                 gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                 onTap: canContinue ? _continue : () {},
               ),

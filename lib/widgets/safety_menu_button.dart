@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:cupid_app/services/safety_service.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,7 @@ class SafetyMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<String>(
-      icon: Icon(icon, color: Colors.black87),
+      icon: Icon(icon, color: CupidColors.textPrimary(context)),
       onSelected: (value) async {
         if (value == 'report') {
           await _showReportSheet(context);
@@ -178,7 +179,7 @@ class SafetyMenuButton extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: CupidColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -246,9 +247,13 @@ class SafetyMenuButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'What’s going on?',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: CupidColors.textPrimary(sheetContext),
+                    ),
                   ),
                   SizedBox(height: 1.8.h),
                   for (final item in reasons)
@@ -269,6 +274,8 @@ class SafetyMenuButton extends StatelessWidget {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
+                      filled: true,
+                      fillColor: CupidColors.surfaceMuted(sheetContext),
                     ),
                   ),
                   SizedBox(height: 1.5.h),

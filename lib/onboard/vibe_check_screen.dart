@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/basics_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -137,9 +138,10 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                   ],
                 )
               : null,
-          color: isSelected ? null : Colors.white,
+          color: isSelected ? null : CupidColors.surface(context),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            color:
+                isSelected ? Colors.transparent : CupidColors.border(context),
           ),
           boxShadow: isSelected
               ? [
@@ -158,7 +160,8 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
               text: label,
               size: 14,
               weight: FontWeight.w600,
-              color: isSelected ? Colors.white : Colors.black,
+              color:
+                  isSelected ? Colors.white : CupidColors.textPrimary(context),
             ),
             if (isSelected) ...[
               SizedBox(width: 1.w),
@@ -177,7 +180,7 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -200,7 +203,7 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                   const TextWidget(
                     text: '5 of 19',
                     size: 14,
-                    color: Colors.grey,
+                    color: null,
                   ),
                 ],
               ),
@@ -222,7 +225,7 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                   TextWidget(
                     text: 'Select exactly 5 interests that define you',
                     size: 15,
-                    color: Color(0xFF1E1E1E),
+                    color: null,
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -247,7 +250,7 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                       shape: BoxShape.circle,
                       color: i < selected.length
                           ? const Color(0xFFD86BCF)
-                          : Colors.grey.shade300,
+                          : CupidColors.border(context),
                     ),
                   ),
                 ),
@@ -298,8 +301,9 @@ class _VibeCheckScreenState extends State<VibeCheckScreen>
                           Color(0x00000000),
                           Color(0x00000000),
                         ],
-                  backgroundColor:
-                      isValid ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+                  backgroundColor: isValid
+                      ? const Color(0xFFFF6F7D)
+                      : CupidColors.border(context),
                   enableShadow: isValid,
                   onTap: isValid
                       ? () async {

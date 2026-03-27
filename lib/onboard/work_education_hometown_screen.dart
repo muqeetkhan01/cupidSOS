@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/onboarding_options.dart';
 import 'package:cupid_app/onboard/preferences_screen.dart';
 import 'package:flutter/material.dart';
@@ -108,7 +109,7 @@ class _WorkEducationHometownScreenState
               const TextWidget(
                 text: '14 of 19',
                 size: 12,
-                color: Colors.grey,
+                color: null,
               ),
             ],
           ),
@@ -129,21 +130,21 @@ class _WorkEducationHometownScreenState
           text: label.toUpperCase(),
           size: 12,
           weight: FontWeight.w600,
-          color: Colors.grey,
+          color: CupidColors.textSecondary(context),
         ),
         SizedBox(height: 1.h),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: CupidColors.surface(context),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(color: CupidColors.border(context)),
           ),
           child: TextField(
             controller: controller,
             textInputAction: TextInputAction.next,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey.shade400),
+              hintStyle: TextStyle(color: CupidColors.textSecondary(context)),
               contentPadding:
                   EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.1.h),
               border: InputBorder.none,
@@ -165,17 +166,25 @@ class _WorkEducationHometownScreenState
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.4.h),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFFFECEF) : Colors.white,
+          color: selected
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF30212B)
+                  : const Color(0xFFFFECEF))
+              : CupidColors.surface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+            color: selected
+                ? const Color(0xFFFF6F7D)
+                : CupidColors.border(context),
             width: selected ? 1.5 : 1,
           ),
         ),
         child: TextWidget(
           text: text,
           weight: FontWeight.w600,
-          color: selected ? const Color(0xFFFF6F7D) : const Color(0xFF1E1E1E),
+          color: selected
+              ? const Color(0xFFFF6F7D)
+              : CupidColors.textPrimary(context),
         ),
       ),
     );
@@ -207,7 +216,7 @@ class _WorkEducationHometownScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -232,7 +241,7 @@ class _WorkEducationHometownScreenState
                   text:
                       'Everything here is optional. Add what feels useful, or skip straight through.',
                   size: 15,
-                  color: Colors.grey,
+                  color: null,
                 ),
                 0.2,
                 0.35,

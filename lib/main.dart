@@ -1,5 +1,6 @@
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/map.dart';
+import 'package:cupid_app/config/app_theme.dart';
+import 'package:cupid_app/config/theme_controller.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:cupid_app/services/notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:cupid_app/onboard/cupid_splash_screen.dart';
@@ -23,6 +23,8 @@ void main() async {
   tz.initializeTimeZones();
   Get.put(AuthService(), permanent: true);
   Get.put(AppFlowController(), permanent: true);
+  final themeController = Get.put(ThemeController(), permanent: true);
+  await themeController.load();
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -51,16 +53,18 @@ class CupidApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
     return ResponsiveSizer(
       builder: (context, orientation, screenType) {
-        return GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Cupid SOS',
-          theme: ThemeData(
-            useMaterial3: true,
-            scaffoldBackgroundColor: Colors.transparent,
+        return Obx(
+          () => GetMaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Cupid SOS',
+            theme: AppThemes.light,
+            darkTheme: AppThemes.dark,
+            themeMode: themeController.mode.value,
+            home: const CupidSplashScreen(),
           ),
-          home: const CupidSplashScreen(),
         );
       },
     );

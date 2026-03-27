@@ -1,4 +1,5 @@
 import 'package:cupid_app/auth/BirthdayScreen.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/match_loading_screen.dart';
 import 'package:flutter/material.dart';
@@ -256,15 +257,22 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
   }
 
   Widget _ruleCard(int index, _RuleItem rule) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: EdgeInsets.all(4.2.w),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.96),
+        color: dark
+            ? const Color(0xFF181B22).withOpacity(0.96)
+            : Colors.white.withOpacity(0.96),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Colors.white.withOpacity(0.7)),
+        border: Border.all(
+          color: dark
+              ? CupidColors.border(context)
+              : Colors.white.withOpacity(0.7),
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB96FD1).withOpacity(0.06),
+            color: CupidColors.shadow(context),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -295,7 +303,9 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8EDF1),
+                        color: dark
+                            ? const Color(0xFF2A2434)
+                            : const Color(0xFFF8EDF1),
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: TextWidget(
@@ -319,7 +329,7 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
                 TextWidget(
                   text: rule.body,
                   size: 14,
-                  color: Colors.grey.shade700,
+                  color: CupidColors.textSecondary(context),
                 ),
               ],
             ),
@@ -332,23 +342,25 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F1EE),
+      backgroundColor: CupidColors.scaffold(context),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: widget.isFinalStep
-                ? const [
-                    Color(0xFFF7F0F2),
-                    Color(0xFFF3EEF7),
-                    Color(0xFFF1EFF6),
-                  ]
-                : const [
-                    Color(0xFFFFF4F2),
-                    Color(0xFFFDF1F4),
-                    Color(0xFFF6EFF8),
-                  ],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? CupidColors.pageGradient(context)
+                : widget.isFinalStep
+                    ? const [
+                        Color(0xFFF7F0F2),
+                        Color(0xFFF3EEF7),
+                        Color(0xFFF1EFF6),
+                      ]
+                    : const [
+                        Color(0xFFFFF4F2),
+                        Color(0xFFFDF1F4),
+                        Color(0xFFF6EFF8),
+                      ],
           ),
         ),
         child: Stack(
@@ -392,13 +404,13 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
                               vertical: 0.9.h,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: CupidColors.surface(context),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: TextWidget(
                               text: _stepLabel,
                               size: 13,
-                              color: Colors.black87,
+                              color: CupidColors.textPrimary(context),
                               weight: FontWeight.w700,
                             ),
                           ),
@@ -414,7 +426,7 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
                       TextWidget(
                         text: _supportingText,
                         size: 14.5,
-                        color: Colors.grey.shade700,
+                        color: CupidColors.textSecondary(context),
                       ),
                       0.2,
                       0.38,
@@ -459,7 +471,7 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
                                 ? 'Thoughtful connections start here.'
                                 : 'You’re in control. We’ve got your back.',
                             size: 13,
-                            color: Colors.grey.shade600,
+                            color: CupidColors.textSecondary(context),
                             textAlign: TextAlign.center,
                           ),
                         ],

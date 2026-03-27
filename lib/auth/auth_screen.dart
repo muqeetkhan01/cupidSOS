@@ -3,6 +3,7 @@
 // Route with AppFlowController.getPostAuthRoute().
 
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -109,7 +110,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -140,8 +141,9 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                 SizedBox(height: 2.h),
                 Obx(() {
                   final err = flow.error.value;
-                  if (err == null || err.isEmpty)
+                  if (err == null || err.isEmpty) {
                     return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: EdgeInsets.only(bottom: 1.h),
                     child: TextWidget(
@@ -189,6 +191,7 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
     bool obscure = false,
   }) {
     const borderColor = Color(0xFFFF6F7D);
+    final context = this.context;
 
     OutlineInputBorder border(Color color) => OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -202,9 +205,12 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
         obscureText: obscure,
         decoration: InputDecoration(
           labelText: label,
-          border: border(Colors.grey.shade300), // fallback
+          filled: true,
+          fillColor: CupidColors.surface(context),
+          border: border(CupidColors.border(context)),
           enabledBorder: border(borderColor), // ✅ enabled
           focusedBorder: border(borderColor), // ✅ focused
+          labelStyle: TextStyle(color: CupidColors.textSecondary(context)),
         ),
       ),
     );

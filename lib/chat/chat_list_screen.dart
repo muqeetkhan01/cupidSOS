@@ -1,5 +1,6 @@
 // lib/Chat/chat_list_screen.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -20,7 +21,7 @@ class ChatListScreen extends StatelessWidget {
     final myUid = _myUid;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: myUid == null
             ? const Center(
@@ -47,7 +48,7 @@ class ChatListScreen extends StatelessWidget {
                     TextWidget(
                       text: "Your conversations 💬",
                       size: 16,
-                      color: Colors.grey.shade600,
+                      color: CupidColors.textSecondary(context),
                     ),
 
                     SizedBox(height: 3.h),
@@ -76,7 +77,7 @@ class ChatListScreen extends StatelessWidget {
                               .toList();
 
                           if (threads.isEmpty) {
-                            return _emptyState();
+                            return _emptyState(context);
                           }
 
                           return ListView.builder(
@@ -119,7 +120,7 @@ class ChatListScreen extends StatelessWidget {
     );
   }
 
-  Widget _emptyState() {
+  Widget _emptyState(BuildContext context) {
     return Center(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 8.w),
@@ -138,7 +139,7 @@ class ChatListScreen extends StatelessWidget {
             TextWidget(
               text: "Match with someone and send a message to start chatting.",
               size: 13.5,
-              color: Colors.grey.shade600,
+              color: CupidColors.textSecondary(context),
               textAlign: TextAlign.center,
             ),
           ],
@@ -275,11 +276,11 @@ class _ChatTile extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.all(3.w),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: CupidColors.surface(context),
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: CupidColors.shadow(context),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -304,7 +305,8 @@ class _ChatTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: const Color(0xFF3DDC84),
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(
+                            color: CupidColors.surface(context), width: 2),
                       ),
                     ),
                   ),
@@ -328,7 +330,7 @@ class _ChatTile extends StatelessWidget {
                   TextWidget(
                     text: message,
                     size: 14,
-                    color: Colors.grey.shade600,
+                    color: CupidColors.textSecondary(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -345,7 +347,7 @@ class _ChatTile extends StatelessWidget {
                 TextWidget(
                   text: time,
                   size: 12,
-                  color: Colors.grey.shade500,
+                  color: CupidColors.textSecondary(context),
                 ),
                 SizedBox(height: 1.h),
                 if (unread > 0)

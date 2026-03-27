@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -120,13 +121,13 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                     colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                   )
                 : null,
-            color: selected ? null : Colors.grey.shade200,
+            color: selected ? null : CupidColors.surfaceMuted(context),
           ),
           child: TextWidget(
             text: label,
             size: 15,
             weight: FontWeight.w600,
-            color: selected ? Colors.white : Colors.grey.shade700,
+            color: selected ? Colors.white : CupidColors.textSecondary(context),
           ),
         ),
       ),
@@ -143,10 +144,10 @@ class _BigThreeScreenState extends State<BigThreeScreen>
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: CupidColors.surface(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 20),
+          BoxShadow(color: CupidColors.shadow(context), blurRadius: 20),
         ],
       ),
       child: Column(
@@ -175,7 +176,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
             child: TextWidget(
               text: desc,
               size: 14,
-              color: Colors.grey.shade600,
+              color: CupidColors.textSecondary(context),
             ),
           ),
           SizedBox(height: 2.h),
@@ -211,7 +212,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -235,7 +236,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                     const TextWidget(
                       text: '4 of 19',
                       size: 14,
-                      color: Colors.grey,
+                      color: null,
                     ),
                   ],
                 ),
@@ -257,7 +258,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                     TextWidget(
                       text: 'Your non-negotiables for a meaningful match',
                       size: 15,
-                      color: Color(0xFF1E1E1E),
+                      color: null,
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -327,7 +328,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                           ? ButtonVariant.gradient
                           : ButtonVariant.solid,
                       gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                      backgroundColor: Colors.grey.shade300,
+                      backgroundColor: CupidColors.border(context),
                       enableShadow: isValid,
                       onTap: isValid
                           ? () async {
@@ -357,7 +358,7 @@ class _BigThreeScreenState extends State<BigThreeScreen>
               TextWidget(
                 text: 'These help us find your perfect cultural match',
                 size: 14,
-                color: const Color.fromARGB(255, 0, 0, 0),
+                color: CupidColors.textSecondary(context),
               ),
               SizedBox(height: 3.h),
             ],

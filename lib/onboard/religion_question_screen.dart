@@ -1,4 +1,5 @@
 import 'package:cupid_app/config/flow.dart';
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/height.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -117,7 +118,7 @@ class _ReligionQuestionScreenState extends State<ReligionQuestionScreen>
               const TextWidget(
                 text: '6 of 11',
                 size: 12,
-                color: Colors.grey,
+                color: null,
               ),
             ],
           ),
@@ -134,17 +135,25 @@ class _ReligionQuestionScreenState extends State<ReligionQuestionScreen>
         duration: const Duration(milliseconds: 180),
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.7.h),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFECEF) : Colors.white,
+          color: isSelected
+              ? (Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF30212B)
+                  : const Color(0xFFFFECEF))
+              : CupidColors.surface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+            color: isSelected
+                ? const Color(0xFFFF6F7D)
+                : CupidColors.border(context),
             width: isSelected ? 1.5 : 1,
           ),
         ),
         child: TextWidget(
           text: text,
           weight: FontWeight.w600,
-          color: isSelected ? const Color(0xFFFF6F7D) : const Color(0xFF1E1E1E),
+          color: isSelected
+              ? const Color(0xFFFF6F7D)
+              : CupidColors.textPrimary(context),
         ),
       ),
     );
@@ -153,7 +162,7 @@ class _ReligionQuestionScreenState extends State<ReligionQuestionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 6.w),
@@ -178,7 +187,7 @@ class _ReligionQuestionScreenState extends State<ReligionQuestionScreen>
                   text:
                       "Totally optional to share — but it can help with compatibility.",
                   size: 15,
-                  color: Colors.grey,
+                  color: null,
                 ),
                 0.2,
                 0.35,
@@ -202,7 +211,7 @@ class _ReligionQuestionScreenState extends State<ReligionQuestionScreen>
                   variant:
                       isValid ? ButtonVariant.gradient : ButtonVariant.solid,
                   gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-                  backgroundColor: Colors.grey.shade300,
+                  backgroundColor: CupidColors.border(context),
                   enableShadow: isValid,
                   onTap: isValid ? _continue : () {},
                 ),

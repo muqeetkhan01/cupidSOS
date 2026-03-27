@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/onboard/onboarding_options.dart';
 import 'package:cupid_app/onboard/quirk_prompt_screen.dart';
@@ -154,7 +155,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
               const TextWidget(
                 text: '15 of 19',
                 size: 12,
-                color: Colors.grey,
+                color: null,
               ),
             ],
           ),
@@ -182,12 +183,14 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                 const TextWidget(
                   text: "Doesn't matter",
                   size: 14,
-                  color: Colors.grey,
+                  color: null,
                 ),
                 SizedBox(width: 2.w),
                 Icon(
                   toggle ? Icons.radio_button_checked : Icons.radio_button_off,
-                  color: toggle ? const Color(0xFFFF6F7D) : Colors.grey,
+                  color: toggle
+                      ? const Color(0xFFFF6F7D)
+                      : CupidColors.textSecondary(context),
                 ),
               ],
             ),
@@ -213,16 +216,16 @@ class _PreferencesScreenState extends State<PreferencesScreen>
               ? const LinearGradient(
                   colors: [Color(0xFFFF6F7D), Color(0xFFD86BCF)])
               : null,
-          color: selected ? null : Colors.white,
+          color: selected ? null : CupidColors.surface(context),
           border: Border.all(
-            color: selected ? Colors.transparent : Colors.grey.shade300,
+            color: selected ? Colors.transparent : CupidColors.border(context),
           ),
         ),
         child: TextWidget(
           text: text,
           size: 14,
           weight: FontWeight.w500,
-          color: selected ? Colors.white : Colors.black,
+          color: selected ? Colors.white : CupidColors.textPrimary(context),
         ),
       ),
     );
@@ -237,10 +240,16 @@ class _PreferencesScreenState extends State<PreferencesScreen>
           duration: const Duration(milliseconds: 220),
           padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.8.h),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFFFFECEF) : Colors.white,
+            color: selected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF30212B)
+                    : const Color(0xFFFFECEF))
+                : CupidColors.surface(context),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: selected ? const Color(0xFFFF6F7D) : Colors.grey.shade300,
+              color: selected
+                  ? const Color(0xFFFF6F7D)
+                  : CupidColors.border(context),
               width: selected ? 1.5 : 1,
             ),
           ),
@@ -248,7 +257,9 @@ class _PreferencesScreenState extends State<PreferencesScreen>
             text: label,
             textAlign: TextAlign.center,
             weight: FontWeight.w600,
-            color: selected ? const Color(0xFFFF6F7D) : Colors.black87,
+            color: selected
+                ? const Color(0xFFFF6F7D)
+                : CupidColors.textPrimary(context),
           ),
         ),
       ),
@@ -329,7 +340,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF7F5),
+      backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
         child: Column(
           children: [
@@ -356,7 +367,7 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                       const TextWidget(
                         text:
                             'Set your dating preferences now. You can always fine-tune them later.',
-                        color: Colors.grey,
+                        color: null,
                       ),
                       0.2,
                       0.35,
@@ -539,11 +550,11 @@ class _PreferencesScreenState extends State<PreferencesScreen>
                           setState(() => languageAny = !languageAny),
                     ),
                     if (!languageAny) ...[
-                      const TextWidget(
+                      TextWidget(
                         text:
                             "Select the languages you’re comfortable using to chat, flirt, and connect.",
                         size: 14,
-                        color: Colors.grey,
+                        color: CupidColors.textSecondary(context),
                       ),
                       SizedBox(height: 2.h),
                       Wrap(

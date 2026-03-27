@@ -9,8 +9,8 @@ class ButtonWidget extends StatefulWidget {
   final double height;
   final double width;
   final double radius;
-  final Color backgroundColor;
-  final Color textColor;
+  final Color? backgroundColor;
+  final Color? textColor;
   final double fontSize;
   final FontWeight fontWeight;
   final EdgeInsetsGeometry? padding;
@@ -29,8 +29,8 @@ class ButtonWidget extends StatefulWidget {
     this.height = 6.5,
     this.width = 100,
     this.radius = 32,
-    this.backgroundColor = Colors.black,
-    this.textColor = Colors.white,
+    this.backgroundColor,
+    this.textColor,
     this.fontSize = 16,
     this.fontWeight = FontWeight.w600,
     this.padding,
@@ -50,6 +50,19 @@ class _ButtonWidgetState extends State<ButtonWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final backgroundColor = widget.backgroundColor ?? scheme.onSurface;
+    final textColor = widget.textColor ??
+        (widget.variant == ButtonVariant.outline
+            ? scheme.onSurface
+            : scheme.onPrimary);
+    final borderColor = widget.borderColor == Colors.transparent
+        ? scheme.outlineVariant
+        : widget.borderColor;
+    final shadowColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.black.withOpacity(0.28)
+        : Colors.black.withOpacity(0.12);
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _scale = 0.97),
       onTapUp: (_) => setState(() => _scale = 1.0),
@@ -65,9 +78,8 @@ class _ButtonWidgetState extends State<ButtonWidget> {
           padding: widget.padding ?? EdgeInsets.symmetric(horizontal: 6.w),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.radius),
-            color: widget.variant == ButtonVariant.solid
-                ? widget.backgroundColor
-                : null,
+            color:
+                widget.variant == ButtonVariant.solid ? backgroundColor : null,
             gradient: widget.variant == ButtonVariant.gradient
                 ? LinearGradient(
                     begin: Alignment.topLeft,
@@ -76,12 +88,12 @@ class _ButtonWidgetState extends State<ButtonWidget> {
                   )
                 : null,
             border: widget.variant == ButtonVariant.outline
-                ? Border.all(color: widget.borderColor, width: 1.5)
+                ? Border.all(color: borderColor, width: 1.5)
                 : null,
             boxShadow: widget.enableShadow
                 ? [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
+                      color: shadowColor,
                       blurRadius: 14,
                       offset: const Offset(0, 6),
                     )
@@ -106,7 +118,7 @@ class _ButtonWidgetState extends State<ButtonWidget> {
                 style: TextStyle(
                   fontSize: widget.fontSize.sp,
                   fontWeight: widget.fontWeight,
-                  color: widget.textColor,
+                  color: textColor,
                 ),
               ),
             ],
