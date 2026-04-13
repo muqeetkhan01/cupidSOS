@@ -202,40 +202,24 @@ class _SignupScreenState extends State<SignupScreen>
                 ),
               ),
 
-              SizedBox(height: 3.h),
-              _animatedItem(
-                start: 0.8,
-                end: 0.9,
-                child: Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2.w),
-                      child: const TextWidget(text: 'or', size: 15),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-              ),
               SizedBox(height: 2.h),
               _animatedItem(
-                start: 0.9,
-                end: 1.0,
-                child: GestureDetector(
+                start: 0.7,
+                end: 0.9,
+                child: ButtonWidget(
+                  text: 'Sign in with Phone Number',
+                  backgroundColor: CupidColors.surface(context),
+                  textColor: CupidColors.textPrimary(context),
+                  icon: Icons.phone_rounded,
+                  iconColor: const Color(0xFFFF6F7D),
                   onTap: _busy
-                      ? null
+                      ? () {}
                       : () {
                           Navigator.push(
                             context,
                             slideRightToLeft(const AuthScreen()),
                           );
                         },
-                  child: const TextWidget(
-                    text: 'Sign up with Email',
-                    size: 16,
-                    color: Color(0xFFFF6F7D),
-                    weight: FontWeight.w600,
-                  ),
                 ),
               ),
               const Spacer(),

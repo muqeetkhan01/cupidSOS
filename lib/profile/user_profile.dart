@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:cupid_app/Discover/discover_screen.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/services/auth_service.dart';
+import 'package:cupid_app/services/profile_display.dart';
 import 'package:cupid_app/profile/safety_center_screen.dart';
 import 'package:cupid_app/widgets/voice.dart';
 import 'package:cupid_app/widgets/safety_menu_button.dart';
@@ -127,7 +128,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     imageUrl: hero,
                     name: u.name,
                     title: u.displayTitle,
-                    location: u.locationLabel,
+                    location: simplifyLocationLabel(u.locationLabel),
                     match: widget.match,
                     tags: u.tags,
                   ),

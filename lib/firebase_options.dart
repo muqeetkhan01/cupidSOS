@@ -51,18 +51,18 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyA-baFcflgLOlRLNDn3s13CSUhAT99kIlI',
-    appId: '1:983515414454:android:4a2b84d8328763c1f3cb17',
-    messagingSenderId: '983515414454',
-    projectId: 'puzzlepic-e1ed3',
-    storageBucket: 'puzzlepic-e1ed3.firebasestorage.app',
+    appId: '1:506329404726:android:477dfb3d4042a2f1f3cb17',
+    messagingSenderId: '506329404726',
+    projectId: 'cupid-sos',
+    storageBucket: 'cupid-sos.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAkHQYEuWY5bmtM0H8rDVBTjt2_i8fa5ew',
-    appId: '1:983515414454:ios:8f0ae32d00b1783af3cb17',
-    messagingSenderId: '983515414454',
-    projectId: 'puzzlepic-e1ed3',
-    storageBucket: 'puzzlepic-e1ed3.firebasestorage.app',
-    iosBundleId: 'com.mk.puzzlepic',
+    apiKey: 'AIzaSyDLMsE2gg_uIhR7SHwpFgpNHWB3gTuznAw',
+    appId: '1:506329404726:ios:f1a9848baba48f57a84f97',
+    messagingSenderId: '506329404726',
+    projectId: 'cupid-sos',
+    storageBucket: 'cupid-sos.firebasestorage.app',
+    iosBundleId: 'com.demo.kowtel',
   );
 }

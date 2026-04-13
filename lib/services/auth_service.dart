@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -163,6 +164,103 @@ class AuthService extends GetxService {
     } catch (e) {
       return e.toString();
     }
+  }
+
+  // ----------------------------------------------------------
+  // PHONE AUTH
+  // ----------------------------------------------------------
+  Future<String?> sendPhoneCode({
+    required String phoneNumber,
+    required void Function(String verificationId) onCodeSent,
+  }) async {
+    final completer = Completer<String?>();
+
+    try {
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber.trim(),
+        timeout: const Duration(seconds: 60),
+        verificationCompleted: (credential) async {
+          try {
+            final result = await _auth.signInWithCredential(credential);
+            final user = result.user;
+            if (user != null) {
+              await ensureUserRecord(
+                  user: user, nameFallback: user.displayName);
+              await user.reload();
+              firebaseUser.value = _auth.currentUser;
+            }
+            if (!completer.isCompleted) completer.complete(null);
+          } catch (e) {
+            if (!completer.isCompleted) completer.complete(e.toString());
+          }
+        },
+        verificationFailed: (e) {
+          if (!completer.isCompleted) {
+            completer.complete(_phoneAuthErrorMessage(e));
+          }
+        },
+        codeSent: (verificationId, _) {
+          onCodeSent(verificationId);
+          if (!completer.isCompleted) completer.complete(null);
+        },
+        codeAutoRetrievalTimeout: (verificationId) {
+          onCodeSent(verificationId);
+          if (!completer.isCompleted) completer.complete(null);
+        },
+      );
+    } catch (e) {
+      if (!completer.isCompleted) completer.complete(e.toString());
+    }
+
+    return completer.future;
+  }
+
+  Future<String?> signInWithSmsCode({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    try {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId.trim(),
+        smsCode: smsCode.trim(),
+      );
+
+      final result = await _auth.signInWithCredential(credential);
+      final user = result.user;
+      if (user == null) return 'Phone sign-in failed';
+
+      await ensureUserRecord(user: user, nameFallback: user.displayName);
+      await user.reload();
+      firebaseUser.value = _auth.currentUser;
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return _phoneAuthErrorMessage(e);
+    } catch (e) {
+      return e.toString();
+    }
+  }
+
+  String _phoneAuthErrorMessage(FirebaseAuthException e) {
+    final code = e.code.trim().toLowerCase();
+    final message = (e.message ?? '').trim();
+
+    if (code == 'invalid-phone-number') {
+      return 'Enter a valid phone number with country code.';
+    }
+    if (code == 'too-many-requests') {
+      return 'Too many attempts right now. Please wait a bit and try again.';
+    }
+    if (code == 'invalid-verification-code') {
+      return 'That code does not look right. Please try again.';
+    }
+    if (code == 'session-expired') {
+      return 'That code expired. Request a new one and try again.';
+    }
+    if (code == 'internal-error') {
+      return 'Phone verification is not fully configured for this iOS build yet. Rebuild the app after syncing the Firebase bundle ID.';
+    }
+
+    return message.isNotEmpty ? message : 'Phone verification failed.';
   }
 
   // ----------------------------------------------------------

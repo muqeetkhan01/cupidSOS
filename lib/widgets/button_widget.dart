@@ -21,6 +21,8 @@ class ButtonWidget extends StatefulWidget {
 
   // ✅ NEW
   final String? iconAsset;
+  final IconData? icon;
+  final Color? iconColor;
 
   const ButtonWidget({
     super.key,
@@ -39,6 +41,8 @@ class ButtonWidget extends StatefulWidget {
     this.variant = ButtonVariant.solid,
     this.borderColor = Colors.transparent,
     this.iconAsset, // ✅ NEW
+    this.icon,
+    this.iconColor,
   });
 
   @override
@@ -110,6 +114,13 @@ class _ButtonWidgetState extends State<ButtonWidget> {
                   widget.iconAsset!,
                   width: 5.w,
                   height: 5.w,
+                ),
+                SizedBox(width: 3.w),
+              ] else if (widget.icon != null) ...[
+                Icon(
+                  widget.icon,
+                  size: 5.w,
+                  color: widget.iconColor ?? textColor,
                 ),
                 SizedBox(width: 3.w),
               ],

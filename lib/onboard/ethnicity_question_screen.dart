@@ -228,7 +228,7 @@ class _EthnicityQuestionScreenState extends State<EthnicityQuestionScreen>
       case IdentityFlowStep.languages:
         return 'Pick every language you feel comfortable using to connect.';
       case IdentityFlowStep.culturalIdentity:
-        return 'This helps shape prompts and more thoughtful matches later.';
+        return 'Pick what feels most like home. This helps us show your vibe to matches.';
       case IdentityFlowStep.personalIdentity:
         return 'Share only what feels right for you.';
     }

@@ -368,10 +368,6 @@ class AppFlowController extends GetxController {
       return const PhotoVerificationScreen();
     }
 
-    if (!finalRulesSeen.value) {
-      return const WelcomeHouseRulesScreen(isFinalStep: true);
-    }
-
     return const MatchLoadingScreen();
   }
 

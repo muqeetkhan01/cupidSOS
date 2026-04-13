@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/services/auth_service.dart';
+import 'package:cupid_app/services/profile_display.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -59,7 +60,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     datingGoalCtrl.text = (flow.datingGoal.value ?? "").trim();
     sexualityCtrl.text = (flow.sexuality.value ?? "").trim();
 
-    locationCtrl.text = (flow.locationLabel.value ?? "").trim();
+    locationCtrl.text = simplifyLocationLabel(flow.locationLabel.value);
 
     quirkCtrl.text = (flow.quirkText.value ?? "").trim();
     storyCtrl.text = (flow.storyText.value ?? "").trim();
@@ -159,7 +160,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       flow.datingGoal.value = datingGoalCtrl.text.trim();
       flow.sexuality.value = sexualityCtrl.text.trim();
 
-      flow.locationLabel.value = locationCtrl.text.trim();
+      flow.locationLabel.value = simplifyLocationLabel(locationCtrl.text);
 
       flow.quirkText.value = quirkCtrl.text.trim();
       flow.storyText.value = storyCtrl.text.trim();
@@ -319,7 +320,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(height: 1.2.h),
               TextField(
                 controller: locationCtrl,
-                decoration: _dec("Location label (e.g., Karachi, PK)"),
+                decoration: _dec("Location label (e.g., Karachi, Pakistan)"),
               ),
               SizedBox(height: 0.8.h),
               TextWidget(

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/welcome_house_rules_screen.dart';
+import 'package:cupid_app/onboard/match_loading_screen.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -101,6 +101,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
 
     flow.verificationPhotoUrl.value = url;
     flow.photoVerified.value = true;
+    flow.finalRulesSeen.value = true;
 
     await flow.saveOnboardingProgress();
 
@@ -110,16 +111,15 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const WelcomeHouseRulesScreen(isFinalStep: true),
+        builder: (_) => const MatchLoadingScreen(),
       ),
     );
   }
 
   Widget _previewCard() {
     final imageWidget = selfie != null
-        ? ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Image.file(
+        ? _verificationFrame(
+            Image.file(
               selfie!,
               width: double.infinity,
               height: 32.h,
@@ -127,9 +127,8 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
             ),
           )
         : (uploadedUrl != null && uploadedUrl!.isNotEmpty)
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(22),
-                child: Image.network(
+            ? _verificationFrame(
+                Image.network(
                   uploadedUrl!,
                   width: double.infinity,
                   height: 32.h,
@@ -140,27 +139,126 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                 width: double.infinity,
                 height: 32.h,
                 decoration: BoxDecoration(
-                  color: CupidColors.surface(context),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFFFFF3F6), Color(0xFFF6ECFF)],
+                  ),
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: CupidColors.border(context)),
                 ),
                 alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.camera_alt_outlined,
-                      size: 42,
-                      color: CupidColors.textSecondary(context),
-                    ),
-                    SizedBox(height: 10),
-                    TextWidget(
-                        text: "Take a selfie to verify", size: 15, color: null),
-                  ],
-                ),
+                child: _placeholderPoseCard(),
               );
 
     return imageWidget;
+  }
+
+  Widget _verificationFrame(Widget child) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          child,
+          Container(
+            width: 60.w,
+            height: 60.w,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.92),
+                width: 3,
+              ),
+            ),
+          ),
+          Positioned(
+            right: 4.w,
+            top: 2.h,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const TextWidget(
+                text: 'Center your face',
+                size: 12,
+                color: Colors.white,
+                weight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _placeholderPoseCard() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Positioned(
+          top: 2.5.h,
+          right: 5.w,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6F7D),
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33FF6F7D),
+                  blurRadius: 16,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: const TextWidget(
+              text: '✌️ Example pose',
+              size: 12,
+              color: Colors.white,
+              weight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Container(
+          width: 60.w,
+          height: 60.w,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFFFFFFF), width: 3),
+          ),
+        ),
+        Container(
+          width: 44.w,
+          height: 44.w,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFD6DE), Color(0xFFE8D8FF)],
+            ),
+          ),
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(
+              Icons.person_rounded,
+              size: 74,
+              color: Color(0xFF53304B),
+            ),
+            SizedBox(height: 6),
+            Text(
+              '✌️',
+              style: TextStyle(fontSize: 26),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   @override
@@ -196,7 +294,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(999),
                                 child: LinearProgressIndicator(
-                                  value: 19 / 20,
+                                  value: 1,
                                   minHeight: 6,
                                   backgroundColor: const Color(0xFFFFD6DE),
                                   valueColor: const AlwaysStoppedAnimation(
@@ -206,7 +304,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                             ),
                             SizedBox(height: 0.8.h),
                             const TextWidget(
-                                text: '19 of 20', size: 12, color: null),
+                                text: '19 of 19', size: 12, color: null),
                           ],
                         ),
                       ],
@@ -236,21 +334,42 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                   0.2,
                   0.35,
                 ),
-                SizedBox(height: 1.5.h),
+                SizedBox(height: 1.6.h),
                 _animated(
                   Container(
                     width: double.infinity,
                     padding: EdgeInsets.all(4.w),
                     decoration: BoxDecoration(
-                      color: CupidColors.surface(context),
+                      color: const Color(0xFFFFF5F7),
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: CupidColors.border(context)),
+                      border: Border.all(color: const Color(0xFFFFE0E7)),
                     ),
-                    child: TextWidget(
-                      text:
-                          "Keep it real.\nMake sure your profile reflects who you truly are.\n\nStay safe.\nDon’t share personal information too quickly.\n\nLead with kindness.\nTreat others with respect.\n\nBe genuine.\nConnect with honesty and real intentions.\n\nHonor connection.\nValue culture and meaningful relationships.\n\nSpeak up.\nReport bad behavior.",
-                      size: 14,
-                      color: CupidColors.textPrimary(context),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 11.w,
+                          height: 11.w,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFFE7EE),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            '✌️',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                        SizedBox(width: 3.w),
+                        Expanded(
+                          child: TextWidget(
+                            text:
+                                'Match the example pose and place your face inside the circle so our team can verify it is really you.',
+                            size: 14,
+                            color: CupidColors.textPrimary(context),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   0.25,
@@ -291,17 +410,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                     gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                     backgroundColor: CupidColors.border(context),
                     enableShadow: isValid,
-                    onTap: isValid
-                        ? _uploadAndFinish
-                        : () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const WelcomeHouseRulesScreen(
-                                    isFinalStep: true),
-                              ),
-                            );
-                          },
+                    onTap: isValid ? _uploadAndFinish : () {},
                   ),
                   0.75,
                   1,

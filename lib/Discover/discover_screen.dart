@@ -839,7 +839,7 @@ class DiscoverUser {
           : _asTrimmedString(d["voiceNotePath"]),
       name: name.isEmpty ? "User" : name,
       photoUrl: _asTrimmedString(d["photoUrl"]),
-      locationLabel: label.trim(),
+      locationLabel: simplifyLocationLabel(label),
       birthday: _parseDate(d["birthday"]),
       vibeType: _asTrimmedString(d["vibeType"]),
       quirkText: _asTrimmedString(d["quirkText"]),

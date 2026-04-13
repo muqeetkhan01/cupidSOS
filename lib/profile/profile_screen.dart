@@ -137,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = AuthService.to.currentUser;
     final name = (flow.displayName.value ?? user?.displayName ?? "").trim();
     final age = _ageFromBirthday(flow.birthday.value);
-    final location = (flow.locationLabel.value ?? "").trim();
+    final location = simplifyLocationLabel(flow.locationLabel.value);
     final photoUrl = (user?.photoURL ?? "").trim();
 
     final headlineParts = <String>[

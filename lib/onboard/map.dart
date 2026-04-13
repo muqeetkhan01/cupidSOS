@@ -1,6 +1,7 @@
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/looking_for_screen.dart';
+import 'package:cupid_app/services/profile_display.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -41,7 +42,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
       _initialLatLng = LatLng(lat, lng);
     }
     if (label != null && label.trim().isNotEmpty) {
-      addressController.text = label;
+      addressController.text = simplifyLocationLabel(label);
     }
   }
 
@@ -93,9 +94,10 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
     );
 
     if (result != null && result.latLng != null) {
+      final simpleLabel = _locationLabelFromResult(result);
       setState(() {
         pickedLocation = result;
-        addressController.text = result.formattedAddress ?? "";
+        addressController.text = simpleLabel;
         _initialLatLng = LatLng(
           result.latLng!.latitude,
           result.latLng!.longitude,
@@ -114,7 +116,7 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
           flow.latitude.value ?? _initialLatLng.latitude,
           flow.longitude.value ?? _initialLatLng.longitude,
         );
-    final label = addressController.text.trim();
+    final label = simplifyLocationLabel(addressController.text);
 
     if (label.isEmpty) return;
 
@@ -171,7 +173,8 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
               ),
               SizedBox(height: 1.h),
               const TextWidget(
-                text: "We’ll use this to show you better matches near you.",
+                text:
+                    "We’ll only show your city and country to keep things simple.",
                 size: 15,
                 color: null,
               ),
@@ -248,5 +251,46 @@ class _LocationQuestionScreenState extends State<LocationQuestionScreen> {
         ),
       ),
     );
+  }
+
+  String _locationLabelFromResult(LocationResult result) {
+    try {
+      final dynamic place = result;
+      final components = place.addressComponents;
+      if (components is List) {
+        String city = '';
+        String country = '';
+
+        for (final component in components) {
+          final dynamic current = component;
+          final name =
+              ((current.longName ?? current.name) as String?)?.trim() ?? '';
+          final rawTypes = current.types;
+          final types = rawTypes is List
+              ? rawTypes.map((type) => type.toString()).toSet()
+              : <String>{};
+
+          if (country.isEmpty && types.contains('country')) {
+            country = name;
+          }
+
+          if (city.isEmpty &&
+              (types.contains('locality') ||
+                  types.contains('postal_town') ||
+                  types.contains('administrative_area_level_2') ||
+                  types.contains('sublocality') ||
+                  types.contains('neighborhood'))) {
+            city = name;
+          }
+        }
+
+        if (city.isNotEmpty && country.isNotEmpty) {
+          return '$city, $country';
+        }
+        if (country.isNotEmpty) return country;
+      }
+    } catch (_) {}
+
+    return simplifyLocationLabel(result.formattedAddress ?? '');
   }
 }

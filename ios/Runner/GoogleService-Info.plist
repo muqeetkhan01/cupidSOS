@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>983515414454-sldik22rmbknl0ch4fvcs1ff43n4aoj7.apps.googleusercontent.com</string>
+	<string>506329404726-fpp8fda2hunm4opscjc5fq9i2lsk24eq.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.983515414454-sldik22rmbknl0ch4fvcs1ff43n4aoj7</string>
+	<string>com.googleusercontent.apps.506329404726-fpp8fda2hunm4opscjc5fq9i2lsk24eq</string>
 	<key>API_KEY</key>
-	<string>AIzaSyAkHQYEuWY5bmtM0H8rDVBTjt2_i8fa5ew</string>
+	<string>AIzaSyDLMsE2gg_uIhR7SHwpFgpNHWB3gTuznAw</string>
 	<key>GCM_SENDER_ID</key>
-	<string>983515414454</string>
+	<string>506329404726</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.mk.pz</string>
+	<string>com.demo.kowtel</string>
 	<key>PROJECT_ID</key>
-	<string>puzzlepic-e1ed3</string>
+	<string>cupid-sos</string>
 	<key>STORAGE_BUCKET</key>
-	<string>puzzlepic-e1ed3.firebasestorage.app</string>
+	<string>cupid-sos.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:983515414454:ios:2d40172bd48b8444f3cb17</string>
+	<string>1:506329404726:ios:f1a9848baba48f57a84f97</string>
 </dict>
 </plist>
