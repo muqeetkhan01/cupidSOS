@@ -226,6 +226,13 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tipGradient = isDark
+        ? const [Color(0xFF2C3143), Color(0xFF33324A)]
+        : const [Color(0xFFF2ECFF), Color(0xFFEDE7FF)];
+    final tipTextColor = isDark ? Colors.white : const Color(0xFF463A58);
+    final tipAvatarBg = isDark ? const Color(0xFF4A4767) : const Color(0xFFE0D7FF);
+
     return Scaffold(
       backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
@@ -373,23 +380,24 @@ class _ShowYourStoryScreenState extends State<ShowYourStoryScreen>
                 padding: EdgeInsets.all(4.w),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(22),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF2ECFF), Color(0xFFEDE7FF)],
+                  gradient: LinearGradient(
+                    colors: tipGradient,
                   ),
                 ),
                 child: Row(
-                  children: const [
+                  children: [
                     CircleAvatar(
                       radius: 22,
-                      backgroundColor: Color(0xFFE0D7FF),
+                      backgroundColor: tipAvatarBg,
                       child: Text('✌️', style: TextStyle(fontSize: 24)),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: TextWidget(
                         text:
                             'Let’s make it official! ✌️\nTo keep our community safe and real, please take a quick selfie mimicking the pose above.',
                         size: 15,
+                        color: tipTextColor,
                       ),
                     ),
                   ],

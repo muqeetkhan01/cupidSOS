@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/onboard/height.dart';
 import 'package:cupid_app/onboard/onboarding_options.dart';
+import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 import '../../widgets/button_widget.dart';
@@ -22,9 +26,12 @@ class _BasicsScreenState extends State<BasicsScreen>
     with TickerProviderStateMixin {
   final flow = Get.find<AppFlowController>();
   late final AnimationController _controller;
+  final ImagePicker _picker = ImagePicker();
 
   final TextEditingController nameCtrl = TextEditingController();
   Gender? gender;
+  File? pickedProfilePhoto;
+  bool _saving = false;
 
   bool get isValid => nameCtrl.text.trim().isNotEmpty && gender != null;
 
@@ -190,12 +197,85 @@ class _BasicsScreenState extends State<BasicsScreen>
     }
   }
 
+  Future<void> _pickProfilePhoto() async {
+    if (_saving) return;
+    final picked =
+        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (picked == null) return;
+    setState(() => pickedProfilePhoto = File(picked.path));
+  }
+
+  Widget _photoPicker() {
+    final currentPhoto = (AuthService.to.currentUser?.photoURL ?? '').trim();
+    final hasCurrent = currentPhoto.isNotEmpty;
+
+    ImageProvider<Object>? avatarProvider;
+    if (pickedProfilePhoto != null) {
+      avatarProvider = FileImage(pickedProfilePhoto!);
+    } else if (hasCurrent) {
+      avatarProvider = NetworkImage(currentPhoto);
+    }
+
+    return Center(
+      child: GestureDetector(
+        onTap: _pickProfilePhoto,
+        child: Stack(
+          children: [
+            CircleAvatar(
+              radius: 44,
+              backgroundColor: CupidColors.surfaceMuted(context),
+              backgroundImage: avatarProvider,
+              child: avatarProvider == null
+                  ? const Icon(Icons.person, size: 36, color: Colors.white)
+                  : null,
+            ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFF6F7D),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add_a_photo_rounded,
+                  size: 16,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _continue() async {
-    if (!isValid) return;
+    if (!isValid || _saving) return;
+    setState(() => _saving = true);
+
     flow.displayName.value = nameCtrl.text.trim();
     flow.gender.value = _genderLabel();
+
     await flow.saveOnboardingProgress();
+
+    final nameErr = await AuthService.to.updateName(flow.displayName.value!);
+    if (nameErr != null && mounted) {
+      Get.snackbar("Profile", nameErr);
+    }
+
+    if (pickedProfilePhoto != null) {
+      final photoErr =
+          await AuthService.to.updateProfilePhoto(pickedProfilePhoto!);
+      if (photoErr != null && mounted) {
+        Get.snackbar("Profile photo", photoErr);
+      }
+    }
+
     if (!mounted) return;
+    setState(() => _saving = false);
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const HeightQuestionScreen()),
@@ -233,6 +313,19 @@ class _BasicsScreenState extends State<BasicsScreen>
                 ),
                 0.2,
                 0.35,
+              ),
+              SizedBox(height: 2.4.h),
+              _animated(_photoPicker(), 0.22, 0.45),
+              SizedBox(height: 0.8.h),
+              _animated(
+                TextWidget(
+                  text: 'Add profile photo',
+                  size: 13,
+                  color: CupidColors.textSecondary(context),
+                  textAlign: TextAlign.center,
+                ),
+                0.26,
+                0.5,
               ),
               SizedBox(height: 4.h),
               _animated(
@@ -295,7 +388,7 @@ class _BasicsScreenState extends State<BasicsScreen>
               const Spacer(),
               _animated(
                 ButtonWidget(
-                  text: 'Next Step',
+                  text: _saving ? 'Saving...' : 'Next Step',
                   height: 7,
                   radius: 36,
                   variant:
@@ -306,7 +399,7 @@ class _BasicsScreenState extends State<BasicsScreen>
                   ],
                   backgroundColor: CupidColors.border(context),
                   enableShadow: isValid,
-                  onTap: isValid ? _continue : () {},
+                  onTap: (isValid && !_saving) ? _continue : () {},
                 ),
                 0.85,
                 1,

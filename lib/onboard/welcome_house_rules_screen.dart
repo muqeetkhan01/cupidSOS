@@ -1,7 +1,6 @@
 import 'package:cupid_app/auth/BirthdayScreen.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
-import 'package:cupid_app/onboard/match_loading_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -10,12 +9,7 @@ import '../../widgets/button_widget.dart';
 import '../../widgets/text_widget.dart';
 
 class WelcomeHouseRulesScreen extends StatefulWidget {
-  const WelcomeHouseRulesScreen({
-    super.key,
-    this.isFinalStep = false,
-  });
-
-  final bool isFinalStep;
+  const WelcomeHouseRulesScreen({super.key});
 
   @override
   State<WelcomeHouseRulesScreen> createState() =>
@@ -102,54 +96,37 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
   }
 
   Future<void> _continue() async {
-    if (widget.isFinalStep) {
-      flow.finalRulesSeen.value = true;
-    } else {
-      flow.welcomeSeen.value = true;
-    }
+    flow.welcomeSeen.value = true;
     await flow.saveOnboardingProgress();
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => widget.isFinalStep
-            ? const MatchLoadingScreen()
-            : const BirthdayScreen(),
+        builder: (_) => const BirthdayScreen(),
       ),
     );
   }
 
-  String get _stepLabel => widget.isFinalStep ? '20 of 20' : '2 of 19';
+  String get _stepLabel => '2 of 19';
 
-  String get _badgeLabel =>
-      widget.isFinalStep ? 'Final House Rules' : 'House Rules';
+  String get _badgeLabel => 'House Rules';
 
-  String get _heroTitle => widget.isFinalStep
-      ? 'Before you go live\non Cupid SOS'
-      : 'Welcome to\nCupid SOS';
+  String get _heroTitle => 'Welcome to\nCupid SOS';
 
-  String get _heroBody => widget.isFinalStep
-      ? 'You’re verified. One last reminder before you enter the community for real.'
-      : 'Real people. Thoughtful connections.\nLet’s set the tone before we start matching.';
+  String get _heroBody =>
+      'Real people. Thoughtful connections.\nLet’s set the tone before we start matching.';
 
-  String get _supportingText => widget.isFinalStep
-      ? 'A strong community works when the rules are clear, calm, and easy to remember.'
-      : 'A safe, thoughtful space starts with shared standards.';
+  String get _supportingText =>
+      'A safe, thoughtful space starts with shared standards.';
 
-  String get _ctaText => widget.isFinalStep ? 'Enter Cupid SOS' : 'I’m in';
+  String get _ctaText => 'I’m in';
 
   Widget _heroCard() {
-    final gradient = widget.isFinalStep
-        ? const [
-            Color(0xFF1E1F2F),
-            Color(0xFF51406A),
-            Color(0xFFD95C7A),
-          ]
-        : const [
-            Color(0xFFF45E7D),
-            Color(0xFFD56391),
-            Color(0xFFB96FD1),
-          ];
+    const gradient = [
+      Color(0xFFF45E7D),
+      Color(0xFFD56391),
+      Color(0xFFB96FD1),
+    ];
 
     return Container(
       width: double.infinity,
@@ -228,9 +205,7 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
                       color: Colors.white.withOpacity(0.18),
                     ),
                     child: Icon(
-                      widget.isFinalStep
-                          ? Icons.shield_moon_outlined
-                          : Icons.favorite_rounded,
+                      Icons.favorite_rounded,
                       color: Colors.white,
                     ),
                   ),
@@ -350,17 +325,11 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
             end: Alignment.bottomCenter,
             colors: Theme.of(context).brightness == Brightness.dark
                 ? CupidColors.pageGradient(context)
-                : widget.isFinalStep
-                    ? const [
-                        Color(0xFFF7F0F2),
-                        Color(0xFFF3EEF7),
-                        Color(0xFFF1EFF6),
-                      ]
-                    : const [
-                        Color(0xFFFFF4F2),
-                        Color(0xFFFDF1F4),
-                        Color(0xFFF6EFF8),
-                      ],
+                : const [
+                    Color(0xFFFFF4F2),
+                    Color(0xFFFDF1F4),
+                    Color(0xFFF6EFF8),
+                  ],
           ),
         ),
         child: Stack(
@@ -453,23 +422,16 @@ class _WelcomeHouseRulesScreenState extends State<WelcomeHouseRulesScreen>
                             height: 7,
                             radius: 36,
                             variant: ButtonVariant.gradient,
-                            gradient: widget.isFinalStep
-                                ? const [
-                                    Color(0xFF2B2C40),
-                                    Color(0xFFD95C7A),
-                                  ]
-                                : const [
-                                    Color(0xFFFF6F7D),
-                                    Color(0xFFD86BCF),
-                                  ],
+                            gradient: const [
+                              Color(0xFFFF6F7D),
+                              Color(0xFFD86BCF),
+                            ],
                             enableShadow: true,
                             onTap: _continue,
                           ),
                           SizedBox(height: 1.h),
                           TextWidget(
-                            text: widget.isFinalStep
-                                ? 'Thoughtful connections start here.'
-                                : 'You’re in control. We’ve got your back.',
+                            text: 'You’re in control. We’ve got your back.',
                             size: 13,
                             color: CupidColors.textSecondary(context),
                             textAlign: TextAlign.center,

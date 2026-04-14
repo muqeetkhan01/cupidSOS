@@ -198,30 +198,6 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
     return Stack(
       alignment: Alignment.center,
       children: [
-        Positioned(
-          top: 2.5.h,
-          right: 5.w,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF6F7D),
-              borderRadius: BorderRadius.circular(999),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33FF6F7D),
-                  blurRadius: 16,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: const TextWidget(
-              text: '✌️ Example pose',
-              size: 12,
-              color: Colors.white,
-              weight: FontWeight.w700,
-            ),
-          ),
-        ),
         Container(
           width: 60.w,
           height: 60.w,
@@ -263,6 +239,15 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final infoCardBg =
+        isDark ? const Color(0xFF2C3143) : const Color(0xFFFFF5F7);
+    final infoCardBorder =
+        isDark ? const Color(0xFF40465D) : const Color(0xFFFFE0E7);
+    final infoIconBg =
+        isDark ? const Color(0xFF4A4767) : const Color(0xFFFFE7EE);
+    final infoTextColor = isDark ? Colors.white : const Color(0xFF463A58);
+
     return Scaffold(
       backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
@@ -340,9 +325,9 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                     width: double.infinity,
                     padding: EdgeInsets.all(4.w),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF5F7),
+                      color: infoCardBg,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: const Color(0xFFFFE0E7)),
+                      border: Border.all(color: infoCardBorder),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,8 +335,8 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                         Container(
                           width: 11.w,
                           height: 11.w,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFFFE7EE),
+                          decoration: BoxDecoration(
+                            color: infoIconBg,
                             shape: BoxShape.circle,
                           ),
                           alignment: Alignment.center,
@@ -366,7 +351,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                             text:
                                 'Match the example pose and place your face inside the circle so our team can verify it is really you.',
                             size: 14,
-                            color: CupidColors.textPrimary(context),
+                            color: infoTextColor,
                           ),
                         ),
                       ],
@@ -409,6 +394,9 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                         isValid ? ButtonVariant.gradient : ButtonVariant.solid,
                     gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
                     backgroundColor: CupidColors.border(context),
+                    textColor: isValid
+                        ? Colors.white
+                        : CupidColors.textSecondary(context),
                     enableShadow: isValid,
                     onTap: isValid ? _uploadAndFinish : () {},
                   ),
