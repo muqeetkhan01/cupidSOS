@@ -50,11 +50,11 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyA-baFcflgLOlRLNDn3s13CSUhAT99kIlI',
-    appId: '1:983515414454:android:477dfb3d4042a2f1f3cb17',
-    messagingSenderId: '983515414454',
-    projectId: 'puzzlepic-e1ed3',
-    storageBucket: 'puzzlepic-e1ed3.firebasestorage.app',
+    apiKey: 'AIzaSyBTygWajDc3pgmk2Q07i--FkohaLRNR-I8',
+    appId: '1:506329404726:android:fd992c9d47cd8676a84f97',
+    messagingSenderId: '506329404726',
+    projectId: 'cupid-sos',
+    storageBucket: 'cupid-sos.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

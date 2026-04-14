@@ -68,6 +68,23 @@ subprojects {
         targetCompatibility = "17"
     }
 
+    // sign_in_with_apple Android module still defaults Java to 1.8 in some setups.
+    // Force it to 17 so Android builds do not fail JVM target validation.
+    if (name == "sign_in_with_apple") {
+        plugins.withId("com.android.library") {
+            extensions.configure<LibraryExtension>("android") {
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_17
+                    targetCompatibility = JavaVersion.VERSION_17
+                }
+            }
+        }
+        tasks.withType<JavaCompile>().configureEach {
+            sourceCompatibility = "17"
+            targetCompatibility = "17"
+        }
+    }
+
     // ✅ Toolchain for Java plugin projects (some plugins create pure Java modules)
     plugins.withType<JavaPlugin> {
         the<org.gradle.api.plugins.JavaPluginExtension>().toolchain {
@@ -75,11 +92,11 @@ subprojects {
         }
     }
     afterEvaluate {
-    tasks.withType<JavaCompile>().configureEach {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
+        tasks.withType<JavaCompile>().configureEach {
+            sourceCompatibility = "17"
+            targetCompatibility = "17"
+        }
     }
-}
 }
 
 // Flutter build dir fix (KEEP THIS)

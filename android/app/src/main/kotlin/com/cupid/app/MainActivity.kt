@@ -1,4 +1,4 @@
-package com.mk.pz
+package com.cupid.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

@@ -16,7 +16,7 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.mk.pz"
+    namespace = "com.cupid.app"
     compileSdk = 36
     ndkVersion = "28.0.12674087"
 
@@ -41,7 +41,7 @@ android {
 }
 
     defaultConfig {
-        applicationId = "com.mk.pz"
+        applicationId = "com.cupid.app"
         minSdk = 29
         targetSdk = 36
         versionCode = 5

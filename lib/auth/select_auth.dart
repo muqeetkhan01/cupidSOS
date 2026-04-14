@@ -4,6 +4,7 @@ import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
@@ -94,6 +95,10 @@ class _SignupScreenState extends State<SignupScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isApplePlatform = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS);
+
     return Scaffold(
       backgroundColor: CupidColors.scaffold(context),
       body: SafeArea(
@@ -163,27 +168,27 @@ class _SignupScreenState extends State<SignupScreen>
               ),
               SizedBox(height: 6.h),
 
-              // // ✅ Apple
-              _animatedItem(
-                start: 0.5,
-                end: 0.6,
-                child: ButtonWidget(
-                  text: _busy ? "Please wait..." : 'Continue with Apple',
-                  backgroundColor:
-                      Theme.of(context).brightness == Brightness.dark
-                          ? CupidColors.surface(context)
-                          : Colors.black,
-                  iconAsset: 'assets/images/apple.png',
-                  textColor: Theme.of(context).brightness == Brightness.dark
-                      ? CupidColors.textPrimary(context)
-                      : Colors.white,
-                  onTap: _busy
-                      ? () {}
-                      : () => _oauthAndRoute(AuthService.to.signInWithApple),
+              if (isApplePlatform)
+                _animatedItem(
+                  start: 0.5,
+                  end: 0.6,
+                  child: ButtonWidget(
+                    text: _busy ? "Please wait..." : 'Continue with Apple',
+                    backgroundColor:
+                        Theme.of(context).brightness == Brightness.dark
+                            ? CupidColors.surface(context)
+                            : Colors.black,
+                    iconAsset: 'assets/images/apple.png',
+                    textColor: Theme.of(context).brightness == Brightness.dark
+                        ? CupidColors.textPrimary(context)
+                        : Colors.white,
+                    onTap: _busy
+                        ? () {}
+                        : () => _oauthAndRoute(AuthService.to.signInWithApple),
+                  ),
                 ),
-              ),
 
-              SizedBox(height: 2.h),
+              if (isApplePlatform) SizedBox(height: 2.h),
 
               // ✅ Google
               _animatedItem(
