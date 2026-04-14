@@ -14,6 +14,8 @@
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
+		<key>FlutterDeepLinkingEnabled</key>
+		<false/>
 		<key>CFBundleName</key>
 		<string>cupid_app</string>
 		<key>CFBundlePackageType</key>
@@ -25,7 +27,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-	<string>com.googleusercontent.apps.983515414454-sldik22rmbknl0ch4fvcs1ff43n4aoj7</string>
+	<string>com.googleusercontent.apps.506329404726-fpp8fda2hunm4opscjc5fq9i2lsk24eq</string>
 			</array>
 		</dict>
 	</array>

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/flow.dart';
 import 'package:cupid_app/services/auth_service.dart';
@@ -85,29 +87,37 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   Future<void> _routeAfterAuth() async {
-    final flow = Get.find<AppFlowController>();
-    final next = await flow.getPostAuthRoute();
-    if (!mounted) return;
+    try {
+      final flow = Get.find<AppFlowController>();
+      final next = await flow.getPostAuthRoute();
+      if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 450),
-        pageBuilder: (_, __, ___) => next,
-        transitionsBuilder: (_, animation, __, child) {
-          final slide = Tween<Offset>(
-            begin: const Offset(0, 0.08),
-            end: Offset.zero,
-          ).animate(
-            CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-          );
-          return FadeTransition(
-            opacity: animation,
-            child: SlideTransition(position: slide, child: child),
-          );
-        },
-      ),
-    );
+      Navigator.pushReplacement(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 450),
+          pageBuilder: (_, __, ___) => next,
+          transitionsBuilder: (_, animation, __, child) {
+            final slide = Tween<Offset>(
+              begin: const Offset(0, 0.08),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(position: slide, child: child),
+            );
+          },
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(
+        () => _error =
+            'Verification succeeded but navigation failed. Please tap back and try again.',
+      );
+    }
   }
 
   Future<void> _submit() async {
@@ -124,10 +134,16 @@ class _AuthScreenState extends State<AuthScreen>
       }
 
       setState(() => _busy = true);
-      final err = await AuthService.to.signInWithSmsCode(
-        verificationId: _verificationId!,
-        smsCode: code,
-      );
+      final err = await AuthService.to
+          .signInWithSmsCode(
+            verificationId: _verificationId!,
+            smsCode: code,
+          )
+          .timeout(
+            const Duration(seconds: 45),
+            onTimeout: () =>
+                'Verification is taking too long. Please try again.',
+          );
       if (!mounted) return;
       setState(() {
         _busy = false;
@@ -149,13 +165,18 @@ class _AuthScreenState extends State<AuthScreen>
     }
 
     setState(() => _busy = true);
-    final err = await AuthService.to.sendPhoneCode(
-      phoneNumber: phone,
-      onCodeSent: (verificationId) {
-        if (!mounted) return;
-        setState(() => _verificationId = verificationId);
-      },
-    );
+    final err = await AuthService.to
+        .sendPhoneCode(
+          phoneNumber: phone,
+          onCodeSent: (verificationId) {
+            if (!mounted) return;
+            setState(() => _verificationId = verificationId);
+          },
+        )
+        .timeout(
+          const Duration(seconds: 45),
+          onTimeout: () => 'Sending code is taking too long. Please try again.',
+        );
 
     if (!mounted) return;
     setState(() {
