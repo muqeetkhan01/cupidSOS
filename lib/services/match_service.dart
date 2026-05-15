@@ -25,6 +25,20 @@ class MatchService {
       "snapshot": targetSnapshot,
     }, SetOptions(merge: true));
 
+    final likedByRef = _db
+        .collection("users_cupid")
+        .doc(targetUid)
+        .collection("liked_by")
+        .doc(myUid);
+    if (liked) {
+      await likedByRef.set({
+        "uid": myUid,
+        "createdAt": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } else {
+      await likedByRef.delete();
+    }
+
     if (!liked) {
       return const SwipeResult(isMatch: false);
     }
@@ -57,25 +71,67 @@ class MatchService {
         .collection("matches")
         .doc(myUid);
 
-    batch.set(myMatchRef, {
-      "uid": targetUid,
-      "createdAt": FieldValue.serverTimestamp(),
-      "threadId": threadIdFor(myUid, targetUid),
-      "lastMessage": null,
-      "lastMessageAt": null,
-    }, SetOptions(merge: true));
+    batch.set(
+        myMatchRef,
+        {
+          "uid": targetUid,
+          "createdAt": FieldValue.serverTimestamp(),
+          "threadId": threadIdFor(myUid, targetUid),
+          "lastMessage": null,
+          "lastMessageAt": null,
+        },
+        SetOptions(merge: true));
 
-    batch.set(theirMatchRef, {
-      "uid": myUid,
-      "createdAt": FieldValue.serverTimestamp(),
-      "threadId": threadIdFor(myUid, targetUid),
-      "lastMessage": null,
-      "lastMessageAt": null,
-    }, SetOptions(merge: true));
+    batch.set(
+        theirMatchRef,
+        {
+          "uid": myUid,
+          "createdAt": FieldValue.serverTimestamp(),
+          "threadId": threadIdFor(myUid, targetUid),
+          "lastMessage": null,
+          "lastMessageAt": null,
+        },
+        SetOptions(merge: true));
 
     await batch.commit();
 
     return SwipeResult(isMatch: true, threadId: threadIdFor(myUid, targetUid));
+  }
+
+  Future<void> sendEliteDirectMessage({
+    required String myUid,
+    required String targetUid,
+    required String text,
+  }) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+
+    final threadId = threadIdFor(myUid, targetUid);
+    final threadRef = _db.collection("threads").doc(threadId);
+    final msgRef = threadRef.collection("messages").doc();
+    final now = FieldValue.serverTimestamp();
+
+    final batch = _db.batch();
+    batch.set(
+      threadRef,
+      {
+        "threadId": threadId,
+        "participants": [myUid, targetUid],
+        "updatedAt": now,
+        "createdAt": now,
+      },
+      SetOptions(merge: true),
+    );
+    batch.set(msgRef, {
+      "id": msgRef.id,
+      "threadId": threadId,
+      "from": myUid,
+      "to": targetUid,
+      "text": trimmed,
+      "createdAt": now,
+      "type": "elite_intro",
+    });
+    await batch.commit();
   }
 
   String threadIdFor(String a, String b) {
@@ -101,12 +157,15 @@ class MatchService {
     // Create thread + add message + update both users' match lastMessage in a single batch
     final batch = _db.batch();
 
-    batch.set(threadRef, {
-      "threadId": threadId,
-      "participants": [myUid, targetUid],
-      "updatedAt": now,
-      "createdAt": now,
-    }, SetOptions(merge: true));
+    batch.set(
+        threadRef,
+        {
+          "threadId": threadId,
+          "participants": [myUid, targetUid],
+          "updatedAt": now,
+          "createdAt": now,
+        },
+        SetOptions(merge: true));
 
     batch.set(msgRef, {
       "id": msgRef.id,

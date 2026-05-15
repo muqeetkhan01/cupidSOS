@@ -2,6 +2,7 @@
 
 import 'package:cupid_app/Discover/discover_screen.dart';
 import 'package:cupid_app/chat/chat_list_screen.dart';
+import 'package:cupid_app/community/community_hub_screen.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/match/matches_screen.dart';
 import 'package:cupid_app/profile/profile_screen.dart';
@@ -29,9 +30,10 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
   /// PAGES
   final List<Widget> _pages = const [
     DiscoverScreen(), // 0
-    MatchesScreen(), // 1
-    ChatListScreen(), // 2
-    ProfileScreen(), // 3
+    CommunityHubScreen(), // 1
+    MatchesScreen(), // 2
+    ChatListScreen(), // 3
+    ProfileScreen(), // 4
   ];
 
   @override
@@ -59,50 +61,65 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
       extendBody: true,
       body: _pages[_currentIndex],
       bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(left: 4.w, right: 4.w, bottom: 2.h),
+        padding: EdgeInsets.only(left: 3.5.w, right: 3.5.w, bottom: 1.4.h),
         child: Container(
-          height: 9.h,
-          padding: EdgeInsets.symmetric(horizontal: 2.w),
+          height: 9.6.h,
+          padding: EdgeInsets.symmetric(horizontal: 1.8.w, vertical: 0.8.h),
           decoration: BoxDecoration(
             color: CupidColors.navBar(context),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: CupidColors.shadow(context),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _navItem(
-                index: 0,
-                label: "Discover",
-                activeIcon: Icons.explore_rounded,
-                inactiveIcon: Icons.explore_outlined,
+              Expanded(
+                child: _navItem(
+                  index: 0,
+                  label: "Discover",
+                  activeIcon: Icons.explore_rounded,
+                  inactiveIcon: Icons.explore_outlined,
+                ),
               ),
-              _navItem(
-                index: 1,
-                label: "Matches",
-                activeIcon: Icons.favorite_rounded,
-                inactiveIcon: Icons.favorite_border_rounded,
+              Expanded(
+                child: _navItem(
+                  index: 1,
+                  label: "Hub",
+                  activeIcon: Icons.graphic_eq_rounded,
+                  inactiveIcon: Icons.graphic_eq_outlined,
+                ),
               ),
-              _navItem(
-                index: 2,
-                label: "Chat",
-                activeIcon: Remix.chat_1_fill,
-                inactiveIcon: Remix.chat_1_line,
-                badge: 3,
+              Expanded(
+                child: _navItem(
+                  index: 2,
+                  label: "Matches",
+                  activeIcon: Icons.favorite_rounded,
+                  inactiveIcon: Icons.favorite_border_rounded,
+                ),
               ),
-              _navItem(
-                index: 3,
-                label: "Me",
-                picUrl: picUrl,
-                isPic: true,
-                activeIcon: Remix.user_fill,
-                inactiveIcon: Remix.user_line,
+              Expanded(
+                child: _navItem(
+                  index: 3,
+                  label: "Chat",
+                  activeIcon: Remix.chat_1_fill,
+                  inactiveIcon: Remix.chat_1_line,
+                  badge: 3,
+                ),
+              ),
+              Expanded(
+                child: _navItem(
+                  index: 4,
+                  label: "Me",
+                  picUrl: picUrl,
+                  isPic: true,
+                  activeIcon: Remix.user_fill,
+                  inactiveIcon: Remix.user_line,
+                ),
               ),
             ],
           ),
@@ -126,17 +143,18 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
       onTap: () => _onTabTapped(index),
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.all(5.0),
+        padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 260),
           curve: Curves.easeOutCubic,
-          width: 18.w,
-          padding: EdgeInsets.symmetric(vertical: 1.h),
+          height: 7.9.h,
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(vertical: 0.6.h),
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFFFF6F7D).withOpacity(0.12)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -165,7 +183,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
                             )
                           : Icon(
                               isSelected ? activeIcon : inactiveIcon,
-                              size: 20.sp,
+                              size: 17.5.sp,
                               color: isSelected
                                   ? const Color(0xFFFF6F7D)
                                   : CupidColors.textSecondary(context),
@@ -200,11 +218,14 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
                 opacity: isSelected ? 1 : 0.7,
                 child: TextWidget(
                   text: label,
-                  size: 14.sp,
+                  size: 10.2,
                   weight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   color: isSelected
                       ? const Color(0xFFFF6F7D)
                       : CupidColors.textSecondary(context),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ],
@@ -227,17 +248,17 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
         backgroundColor: !isSelected
             ? const Color(0xFFFF6F7D)
             : CupidColors.surface(context),
-        radius: 15.sp,
+        radius: 12.5.sp,
         child: Icon(
           isSelected ? activeIcon : inactiveIcon,
-          size: 15.sp,
+          size: 12.sp,
           color: isSelected ? const Color(0xFFFF6F7D) : Colors.white,
         ),
       );
     }
 
     return CircleAvatar(
-      radius: 15.sp,
+      radius: 12.5.sp,
       backgroundImage: NetworkImage(url),
       backgroundColor: CupidColors.surfaceMuted(context),
       onBackgroundImageError: (_, __) {},

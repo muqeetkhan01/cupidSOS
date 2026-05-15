@@ -8,6 +8,7 @@ import 'package:cupid_app/config/colors.dart';
 import 'package:cupid_app/profile/user_profile.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:cupid_app/services/profile_display.dart';
+import 'package:cupid_app/services/premium_service.dart';
 import 'package:cupid_app/services/safety_service.dart';
 import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   late final MatchService _matchService = MatchService(_db);
+  final PremiumService _premiumService = PremiumService.instance;
 
   final List<DiscoverUser> _profiles = [];
   int _currentIndex = 0;
@@ -92,6 +94,10 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       });
 
     _loadFirstPage();
+    final uid = _myUid;
+    if (uid != null) {
+      _premiumService.ensureDefaults(uid);
+    }
   }
 
   @override
@@ -156,6 +162,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   void _swipe(bool right) {
     _swipeTarget = Offset(right ? 500 : -500, 0);
     _swipeController.forward(from: 0);
+  }
+
+  void _showSnack(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<void> _handleSwipe({
@@ -318,15 +329,11 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     }
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 2.h, top: 2.h),
+      padding:
+          EdgeInsets.only(left: 4.5.w, right: 4.5.w, bottom: 1.1.h, top: 1.h),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _animatedAction(
-            icon: Icons.refresh,
-            color: Colors.orange,
-            onTap: () async => _loadFirstPage(),
-          ),
           _animatedAction(
             icon: Icons.close,
             color: Colors.redAccent,
@@ -342,9 +349,14 @@ class _DiscoverScreenState extends State<DiscoverScreen>
             big: true,
             pulse: true,
             onTap: () async {
-              final target = _profiles[_currentIndex];
-              await _handleSwipe(target: target, liked: true);
-              _swipe(true);
+              await _sendSosArrow();
+            },
+          ),
+          _animatedAction(
+            icon: Icons.videocam_rounded,
+            color: Colors.deepPurpleAccent,
+            onTap: () async {
+              await _requestSosCall();
             },
           ),
           _animatedAction(
@@ -357,8 +369,115 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               _swipe(true);
             },
           ),
+          _animatedAction(
+            icon: Icons.mark_chat_unread_rounded,
+            color: Colors.blueAccent,
+            onTap: () async {
+              await _sendEliteIntroMessage();
+            },
+          ),
         ],
       ),
+    );
+  }
+
+  Future<void> _sendSosArrow() async {
+    final myUid = _myUid;
+    if (myUid == null || _profiles.isEmpty) return;
+    final target = _profiles[_currentIndex];
+
+    bool allowed = await _premiumService.consumeDailyFreeUsage(
+      uid: myUid,
+      featureKey: 'sosArrow',
+      freePerDay: 1,
+    );
+
+    if (!allowed) {
+      final spent = await _premiumService.spendCoins(myUid, 30);
+      if (!spent) {
+        _showSnack('No free SOS Arrow left. Need 30 coins.');
+        return;
+      }
+      allowed = true;
+    }
+
+    if (!allowed) return;
+
+    await _handleSwipe(target: target, liked: true);
+    _swipe(true);
+    _showSnack('SOS Arrow sent to ${target.name}.');
+  }
+
+  Future<void> _requestSosCall() async {
+    final myUid = _myUid;
+    if (myUid == null || _profiles.isEmpty) return;
+    final target = _profiles[_currentIndex];
+
+    bool allowed = await _premiumService.consumeDailyFreeUsage(
+      uid: myUid,
+      featureKey: 'sosCall',
+      freePerDay: 1,
+    );
+    if (!allowed) {
+      final spent = await _premiumService.spendCoins(myUid, 80);
+      if (!spent) {
+        _showSnack('No free SOS Call left. Need 80 coins.');
+        return;
+      }
+      allowed = true;
+    }
+
+    if (!allowed) return;
+    await _handleSwipe(target: target, liked: true);
+    _showSnack('SOS Call request sent to ${target.name}.');
+  }
+
+  Future<void> _sendEliteIntroMessage() async {
+    final myUid = _myUid;
+    if (myUid == null || _profiles.isEmpty) return;
+    final target = _profiles[_currentIndex];
+
+    final can = await _premiumService.canMessageBeforeMatch(myUid);
+    if (!can) {
+      _showSnack('Elite only feature. Upgrade to message before matching.');
+      return;
+    }
+    if (!mounted) return;
+
+    final ctrl = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text('Message ${target.name}'),
+          content: TextField(
+            controller: ctrl,
+            maxLines: 4,
+            decoration: const InputDecoration(
+              hintText: 'Send your opening move...',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                await _matchService.sendEliteDirectMessage(
+                  myUid: myUid,
+                  targetUid: target.uid,
+                  text: ctrl.text,
+                );
+                if (!ctx.mounted) return;
+                Navigator.pop(ctx);
+                _showSnack('Elite intro sent. You can continue in chat.');
+              },
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -369,7 +488,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     bool big = false,
     bool pulse = false,
   }) {
-    final size = big ? 20.w : 16.w;
+    final size = big ? 16.8.w : 15.4.w;
 
     final button = Container(
       width: size,
@@ -377,18 +496,18 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors: [color.withOpacity(0.95), color],
+          colors: [color.withOpacity(0.88), color],
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.6),
-            blurRadius: pulse ? 30 : 18,
-            spreadRadius: pulse ? 4 : 1,
-            offset: const Offset(0, 10),
+            color: color.withOpacity(0.34),
+            blurRadius: pulse ? 18 : 12,
+            spreadRadius: pulse ? 1.2 : 0.4,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Icon(icon, color: Colors.white, size: big ? 34 : 28),
+      child: Icon(icon, color: Colors.white, size: big ? 27 : 21),
     );
 
     if (pulse) {

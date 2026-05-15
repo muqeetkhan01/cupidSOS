@@ -6,7 +6,7 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 // 👉 import your next screen
-import 'vibe_check_screen.dart';
+import 'compatibility_quiz_screen.dart';
 
 enum Answer { yes, no }
 
@@ -343,7 +343,8 @@ class _BigThreeScreenState extends State<BigThreeScreen>
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const VibeCheckScreen(),
+                                  builder: (_) =>
+                                      const CompatibilityQuizScreen(),
                                 ),
                               );
                             }

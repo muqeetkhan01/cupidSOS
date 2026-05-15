@@ -1,5 +1,6 @@
 // lib/screens/profile/profile_screen.dart
 import 'package:cupid_app/onboard/cupid_splash_screen.dart';
+import 'package:cupid_app/community/community_hub_screen.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/theme_controller.dart';
 import 'package:cupid_app/profile/edit.dart';
@@ -243,7 +244,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Upgrade to Gold',
                   trailing: '2× visibility',
                   trailingColor: const Color(0xFFFF6F7D),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CommunityHubScreen(initialTab: 3),
+                      ),
+                    );
+                  },
+                ),
+                _optionTile(
+                  icon: Icons.forum_outlined,
+                  title: 'Cupid Community',
+                  trailing: 'Audio + Hive',
+                  trailingColor: const Color(0xFFFF6F7D),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CommunityHubScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _optionTile(
                   icon: Icons.edit_outlined,

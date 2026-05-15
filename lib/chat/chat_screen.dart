@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cupid_app/config/app_theme.dart';
+import 'package:cupid_app/services/premium_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -216,6 +217,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   final _input = TextEditingController();
   bool _sending = false;
+  final PremiumService _premium = PremiumService.instance;
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _threadSub;
   bool _incomingDialogOpen = false;
@@ -445,6 +447,112 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  Future<void> _sendGift({
+    required String giftName,
+    required int costCoins,
+  }) async {
+    if (_sending) return;
+
+    setState(() => _sending = true);
+    try {
+      final canSpend = await _premium.spendCoins(widget.myUid, costCoins);
+      if (!canSpend) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Need $costCoins coins to send $giftName.')),
+        );
+        return;
+      }
+
+      final msgRef = _messagesRef.doc();
+      final now = FieldValue.serverTimestamp();
+      final preview = 'Sent a $giftName gift';
+
+      final batch = _db.batch();
+      batch.set(msgRef, {
+        "id": msgRef.id,
+        "threadId": widget.threadId,
+        "from": widget.myUid,
+        "to": widget.peerUid,
+        "text": preview,
+        "giftName": giftName,
+        "giftCostCoins": costCoins,
+        "createdAt": now,
+        "type": "gift",
+      });
+      batch.set(
+          _threadRef,
+          {
+            "updatedAt": now,
+            "lastMessage": preview,
+            "lastMessageFrom": widget.myUid,
+            "lastMessageAt": now,
+          },
+          SetOptions(merge: true));
+
+      await batch.commit();
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _openGiftSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: CupidColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        const gifts = <Map<String, dynamic>>[
+          {"name": "Rose", "cost": 20, "emoji": "🌹"},
+          {"name": "Chocolate", "cost": 35, "emoji": "🍫"},
+          {"name": "Teddy", "cost": 60, "emoji": "🧸"},
+          {"name": "Diamond Ring", "cost": 150, "emoji": "💍"},
+        ];
+
+        return Padding(
+          padding: EdgeInsets.fromLTRB(6.w, 2.h, 6.w, 2.5.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const TextWidget(
+                text: 'Send Virtual Gift',
+                size: 17,
+                weight: FontWeight.w700,
+              ),
+              SizedBox(height: 1.2.h),
+              for (final gift in gifts)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Text(
+                    gift["emoji"] as String,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  title: Text(gift["name"] as String),
+                  subtitle: Text('${gift["cost"]} coins'),
+                  trailing: FilledButton.tonal(
+                    onPressed: _sending
+                        ? null
+                        : () async {
+                            await _sendGift(
+                              giftName: gift["name"] as String,
+                              costCoins: gift["cost"] as int,
+                            );
+                            if (!sheetContext.mounted) return;
+                            Navigator.pop(sheetContext);
+                          },
+                    child: const Text('Send'),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -670,7 +778,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemBuilder: (context, i) {
                       final m = msgs[i];
                       final isMe = m.from == widget.myUid;
-                      return _bubble(m.text, isMe: isMe);
+                      return _bubble(m.text, type: m.type, isMe: isMe);
                     },
                   ),
                 );
@@ -683,6 +791,23 @@ class _ChatScreenState extends State<ChatScreen> {
             padding: EdgeInsets.fromLTRB(4.w, 1.2.h, 4.w, 2.2.h),
             child: Row(
               children: [
+                InkWell(
+                  onTap: _sending ? null : _openGiftSheet,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    width: 11.w,
+                    height: 11.w,
+                    decoration: BoxDecoration(
+                      color: CupidColors.surface(context),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.card_giftcard_rounded,
+                      color: Color(0xFFFF6F7D),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 2.2.w),
                 Expanded(
                   child: TextField(
                     controller: _input,
@@ -754,9 +879,10 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _bubble(String text, {required bool isMe}) {
+  Widget _bubble(String text, {required String type, required bool isMe}) {
     final bg = isMe ? const Color(0xFFFF6F7D) : CupidColors.surface(context);
     final fg = isMe ? Colors.white : CupidColors.textPrimary(context);
+    final shownText = type == 'gift' ? '🎁 $text' : text;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -776,7 +902,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         child: Text(
-          text,
+          shownText,
           style: TextStyle(
             color: fg,
             fontSize: 14.5,
@@ -796,6 +922,7 @@ class ChatMessage {
     required this.to,
     required this.text,
     required this.createdAt,
+    required this.type,
   });
 
   final String id;
@@ -803,6 +930,7 @@ class ChatMessage {
   final String to;
   final String text;
   final DateTime? createdAt;
+  final String type;
 
   static ChatMessage fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final d = doc.data() ?? const <String, dynamic>{};
@@ -813,6 +941,7 @@ class ChatMessage {
       to: (d["to"] as String?) ?? "",
       text: (d["text"] as String?) ?? "",
       createdAt: ts is Timestamp ? ts.toDate() : null,
+      type: (d["type"] as String?) ?? "text",
     );
   }
 }

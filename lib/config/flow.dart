@@ -21,6 +21,7 @@ import '../onboard/show_your_story_screen.dart';
 import '../onboard/vibe_selection_screen.dart';
 import '../onboard/voice_prompt_screen.dart';
 import '../onboard/big_three_screen.dart';
+import '../onboard/compatibility_quiz_screen.dart';
 import '../onboard/vibe_check_screen.dart';
 import '../onboard/welcome_house_rules_screen.dart';
 import '../widgets/bottomNav.dart';
@@ -56,6 +57,9 @@ class AppFlowController extends GetxController {
   final RxnBool familyApprovalImportant = RxnBool();
   final RxnBool marriageTimelineImportant = RxnBool();
   final RxnBool culturalAlignmentImportant = RxnBool();
+  final RxBool compatibilityQuizCompleted = false.obs;
+  final RxInt compatibilityScore = 0.obs;
+  final RxMap<String, int> compatibilityAnswers = <String, int>{}.obs;
   final RxList<String> interests = <String>[].obs;
 
   // Height: store numeric value in cm, but remember the user's chosen unit for UI.
@@ -200,6 +204,22 @@ class AppFlowController extends GetxController {
         data["marriageTimelineImportant"] as bool?;
     culturalAlignmentImportant.value =
         data["culturalAlignmentImportant"] as bool?;
+    compatibilityQuizCompleted.value =
+        data["compatibilityQuizCompleted"] == true;
+    compatibilityScore.value = 0;
+    final scoreValue = data["compatibilityScore"];
+    if (scoreValue is num) {
+      compatibilityScore.value = scoreValue.toInt();
+    }
+    final compatAnswers = data["compatibilityAnswers"];
+    compatibilityAnswers.clear();
+    if (compatAnswers is Map) {
+      compatAnswers.forEach((key, value) {
+        if (key is String && value is num) {
+          compatibilityAnswers[key] = value.toInt();
+        }
+      });
+    }
 
     final savedInterests = data["interests"];
     if (savedInterests is List) {
@@ -315,6 +335,9 @@ class AppFlowController extends GetxController {
         culturalAlignmentImportant.value == null) {
       return const BigThreeScreen();
     }
+    if (!compatibilityQuizCompleted.value || compatibilityAnswers.length < 15) {
+      return const CompatibilityQuizScreen();
+    }
     if (interests.length < 5) return const VibeCheckScreen();
     if (displayName.value == null ||
         displayName.value!.isEmpty ||
@@ -392,6 +415,11 @@ class AppFlowController extends GetxController {
       "familyApprovalImportant": familyApprovalImportant.value,
       "marriageTimelineImportant": marriageTimelineImportant.value,
       "culturalAlignmentImportant": culturalAlignmentImportant.value,
+      "compatibilityQuizCompleted": compatibilityQuizCompleted.value,
+      "compatibilityScore": compatibilityScore.value,
+      "compatibilityAnswers": compatibilityAnswers.map(
+        (key, value) => MapEntry(key, value),
+      ),
       "interests": interests.toList(),
       "heightUnit": heightUnit.value,
       "bigThree": {
