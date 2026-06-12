@@ -89,7 +89,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
               Expanded(
                 child: _navItem(
                   index: 1,
-                  label: "Hub",
+                  label: "Community",
                   activeIcon: Icons.graphic_eq_rounded,
                   inactiveIcon: Icons.graphic_eq_outlined,
                 ),
@@ -183,7 +183,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
                             )
                           : Icon(
                               isSelected ? activeIcon : inactiveIcon,
-                              size: 17.5.sp,
+                              size: 18.5.sp,
                               color: isSelected
                                   ? const Color(0xFFFF6F7D)
                                   : CupidColors.textSecondary(context),
@@ -218,7 +218,7 @@ class _CustomCupidBottomNavState extends State<CustomCupidBottomNav> {
                 opacity: isSelected ? 1 : 0.7,
                 child: TextWidget(
                   text: label,
-                  size: 10.2,
+                  size: 11.4,
                   weight: isSelected ? FontWeight.w600 : FontWeight.w400,
                   color: isSelected
                       ? const Color(0xFFFF6F7D)

@@ -6,6 +6,7 @@ import 'package:cupid_app/services/premium_service.dart';
 import 'package:cupid_app/widgets/button_widget.dart';
 import 'package:cupid_app/widgets/text_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 class CommunityHubScreen extends StatefulWidget {
@@ -18,7 +19,7 @@ class CommunityHubScreen extends StatefulWidget {
 }
 
 class _CommunityHubScreenState extends State<CommunityHubScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final _community = CommunityService.instance;
   final _premium = PremiumService.instance;
 
@@ -29,6 +30,9 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
   Map<String, dynamic>? _fortune;
   Map<String, dynamic>? _mystery;
   bool _loadingDaily = true;
+  bool _hasFortuneAlert = false;
+
+  late final AnimationController _cookiePulse;
 
   final List<String> _gamePrompts = const [
     'Hotpot or Not: Surprise your match with a late-night dumpling run?',
@@ -47,6 +51,10 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     super.initState();
     _tabs = TabController(
         length: 4, vsync: this, initialIndex: widget.initialTab.clamp(0, 3));
+    _cookiePulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
     _initData();
   }
 
@@ -66,12 +74,14 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       _fortune = fortune;
       _mystery = mystery;
       _loadingDaily = false;
+      _hasFortuneAlert = _hasFortuneAlert || (fortune != null);
     });
   }
 
   @override
   void dispose() {
     _tabs.dispose();
+    _cookiePulse.dispose();
     _postCtrl.dispose();
     super.dispose();
   }
@@ -260,6 +270,118 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     );
   }
 
+  Color _fortuneGlowColor() {
+    final text = ((_fortune?['message'] as String?) ?? '').toLowerCase();
+    if (text.contains('academy')) return const Color(0xFFFFC857); // gold
+    if (text.contains('match')) return const Color(0xFFFF6F7D); // pink
+    return Colors.white; // daily prompt
+  }
+
+  Future<void> _openFortuneCookie() async {
+    await HapticFeedback.lightImpact();
+    SystemSound.play(SystemSoundType.click);
+    if (!mounted) return;
+
+    setState(() => _hasFortuneAlert = false);
+
+    final fortuneName = (_fortune?['targetName'] as String? ?? '').trim();
+    final fortuneText = (_fortune?['message'] as String? ?? '').trim();
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const TextWidget(
+            text: 'Fortune Cookie',
+            size: 17,
+            weight: FontWeight.w700,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextWidget(
+                text: fortuneName.isEmpty
+                    ? 'Your personalized fortune is ready.'
+                    : 'Suggested: $fortuneName',
+                size: 14.5,
+                weight: FontWeight.w700,
+                color: const Color(0xFFFF6F7D),
+              ),
+              SizedBox(height: 1.h),
+              TextWidget(
+                text: fortuneText.isEmpty
+                    ? 'No fortune yet. Pull to refresh and check again.'
+                    : fortuneText,
+                size: 13.5,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _fortuneCookieAction() {
+    final glow = _fortuneGlowColor();
+    final pulse = CurvedAnimation(
+      parent: _cookiePulse,
+      curve: Curves.easeInOut,
+    );
+
+    return AnimatedBuilder(
+      animation: pulse,
+      builder: (context, _) {
+        final spread = 6 + (8 * pulse.value);
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: glow.withValues(alpha: 0.42),
+                    blurRadius: spread,
+                    spreadRadius: pulse.value * 1.2,
+                  ),
+                ],
+              ),
+              child: IconButton(
+                onPressed: _openFortuneCookie,
+                tooltip: 'Open fortune cookie',
+                icon: const Icon(Icons.cookie_rounded),
+                color: const Color(0xFFFF6F7D),
+              ),
+            ),
+            if (_hasFortuneAlert)
+              Positioned(
+                right: 4,
+                top: 4,
+                child: Container(
+                  width: 9,
+                  height: 9,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF4D6D),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: CupidColors.scaffold(context)),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _sendPost() async {
     final uid = _uid;
     if (uid == null) return;
@@ -311,10 +433,11 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     final uid = _uid;
     if (uid == null) return;
     final price = switch (amount) {
-      100 => 4.99,
-      250 => 9.99,
-      700 => 19.99,
-      _ => (amount / 25).toDouble(),
+      100 => 1.99,
+      500 => 7.99,
+      1200 => 14.99,
+      2500 => 24.99,
+      _ => (amount / 100).toDouble(),
     };
     await _premium.purchaseCoinsPackage(
       uid: uid,
@@ -323,27 +446,6 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       packageId: 'coins_$amount',
     );
     _showSnack('Purchased $amount Cupid Coins (\$$price).');
-  }
-
-  Future<void> _upgrade(SubscriptionTier tier) async {
-    final uid = _uid;
-    if (uid == null) return;
-    if (tier == SubscriptionTier.standard) {
-      await _premium.upgradeTier(uid, tier);
-      _showSnack('Subscription downgraded to STANDARD.');
-      return;
-    }
-
-    final price = tier == SubscriptionTier.gold ? 14.99 : 29.99;
-    await _premium.purchaseSubscription(
-      uid: uid,
-      tier: tier,
-      amountUsd: price,
-      billingCycle: 'monthly',
-    );
-    _showSnack(
-      'Subscription updated to ${tier.name.toUpperCase()} (\$$price / month).',
-    );
   }
 
   Future<void> _playFunZone(bool hotpotChoice) async {
@@ -414,12 +516,27 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
               size: 18,
               weight: FontWeight.w700,
             ),
+            actions: [
+              Padding(
+                padding: EdgeInsets.only(right: 2.4.w),
+                child: _fortuneCookieAction(),
+              ),
+            ],
             bottom: TabBar(
               controller: _tabs,
               isScrollable: true,
               labelColor: const Color(0xFFFF6F7D),
               unselectedLabelColor: CupidColors.textSecondary(context),
               indicatorColor: const Color(0xFFFF6F7D),
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 14.5,
+                fontWeight: FontWeight.w600,
+              ),
               tabs: const [
                 Tab(text: 'Daily'),
                 Tab(text: 'Audio'),
@@ -438,7 +555,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                     _dailyTab(uid),
                     _audioTab(premium),
                     _feedTab(uid),
-                    _funStoreTab(premium),
+                    _funStoreTab(),
                   ],
                 ),
               ),
@@ -461,12 +578,11 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       ),
       child: Row(
         children: [
-          const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFF6F7D)),
+          const Icon(Icons.monetization_on_rounded, color: Color(0xFFFF6F7D)),
           SizedBox(width: 2.5.w),
           Expanded(
             child: TextWidget(
-              text:
-                  'Tier: ${premium.tier.name.toUpperCase()}  •  Coins: ${premium.coins}  •  Free SOS Arrow left: ${premium.sosArrowFreeRemaining}',
+              text: 'Available Coins: ${premium.coins}',
               size: 13.5,
               weight: FontWeight.w600,
             ),
@@ -500,86 +616,6 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
             name: (_mystery?['targetName'] as String? ?? '').trim(),
             message: (_mystery?['message'] as String? ?? '').trim(),
           ),
-          SizedBox(height: 2.h),
-          TextWidget(
-            text: 'Cupid Academy Schedule',
-            size: 16,
-            weight: FontWeight.w700,
-          ),
-          SizedBox(height: 1.h),
-          StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: _community.watchAcademyContent(),
-            builder: (context, snap) {
-              final docs = snap.data?.docs ?? const [];
-              if (docs.isEmpty) {
-                return _infoTile(
-                  'No scheduled academy sessions yet. Check back soon.',
-                );
-              }
-
-              return Column(
-                children: docs.map((doc) {
-                  final data = doc.data();
-                  final title =
-                      (data['title'] as String? ?? 'Academy Session').trim();
-                  final description =
-                      (data['description'] as String? ?? '').trim();
-                  final scheduledAt = data['scheduledAt'];
-                  final dt = scheduledAt is Timestamp
-                      ? scheduledAt.toDate()
-                      : DateTime.now();
-                  final dateLabel =
-                      '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-
-                  return Container(
-                    width: double.infinity,
-                    margin: EdgeInsets.only(bottom: 0.8.h),
-                    padding: EdgeInsets.all(3.2.w),
-                    decoration: BoxDecoration(
-                      color: CupidColors.surface(context),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: CupidColors.border(context)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextWidget(
-                          text: title,
-                          size: 13.8,
-                          weight: FontWeight.w700,
-                        ),
-                        SizedBox(height: 0.4.h),
-                        TextWidget(
-                          text: description.isEmpty
-                              ? 'No description'
-                              : description,
-                          size: 12.5,
-                          color: CupidColors.textSecondary(context),
-                        ),
-                        SizedBox(height: 0.4.h),
-                        TextWidget(
-                          text: 'Scheduled: $dateLabel',
-                          size: 12.2,
-                          color: CupidColors.textSecondary(context),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              );
-            },
-          ),
-          SizedBox(height: 1.h),
-          TextWidget(
-            text: 'Access Control Summary',
-            size: 16,
-            weight: FontWeight.w700,
-          ),
-          SizedBox(height: 1.h),
-          _infoTile(
-              'Mandatory onboarding completed users can access this section.'),
-          _infoTile('Cupid Academy and Circle unlock post-onboarding.'),
-          _infoTile('Cupid Vows room requires premium tier token access.'),
         ],
       ),
     );
@@ -642,6 +678,140 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     );
   }
 
+  String _academyDateLabel(DateTime dt) {
+    return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _academySessionCard(Map<String, dynamic> data) {
+    final title = (data['title'] as String? ?? 'Academy Session').trim();
+    final description = (data['description'] as String? ?? '').trim();
+    final scheduledAt = data['scheduledAt'];
+    final dt = scheduledAt is Timestamp ? scheduledAt.toDate() : DateTime.now();
+
+    return Container(
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 0.8.h),
+      padding: EdgeInsets.all(3.2.w),
+      decoration: BoxDecoration(
+        color: CupidColors.surface(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: CupidColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextWidget(
+            text: title,
+            size: 14.2,
+            weight: FontWeight.w700,
+          ),
+          SizedBox(height: 0.4.h),
+          TextWidget(
+            text: description.isEmpty ? 'No description' : description,
+            size: 12.8,
+            color: CupidColors.textSecondary(context),
+          ),
+          SizedBox(height: 0.4.h),
+          TextWidget(
+            text: 'Scheduled: ${_academyDateLabel(dt)}',
+            size: 12.4,
+            color: CupidColors.textSecondary(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showAllAcademySchedules() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: CupidColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      isScrollControlled: true,
+      builder: (_) {
+        return SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 70.h,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.h),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TextWidget(
+                    text: 'All Academy Schedules',
+                    size: 17,
+                    weight: FontWeight.w700,
+                  ),
+                  SizedBox(height: 1.h),
+                  Expanded(
+                    child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: _community.watchAcademyContent(),
+                      builder: (context, snap) {
+                        final docs = snap.data?.docs ?? const [];
+                        if (docs.isEmpty) {
+                          return ListView(
+                            children: [
+                              _infoTile(
+                                'No scheduled academy sessions yet. Check back soon.',
+                              ),
+                            ],
+                          );
+                        }
+
+                        return ListView.builder(
+                          itemCount: docs.length,
+                          itemBuilder: (_, i) =>
+                              _academySessionCard(docs[i].data()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _academyScheduleSection() {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _community.watchAcademyContent(),
+      builder: (context, snap) {
+        final docs = snap.data?.docs ?? const [];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Expanded(
+                  child: TextWidget(
+                    text: 'Cupid Academy Schedule',
+                    size: 16.5,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                TextButton(
+                  onPressed: _showAllAcademySchedules,
+                  child: const Text('Browse All >'),
+                ),
+              ],
+            ),
+            if (docs.isEmpty)
+              _infoTile('No scheduled academy sessions yet. Check back soon.')
+            else
+              ...docs.take(3).map((doc) => _academySessionCard(doc.data())),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _audioTab(PremiumSnapshot premium) {
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: _community.watchRooms(includePrivate: true),
@@ -698,6 +868,13 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
               color: CupidColors.textSecondary(context),
             ),
             SizedBox(height: 1.6.h),
+            _academyScheduleSection(),
+            SizedBox(height: 0.6.h),
+            _infoTile(
+                'Mandatory onboarding completed users can access this section.'),
+            _infoTile('Cupid Academy and Circle unlock post-onboarding.'),
+            _infoTile('Cupid Vows room requires premium tier token access.'),
+            SizedBox(height: 0.8.h),
             if (docs.isEmpty)
               _infoTile('No rooms live now. Create one and invite listeners.')
             else
@@ -884,7 +1061,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     );
   }
 
-  Widget _funStoreTab(PremiumSnapshot premium) {
+  Widget _funStoreTab() {
     return ListView(
       padding: EdgeInsets.fromLTRB(5.w, 1.h, 5.w, 10.h),
       children: [
@@ -962,51 +1139,79 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const TextWidget(
-                  text: 'Cupid Coins Store', size: 16, weight: FontWeight.w700),
-              SizedBox(height: 1.h),
-              _storeButton('Buy 100 coins', () => _purchaseCoins(100)),
-              _storeButton('Buy 250 coins', () => _purchaseCoins(250)),
-              _storeButton('Buy 700 coins', () => _purchaseCoins(700)),
-            ],
-          ),
-        ),
-        SizedBox(height: 1.4.h),
-        Container(
-          padding: EdgeInsets.all(4.w),
-          decoration: BoxDecoration(
-            color: CupidColors.surface(context),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: CupidColors.border(context)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const TextWidget(
-                  text: 'Subscription Tiers',
-                  size: 16,
-                  weight: FontWeight.w700),
-              SizedBox(height: 0.6.h),
-              TextWidget(
-                text: 'Current tier: ${premium.tier.name.toUpperCase()}',
-                size: 13,
-                color: CupidColors.textSecondary(context),
+                text: 'Cupid Coins Store',
+                size: 16,
+                weight: FontWeight.w700,
               ),
               SizedBox(height: 1.h),
-              _storeButton(
-                  'Upgrade to Gold', () => _upgrade(SubscriptionTier.gold)),
-              _storeButton(
-                  'Upgrade to Elite', () => _upgrade(SubscriptionTier.elite)),
-              _storeButton('Downgrade to Standard',
-                  () => _upgrade(SubscriptionTier.standard)),
+              _coinsPriceRow(
+                title: '100 Coins',
+                price: '\$1.99',
+                bestFor: 'Try flirty animations',
+              ),
+              _coinsPriceRow(
+                title: '500 Coins',
+                price: '\$7.99',
+                bestFor: 'Boost + 3 gifts',
+              ),
+              _coinsPriceRow(
+                title: '1,200 Coins',
+                price: '\$14.99',
+                bestFor: 'VIP chats & mystery match',
+              ),
+              _coinsPriceRow(
+                title: '2,500 Coins',
+                price: '\$24.99',
+                bestFor: 'Heavy users (Cupid Elite)',
+              ),
               SizedBox(height: 1.h),
-              _infoTile(
-                  'Gold/Elite: unlimited likes, priority visibility, advanced filters, Vows access.'),
-              _infoTile(
-                  'Elite: message anyone before matching and premium communication privileges.'),
+              _storeButton('Buy 100 Coins', () => _purchaseCoins(100)),
+              _storeButton('Buy 500 Coins', () => _purchaseCoins(500)),
+              _storeButton('Buy 1,200 Coins', () => _purchaseCoins(1200)),
+              _storeButton('Buy 2,500 Coins', () => _purchaseCoins(2500)),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _coinsPriceRow({
+    required String title,
+    required String price,
+    required String bestFor,
+  }) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 0.8.h),
+      padding: EdgeInsets.all(3.w),
+      decoration: BoxDecoration(
+        color: CupidColors.surfaceMuted(context),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: TextWidget(text: title, size: 13.8, weight: FontWeight.w700),
+          ),
+          SizedBox(width: 2.w),
+          TextWidget(
+            text: price,
+            size: 13.8,
+            weight: FontWeight.w700,
+            color: const Color(0xFFFF6F7D),
+          ),
+          SizedBox(width: 2.5.w),
+          Expanded(
+            child: TextWidget(
+              text: bestFor,
+              size: 12.4,
+              color: CupidColors.textSecondary(context),
+              textAlign: TextAlign.right,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

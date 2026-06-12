@@ -1,5 +1,3 @@
-// lib/screens/user/user_profile_screen.dart
-import 'dart:ui';
 import 'package:cupid_app/Discover/discover_screen.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/services/auth_service.dart';
@@ -126,11 +124,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 flexibleSpace: FlexibleSpaceBar(
                   background: _HeroHeader(
                     imageUrl: hero,
-                    name: u.name,
-                    title: u.displayTitle,
-                    location: simplifyLocationLabel(u.locationLabel),
-                    match: widget.match,
-                    tags: u.tags,
                   ),
                 ),
               ),
@@ -140,6 +133,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      _identityCard(
+                        title: u.displayTitle,
+                        location: simplifyLocationLabel(u.locationLabel),
+                        match: widget.match,
+                        tags: u.tags,
+                      ),
+                      SizedBox(height: 2.2.h),
+
                       /// About
                       _sectionTitle("About"),
                       SizedBox(height: 1.2.h),
@@ -229,6 +230,86 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           //     onLike: () => Navigator.pop(context, "like"),
           //   ),
           // ),
+        ],
+      ),
+    );
+  }
+
+  Widget _identityCard({
+    required String title,
+    required String location,
+    required String match,
+    required List<String> tags,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(4.w),
+      decoration: BoxDecoration(
+        color: CupidColors.surface(context),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: CupidColors.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextWidget(
+                  text: title,
+                  size: 20,
+                  weight: FontWeight.w800,
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF6F7D).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: TextWidget(
+                  text: '$match Match',
+                  size: 12.2,
+                  weight: FontWeight.w700,
+                  color: const Color(0xFFFF6F7D),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 0.8.h),
+          TextWidget(
+            text: location.isEmpty ? 'Unknown location' : location,
+            size: 13.5,
+            color: CupidColors.textSecondary(context),
+          ),
+          if (tags.isNotEmpty) ...[
+            SizedBox(height: 1.2.h),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: tags
+                  .take(6)
+                  .map(
+                    (tag) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: CupidColors.surfaceMuted(context),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: TextWidget(
+                        text: tag,
+                        size: 12.2,
+                        weight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
         ],
       ),
     );
@@ -381,154 +462,29 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 /// ----------------------
 class _HeroHeader extends StatelessWidget {
   final String imageUrl;
-  final String name;
-  final String title;
-  final String location;
-  final String match;
-  final List<String> tags;
 
   const _HeroHeader({
     required this.imageUrl,
-    required this.name,
-    required this.title,
-    required this.location,
-    required this.match,
-    required this.tags,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: CupidColors.surfaceMuted(context),
-              alignment: Alignment.center,
-              child: const Icon(Icons.person, size: 64),
-            ),
-            loadingBuilder: (_, child, progress) {
-              if (progress == null) return child;
-              return Container(
-                color: CupidColors.surfaceMuted(context),
-                alignment: Alignment.center,
-                child: const CircularProgressIndicator(strokeWidth: 2),
-              );
-            },
-          ),
-        ),
-
-        /// gradient
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withOpacity(0.92),
-                  Colors.black.withOpacity(0.35),
-                  Colors.transparent,
-                ],
-                stops: const [0.0, 0.55, 0.9],
-              ),
-            ),
-          ),
-        ),
-
-        /// content
-        Positioned(
-          left: 5.w,
-          right: 5.w,
-          bottom: 3.h,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// name row + match badge
-              Row(
-                children: [
-                  Expanded(
-                    child: TextWidget(
-                      text: title,
-                      size: 26,
-                      weight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                  _glassBadge("$match Match"),
-                ],
-              ),
-
-              SizedBox(height: 1.h),
-
-              Row(
-                children: [
-                  const Icon(Icons.location_on,
-                      color: Colors.white70, size: 16),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: TextWidget(
-                      text: location.isEmpty ? "Unknown location" : location,
-                      size: 13,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 2.h),
-
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: tags.take(6).map((t) => _pillTag(t)).toList(),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  static Widget _glassBadge(String text) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.14),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white.withOpacity(0.28)),
-          ),
-          child: TextWidget(
-            text: text,
-            size: 12.5,
-            weight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => Container(
+        color: CupidColors.surfaceMuted(context),
+        alignment: Alignment.center,
+        child: const Icon(Icons.person, size: 64),
       ),
-    );
-  }
-
-  static Widget _pillTag(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        color: Colors.black.withOpacity(0.35),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
-      ),
-      child: TextWidget(
-        text: text,
-        size: 12.5,
-        color: Colors.white,
-        weight: FontWeight.w600,
-      ),
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          color: CupidColors.surfaceMuted(context),
+          alignment: Alignment.center,
+          child: const CircularProgressIndicator(strokeWidth: 2),
+        );
+      },
     );
   }
 }

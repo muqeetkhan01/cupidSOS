@@ -172,23 +172,6 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
               ),
             ),
           ),
-          Positioned(
-            right: 4.w,
-            top: 2.h,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 0.8.h),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const TextWidget(
-                text: 'Center your face',
-                size: 12,
-                color: Colors.white,
-                weight: FontWeight.w600,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -301,7 +284,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                 SizedBox(height: 3.h),
                 _animated(
                   TextWidget(
-                    text: 'Photo Verification',
+                    text: "Let's make sure it's really you.",
                     size: 18.sp,
                     weight: FontWeight.w600,
                   ),
@@ -312,7 +295,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                 _animated(
                   const TextWidget(
                     text:
-                        "It won't be shown on your profile. It's just for our team to verify it's really you.",
+                        'Give a peace sign and smile. It won\'t be shown on your profile.',
                     size: 15,
                     color: null,
                   ),
@@ -349,7 +332,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                         Expanded(
                           child: TextWidget(
                             text:
-                                'Match the example pose and place your face inside the circle so our team can verify it is really you.',
+                                'Liveness verification:\n1. Gesture: Give a peace sign and smile.\n2. AI check: Nano Banana engine verifies your face against your photo stack.',
                             size: 14,
                             color: infoTextColor,
                           ),
@@ -362,6 +345,19 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                 ),
                 SizedBox(height: 3.h),
                 _animated(_previewCard(), 0.3, 0.65),
+                SizedBox(height: 1.h),
+                _animated(
+                  TextWidget(
+                    text: isValid
+                        ? 'Peace sign detected. Looking great!'
+                        : 'Place your face in the circle.',
+                    size: 13.5,
+                    weight: FontWeight.w600,
+                    color: const Color(0xFFFF6F7D),
+                  ),
+                  0.4,
+                  0.7,
+                ),
                 SizedBox(height: 2.h),
                 _animated(
                   Row(
@@ -387,7 +383,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                 // const Spacer(),
                 _animated(
                   ButtonWidget(
-                    text: _uploading ? 'Uploading…' : 'Finish',
+                    text: _uploading ? 'Uploading…' : 'Submit Verification',
                     height: 7,
                     radius: 36,
                     variant:
