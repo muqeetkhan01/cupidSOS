@@ -10,6 +10,7 @@ import 'package:cupid_app/services/auth_service.dart';
 import 'package:cupid_app/services/profile_display.dart';
 import 'package:cupid_app/services/premium_service.dart';
 import 'package:cupid_app/services/safety_service.dart';
+import 'package:cupid_app/widgets/subscription_review_dialog.dart';
 import 'package:fancy_shimmer_image/fancy_shimmer_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -439,7 +440,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
 
     final can = await _premiumService.canMessageBeforeMatch(myUid);
     if (!can) {
-      _showSnack('Elite only feature. Upgrade to message before matching.');
+      if (mounted) showSubscriptionReviewDialog(context);
       return;
     }
     if (!mounted) return;

@@ -5,6 +5,7 @@ import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/theme_controller.dart';
 import 'package:cupid_app/profile/edit.dart';
 import 'package:cupid_app/profile/safety_center_screen.dart';
+import 'package:cupid_app/widgets/subscription_review_dialog.dart';
 import 'package:cupid_app/widgets/voice.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -245,12 +246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   trailing: '2× visibility',
                   trailingColor: const Color(0xFFFF6F7D),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CommunityHubScreen(initialTab: 3),
-                      ),
-                    );
+                    showSubscriptionReviewDialog(context);
                   },
                 ),
                 _optionTile(

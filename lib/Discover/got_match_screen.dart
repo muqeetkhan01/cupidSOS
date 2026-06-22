@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 
+import '../fortune/fortune_cookie_repository.dart';
 import '../services/match_service.dart';
 import '../widgets/text_widget.dart';
 
@@ -33,8 +34,17 @@ class GotMatchScreen extends StatefulWidget {
 class _GotMatchScreenState extends State<GotMatchScreen> {
   final _controller = TextEditingController();
   bool _sending = false;
+  late final Future<FortuneCookie> _matchFortune;
 
   MatchService get _matchService => MatchService(FirebaseFirestore.instance);
+
+  @override
+  void initState() {
+    super.initState();
+    _matchFortune = FortuneCookieRepository.instance.matchLineForSeed(
+      '${widget.myUid}:${widget.targetUid}',
+    );
+  }
 
   @override
   void dispose() {
@@ -64,6 +74,11 @@ class _GotMatchScreenState extends State<GotMatchScreen> {
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  Future<void> _sendFortune() async {
+    final fortune = await _matchFortune;
+    await _send(fortune.text);
   }
 
   @override
@@ -150,6 +165,74 @@ class _GotMatchScreenState extends State<GotMatchScreen> {
                             size: 13.5,
                             color: Colors.white.withOpacity(0.9),
                           ),
+                          SizedBox(height: 1.2.h),
+                          FutureBuilder<FortuneCookie>(
+                            future: _matchFortune,
+                            builder: (context, snapshot) {
+                              final fortune = snapshot.data?.text ??
+                                  'A match is a moment; connection is a choice.';
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(18),
+                                onTap: _sending ? null : _sendFortune,
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.13),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.24),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.asset(
+                                          'assets/images/fortune_cookie_reveal.jpeg',
+                                          width: 52,
+                                          height: 52,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            TextWidget(
+                                              text: 'Fortune opener',
+                                              size: 12,
+                                              weight: FontWeight.w700,
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.78),
+                                            ),
+                                            const SizedBox(height: 3),
+                                            TextWidget(
+                                              text: fortune,
+                                              size: 13,
+                                              weight: FontWeight.w600,
+                                              color: Colors.white,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Icon(
+                                        Icons.send_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                           SizedBox(height: 1.5.h),
                           TextField(
                             controller: _controller,
@@ -193,6 +276,8 @@ class _GotMatchScreenState extends State<GotMatchScreen> {
                                   () => _send("You seem fun 😄")),
                               _quickChip("Coffee this week? ☕",
                                   () => _send("Coffee this week? ☕")),
+                              _quickChip(
+                                  "Fortune opener", () => _sendFortune()),
                             ],
                           ),
                         ],

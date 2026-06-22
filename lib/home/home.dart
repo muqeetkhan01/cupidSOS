@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import '../../config/app_theme.dart';
+import '../../fortune/fortune_cookie_repository.dart';
+import '../../fortune/fortune_cookie_screen.dart';
 import '../../widgets/text_widget.dart';
 import '../../widgets/button_widget.dart';
 
@@ -165,39 +167,76 @@ class _HomeScreenState extends State<HomeScreen>
   // ===================== COMPONENTS =====================
 
   Widget _fortuneCard() {
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF1DC), Color(0xFFF5E8FF)],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const TextWidget(
-            text: '🎁 Fortune Cookie Match 🥠',
-            size: 16,
-            weight: FontWeight.bold,
+    return FutureBuilder<FortuneCookie>(
+      future: FortuneCookieRepository.instance.todayDailyFortune(),
+      builder: (context, snapshot) {
+        final preview =
+            snapshot.data?.text ?? 'Your daily cosmic match is ready.';
+
+        return Container(
+          padding: EdgeInsets.all(4.w),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(26),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFFF1DC), Color(0xFFF5E8FF)],
+            ),
+            boxShadow: [
+              BoxShadow(color: CupidColors.shadow(context), blurRadius: 14),
+            ],
           ),
-          const SizedBox(height: 6),
-          TextWidget(
-            text: 'Your daily cosmic match is ready!',
-            size: 14,
-            color: CupidColors.textSecondary(context),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const TextWidget(
+                      text: 'Fortune Cookie Match',
+                      size: 16,
+                      weight: FontWeight.bold,
+                    ),
+                    const SizedBox(height: 6),
+                    TextWidget(
+                      text: preview,
+                      size: 13.5,
+                      color: CupidColors.textSecondary(context),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: 1.8.h),
+                    ButtonWidget(
+                      text: 'Open',
+                      height: 5.2,
+                      width: 35,
+                      radius: 30,
+                      variant: ButtonVariant.gradient,
+                      gradient: const [Color(0xFFFF6F7D), Color(0xFFFFB25F)],
+                      icon: Icons.auto_awesome_rounded,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const FortuneCookieScreen(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: 3.w),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: Image.asset(
+                  'assets/images/fortune_cookie_pending.jpeg',
+                  width: 28.w,
+                  height: 28.w,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 2.h),
-          ButtonWidget(
-            text: 'Open Fortune 🔮',
-            height: 5.8,
-            radius: 30,
-            variant: ButtonVariant.gradient,
-            gradient: const [Color(0xFFFFC107), Color(0xFFFF9800)],
-            onTap: () {},
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

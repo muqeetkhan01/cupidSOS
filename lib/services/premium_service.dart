@@ -4,6 +4,13 @@ import 'auth_service.dart';
 
 enum SubscriptionTier { standard, gold, elite }
 
+class SubscriptionUnavailableException implements Exception {
+  const SubscriptionUnavailableException();
+
+  @override
+  String toString() => PremiumService.subscriptionReviewMessage;
+}
+
 class PremiumSnapshot {
   const PremiumSnapshot({
     required this.tier,
@@ -31,6 +38,11 @@ class PremiumService {
   PremiumService._();
 
   static final PremiumService instance = PremiumService._();
+  static const bool subscriptionsAvailable = false;
+  static const String subscriptionReviewTitle = 'Subscriptions in review';
+  static const String subscriptionReviewMessage =
+      'Subscriptions are being reviewed and are not available at the moment.';
+
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   static const int _freeSosArrowPerDay = 1;
@@ -209,6 +221,10 @@ class PremiumService {
     String billingCycle = 'monthly',
   }) async {
     if (tier == SubscriptionTier.standard) return;
+    if (!subscriptionsAvailable) {
+      throw const SubscriptionUnavailableException();
+    }
+
     final now = FieldValue.serverTimestamp();
     final paymentRef = _payments.doc();
 

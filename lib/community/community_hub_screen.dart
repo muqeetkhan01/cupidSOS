@@ -4,6 +4,7 @@ import 'package:cupid_app/services/auth_service.dart';
 import 'package:cupid_app/services/community_service.dart';
 import 'package:cupid_app/services/premium_service.dart';
 import 'package:cupid_app/widgets/button_widget.dart';
+import 'package:cupid_app/widgets/subscription_review_dialog.dart';
 import 'package:cupid_app/widgets/text_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -123,7 +124,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                   if (!snap.isGoldOrHigher) {
                     if (!ctx.mounted) return;
                     Navigator.pop(ctx);
-                    _showSnack('Cupid Vows requires Gold or Elite access.');
+                    if (mounted) showSubscriptionReviewDialog(context);
                     return;
                   }
                 }
@@ -155,7 +156,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     if (premiumOnly) {
       final snap = await _premium.fetch(uid);
       if (!snap.isGoldOrHigher) {
-        _showSnack('Premium room. Upgrade to Gold/Elite to join Cupid Vows.');
+        if (mounted) showSubscriptionReviewDialog(context);
         return;
       }
     }
