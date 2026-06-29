@@ -1,6 +1,7 @@
 # Miscellaneous
 *.class
 *.log
+firebase-debug.log
 *.pyc
 *.swp
 .DS_Store

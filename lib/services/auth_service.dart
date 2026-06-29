@@ -27,7 +27,6 @@ class AuthService extends GetxService {
   @override
   void onInit() {
     firebaseUser.bindStream(_auth.authStateChanges());
-
     super.onInit();
   }
 

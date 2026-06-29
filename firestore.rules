@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    // Profiles are discoverable to signed-in members, but only their owner can
+    // create, edit, or delete the profile itself.
+    match /users_cupid/{userId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isUser(userId);
+
+      // Matching currently uses reciprocal client-side writes (swipes,
+      // liked_by and matches). Keep those app flows authenticated while the
+      // profile document above remains owner-only.
+      match /{nestedDocument=**} {
+        allow read, write: if signedIn();
+      }
+    }
+
+    // A thread and its messages are visible only to thread participants.
+    match /threads/{threadId} {
+      allow create: if signedIn()
+        && request.resource.data.participants is list
+        && request.auth.uid in request.resource.data.participants;
+      allow read, update, delete: if signedIn()
+        && request.auth.uid in resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read, update, delete: if signedIn()
+          && request.auth.uid in
+            get(/databases/$(database)/documents/threads/$(threadId)).data.participants;
+        allow create: if signedIn()
+          && request.auth.uid in
+            getAfter(/databases/$(database)/documents/threads/$(threadId)).data.participants;
+      }
+    }
+
+    match /safety_reports/{reportId} {
+      allow create: if signedIn()
+        && request.resource.data.reporterUid == request.auth.uid;
+      allow read: if signedIn() && resource.data.reporterUid == request.auth.uid;
+    }
+
+    match /payments/{paymentId} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /coin_ledger/{entryId} {
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /audio_rooms/{roomId} {
+      allow read, create, update, delete: if signedIn();
+    }
+
+    match /cupid_hive_posts/{postId} {
+      allow read, create, update, delete: if signedIn();
+      match /{nestedDocument=**} {
+        allow read, write: if signedIn();
+      }
+    }
+
+    match /academy_content/{contentId} {
+      allow read: if signedIn();
+    }
+
+    match /notifications/{notificationId} {
+      allow create: if signedIn();
+      allow read: if signedIn()
+        && (!('uid' in resource.data) || resource.data.uid == request.auth.uid);
+    }
+  }
+}
