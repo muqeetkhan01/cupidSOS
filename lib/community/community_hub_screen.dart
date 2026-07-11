@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cupid_app/community/audio_room_screen.dart';
 import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/services/auth_service.dart';
 import 'package:cupid_app/services/community_service.dart';
@@ -6,6 +7,7 @@ import 'package:cupid_app/services/premium_service.dart';
 import 'package:cupid_app/widgets/button_widget.dart';
 import 'package:cupid_app/widgets/subscription_review_dialog.dart';
 import 'package:cupid_app/widgets/text_widget.dart';
+import 'package:cupid_app/video_call/join.dart' show createMeeting;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
@@ -26,8 +28,6 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
 
   late final TabController _tabs;
 
-  final _postCtrl = TextEditingController();
-
   Map<String, dynamic>? _fortune;
   Map<String, dynamic>? _mystery;
   bool _loadingDaily = true;
@@ -35,15 +35,35 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
 
   late final AnimationController _cookiePulse;
 
-  final List<String> _gamePrompts = const [
-    'Hotpot or Not: Surprise your match with a late-night dumpling run?',
-    'Hotpot or Not: First date should include family-style sharing?',
-    'Hotpot or Not: Voice-note confession beats texting?',
-    'Hotpot or Not: Karaoke on date two?',
-    'Hotpot or Not: Astrology compatibility as a tie-breaker?',
-  ];
+  final Map<String, List<String>> _gamePrompts = const {
+    'Hotpot or Not': [
+      'Surprise your match with a late-night dumpling run?',
+      'First date should include family-style sharing?',
+      'Voice-note confession beats texting?',
+    ],
+    'This or That': [
+      'Sunrise coffee or midnight dessert?',
+      'Plan the date or embrace the surprise?',
+      'City lights or quiet cabin?',
+    ],
+    'Red Flag Radar': [
+      'They are kind to you but rude to the server.',
+      'They never ask a follow-up question.',
+      'They need a full day to cool down after conflict.',
+    ],
+  };
+  String _gameMode = 'Hotpot or Not';
   int _gameIndex = 0;
   String? _gameResult;
+  int _selectedCoinPackage = 500;
+
+  List<String> get _currentGamePrompts => _gamePrompts[_gameMode]!;
+
+  List<String> get _currentGameOptions => switch (_gameMode) {
+        'This or That' => const ['First', 'Second'],
+        'Red Flag Radar' => const ['Red flag', 'Talk it out'],
+        _ => const ['Hotpot', 'Not'],
+      };
 
   String? get _uid => AuthService.to.currentUser?.uid;
 
@@ -83,12 +103,14 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
   void dispose() {
     _tabs.dispose();
     _cookiePulse.dispose();
-    _postCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _createRoom(
-      {required String type, required bool premiumOnly}) async {
+  Future<void> _createRoom({
+    required String type,
+    required bool premiumOnly,
+    String? category,
+  }) async {
     final uid = _uid;
     if (uid == null) return;
 
@@ -129,22 +151,123 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                   }
                 }
 
-                await _community.createRoom(
-                  ownerUid: uid,
-                  title: title,
-                  type: type,
-                  isPrivate: type != 'academy',
-                  premiumOnly: premiumOnly,
-                );
-                if (!ctx.mounted) return;
-                Navigator.pop(ctx);
-                _showSnack('Room created. Invite listeners and speakers.');
+                try {
+                  final meetingId = await createMeeting();
+                  final roomId = await _community.createRoom(
+                    ownerUid: uid,
+                    title: title,
+                    type: type,
+                    category: category,
+                    meetingId: meetingId,
+                    isPrivate: type == 'circle' || type == 'vows',
+                    premiumOnly: premiumOnly,
+                  );
+                  if (!ctx.mounted) return;
+                  Navigator.pop(ctx);
+                  if (!mounted) return;
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => AudioRoomScreen(
+                        meetingId: meetingId,
+                        title: title,
+                        displayName:
+                            AuthService.to.currentUser?.displayName ?? 'Host',
+                        startAsSpeaker: true,
+                      ),
+                    ),
+                  );
+                  await _community.endRoom(roomId: roomId, ownerUid: uid);
+                } catch (_) {
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  _showSnack('Could not start live audio. Please try again.');
+                }
               },
               child: const Text('Create'),
             ),
           ],
         );
       },
+    );
+  }
+
+  Future<void> _showHostRoomSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: CupidColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.5.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Center(
+                child: TextWidget(
+                  text: 'Host a room',
+                  size: 19,
+                  weight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(height: 1.8.h),
+              _roomTypeOption(
+                icon: Icons.public_rounded,
+                title: 'Cupid Academy',
+                subtitle: 'Public expert-led relationship room',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _createRoom(type: 'academy', premiumOnly: false);
+                },
+              ),
+              _roomTypeOption(
+                icon: Icons.groups_2_rounded,
+                title: 'Cupid Circle',
+                subtitle: 'Invite-only room for families and moderators',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _createRoom(type: 'circle', premiumOnly: false);
+                },
+              ),
+              _roomTypeOption(
+                icon: Icons.workspace_premium_rounded,
+                title: 'Cupid Vows',
+                subtitle: 'Premium private room',
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _createRoom(type: 'vows', premiumOnly: true);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _roomTypeOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 1.h),
+      child: ListTile(
+        onTap: onTap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        tileColor: CupidColors.surfaceMuted(context),
+        leading: Icon(icon, color: const Color(0xFFFF6F7D)),
+        title: TextWidget(text: title, size: 14.5, weight: FontWeight.w700),
+        subtitle: TextWidget(
+          text: subtitle,
+          size: 12.2,
+          color: CupidColors.textSecondary(context),
+        ),
+        trailing: const Icon(Icons.chevron_right_rounded),
+      ),
     );
   }
 
@@ -161,10 +284,38 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       }
     }
 
-    await _community.joinAsListener(
-        roomId: room['id'] as String? ?? '', uid: uid);
-    if (!mounted) return;
-    _showRoomActions(room);
+    final roomId = (room['id'] as String? ?? '').trim();
+    if (roomId.isEmpty) return;
+    try {
+      var meetingId = (room['meetingId'] as String? ?? '').trim();
+      if (meetingId.isEmpty) {
+        meetingId = await createMeeting();
+        await _community.attachMeetingId(
+          roomId: roomId,
+          meetingId: meetingId,
+        );
+      }
+      await _community.joinAsListener(roomId: roomId, uid: uid);
+      if (!mounted) return;
+      final speakers =
+          (room['speakers'] as List?)?.whereType<String>().toSet() ??
+              const <String>{};
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => AudioRoomScreen(
+            meetingId: meetingId,
+            title: (room['title'] as String? ?? 'Cupid Audio Room').trim(),
+            displayName:
+                AuthService.to.currentUser?.displayName ?? 'Cupid member',
+            startAsSpeaker: speakers.contains(uid),
+            onRaiseHand: () => _community.raiseHand(roomId: roomId, uid: uid),
+          ),
+        ),
+      );
+      await _community.leaveRoom(roomId: roomId, uid: uid);
+    } catch (_) {
+      _showSnack('Could not join live audio. Please try again.');
+    }
   }
 
   Future<void> _showRoomActions(Map<String, dynamic> room) async {
@@ -287,6 +438,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
 
     final fortuneName = (_fortune?['targetName'] as String? ?? '').trim();
     final fortuneText = (_fortune?['message'] as String? ?? '').trim();
+    final cookieText = (_fortune?['fortuneText'] as String? ?? '').trim();
 
     await showDialog<void>(
       context: context,
@@ -302,14 +454,22 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextWidget(
-                text: fortuneName.isEmpty
+                text: cookieText.isEmpty
                     ? 'Your personalized fortune is ready.'
-                    : 'Suggested: $fortuneName',
-                size: 14.5,
+                    : cookieText,
+                size: 15,
                 weight: FontWeight.w700,
-                color: const Color(0xFFFF6F7D),
               ),
-              SizedBox(height: 1.h),
+              if (fortuneName.isNotEmpty) ...[
+                SizedBox(height: 1.2.h),
+                TextWidget(
+                  text: 'Suggested: $fortuneName',
+                  size: 14.5,
+                  weight: FontWeight.w700,
+                  color: const Color(0xFFFF6F7D),
+                ),
+              ],
+              SizedBox(height: 0.6.h),
               TextWidget(
                 text: fortuneText.isEmpty
                     ? 'No fortune yet. Pull to refresh and check again.'
@@ -383,51 +543,59 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     );
   }
 
-  Future<void> _sendPost() async {
+  Future<void> _openMysteryBox() async {
     final uid = _uid;
     if (uid == null) return;
-    final text = _postCtrl.text.trim();
-    if (text.isEmpty) return;
-
-    await _community.createFeedPost(uid: uid, text: text);
-    _postCtrl.clear();
-    if (!mounted) return;
-    _showSnack('Posted to Cupid Hive.');
+    final opened = await _community.openMysteryMatch(uid);
+    if (!mounted || opened == null) return;
+    setState(() => _mystery = opened);
   }
 
-  Future<void> _commentOnPost(String postId) async {
+  Future<void> _sendMysteryIntro() async {
     final uid = _uid;
     if (uid == null) return;
-
     final ctrl = TextEditingController();
     await showDialog<void>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Add comment'),
-          content: TextField(
-            controller: ctrl,
-            maxLines: 3,
-            decoration: const InputDecoration(hintText: 'Write your comment'),
+      builder: (ctx) => AlertDialog(
+        title: const Text('Send your first spark'),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            hintText: 'Say something curious and kind…',
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                await _community.addComment(
-                    postId: postId, uid: uid, comment: ctrl.text);
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Not yet'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              try {
+                await _community.sendMysteryMessage(
+                  uid: uid,
+                  text: ctrl.text,
+                );
                 if (!ctx.mounted) return;
                 Navigator.pop(ctx);
-              },
-              child: const Text('Send'),
-            ),
-          ],
-        );
-      },
+                setState(() => _mystery = {
+                      ...?_mystery,
+                      'status': 'messaged',
+                      'messageSentAt': Timestamp.now(),
+                    });
+                _showSnack('Spark sent. Your conversation is now in Chat.');
+              } catch (error) {
+                _showSnack(error.toString().replaceFirst('Bad state: ', ''));
+              }
+            },
+            child: const Text('Send'),
+          ),
+        ],
+      ),
     );
+    ctrl.dispose();
   }
 
   Future<void> _purchaseCoins(int amount) async {
@@ -460,7 +628,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       _gameResult = hotpotChoice
           ? 'Great pick. You earned $earned coins and unlocked a replay token.'
           : 'Interesting answer. You earned $earned coins for participation.';
-      _gameIndex = (_gameIndex + 1) % _gamePrompts.length;
+      _gameIndex = (_gameIndex + 1) % _currentGamePrompts.length;
     });
   }
 
@@ -473,7 +641,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       return;
     }
     setState(() {
-      _gameIndex = (_gameIndex + 1) % _gamePrompts.length;
+      _gameIndex = (_gameIndex + 1) % _currentGamePrompts.length;
       _gameResult = 'You used 20 coins to skip. New question unlocked.';
     });
   }
@@ -555,7 +723,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                   children: [
                     _dailyTab(uid),
                     _audioTab(premium),
-                    _feedTab(uid),
+                    _hiveTab(uid),
                     _funStoreTab(),
                   ],
                 ),
@@ -609,15 +777,111 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
             message: (_fortune?['message'] as String? ?? '').trim(),
           ),
           SizedBox(height: 1.4.h),
-          _dailyCard(
-            title: 'Mystery Match Box',
-            subtitle: 'One weekly suggestion based on behavioral AI.',
-            icon: Icons.auto_awesome,
-            loading: _loadingDaily,
-            name: (_mystery?['targetName'] as String? ?? '').trim(),
-            message: (_mystery?['message'] as String? ?? '').trim(),
-          ),
+          _mysteryCard(),
         ],
+      ),
+    );
+  }
+
+  Widget _mysteryCard() {
+    final mystery = _mystery;
+    final status =
+        mystery == null ? 'unavailable' : _community.mysteryStatus(mystery);
+    final isOpen = status == 'open';
+    final isMessaged = status == 'messaged';
+    final isExpired = status == 'expired';
+    final name = (mystery?['targetName'] as String? ?? '').trim();
+    final expiresAt = mystery?['expiresAt'];
+    final remaining = expiresAt is Timestamp
+        ? expiresAt.toDate().difference(DateTime.now())
+        : null;
+    final remainingLabel = remaining == null
+        ? ''
+        : '${remaining.inHours.clamp(0, 24)}h ${remaining.inMinutes.remainder(60).clamp(0, 59)}m left';
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 250),
+      opacity: isExpired ? 0.5 : 1,
+      child: Container(
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: CupidColors.surface(context),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: CupidColors.border(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.auto_awesome, color: Color(0xFFFF6F7D)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: TextWidget(
+                    text: 'Mystery Match Box',
+                    size: 15,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 0.8.h),
+            TextWidget(
+              text: isExpired
+                  ? 'This box faded. A new active match arrives next week.'
+                  : isMessaged
+                      ? 'You sent the spark—continue the conversation in Chat.'
+                      : isOpen
+                          ? 'Suggested: $name'
+                          : 'One exclusive weekly match. Both of you were active this week.',
+              size: isOpen ? 14 : 13,
+              weight: isOpen ? FontWeight.w700 : FontWeight.w400,
+              color: isOpen
+                  ? const Color(0xFFFF6F7D)
+                  : CupidColors.textSecondary(context),
+            ),
+            if (isOpen) ...[
+              SizedBox(height: 0.5.h),
+              TextWidget(
+                text: (mystery?['message'] as String? ?? '').trim(),
+                size: 13,
+              ),
+              SizedBox(height: 0.5.h),
+              TextWidget(
+                text: '24-hour spark • $remainingLabel',
+                size: 12,
+                weight: FontWeight.w700,
+                color: const Color(0xFFFF6F7D),
+              ),
+            ],
+            if (_loadingDaily)
+              const Padding(
+                padding: EdgeInsets.only(top: 12),
+                child: LinearProgressIndicator(minHeight: 4),
+              )
+            else if (status == 'sealed') ...[
+              SizedBox(height: 1.2.h),
+              ButtonWidget(
+                text: 'Open Mystery Box',
+                height: 5.2,
+                radius: 26,
+                variant: ButtonVariant.gradient,
+                gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                onTap: _openMysteryBox,
+              ),
+            ] else if (isOpen) ...[
+              SizedBox(height: 1.2.h),
+              ButtonWidget(
+                text: 'Send a Spark',
+                height: 5.2,
+                radius: 26,
+                variant: ButtonVariant.gradient,
+                gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                onTap: _sendMysteryIntro,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -817,48 +1081,21 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
       stream: _community.watchRooms(includePrivate: true),
       builder: (context, snap) {
-        final docs = snap.data?.docs ?? const [];
+        final docs = (snap.data?.docs ?? const [])
+            .where((doc) => doc.data()['type'] != 'hive')
+            .where((doc) => doc.data()['status'] != 'ended')
+            .toList();
 
         return ListView(
           padding: EdgeInsets.fromLTRB(5.w, 1.h, 5.w, 10.h),
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: ButtonWidget(
-                    text: 'Create Academy',
-                    height: 5.4,
-                    radius: 28,
-                    variant: ButtonVariant.solid,
-                    backgroundColor: CupidColors.surfaceMuted(context),
-                    textColor: CupidColors.textPrimary(context),
-                    onTap: () =>
-                        _createRoom(type: 'academy', premiumOnly: false),
-                  ),
-                ),
-                SizedBox(width: 2.w),
-                Expanded(
-                  child: ButtonWidget(
-                    text: 'Create Circle',
-                    height: 5.4,
-                    radius: 28,
-                    variant: ButtonVariant.solid,
-                    backgroundColor: CupidColors.surfaceMuted(context),
-                    textColor: CupidColors.textPrimary(context),
-                    onTap: () =>
-                        _createRoom(type: 'circle', premiumOnly: false),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 1.h),
             ButtonWidget(
-              text: 'Create Vows (Premium)',
-              height: 5.4,
-              radius: 28,
+              text: '+  Host a room',
+              height: 6,
+              radius: 30,
               variant: ButtonVariant.gradient,
               gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
-              onTap: () => _createRoom(type: 'vows', premiumOnly: true),
+              onTap: _showHostRoomSheet,
             ),
             SizedBox(height: 1.4.h),
             TextWidget(
@@ -916,6 +1153,11 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                           ),
                           if (premiumOnly)
                             const Icon(Icons.lock_outline_rounded, size: 18),
+                          IconButton(
+                            tooltip: 'Room controls',
+                            onPressed: () => _showRoomActions(room),
+                            icon: const Icon(Icons.more_horiz_rounded),
+                          ),
                         ],
                       ),
                       SizedBox(height: 0.4.h),
@@ -945,120 +1187,241 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     );
   }
 
-  Widget _feedTab(String uid) {
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(5.w, 1.h, 5.w, 1.2.h),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _postCtrl,
-                  minLines: 1,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText: 'Share something in Cupid Hive...',
-                    filled: true,
-                    fillColor: CupidColors.surface(context),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide:
-                          BorderSide(color: CupidColors.border(context)),
+  List<Map<String, dynamic>> get _hiveCategories => const [
+        {
+          'name': 'Music Lovers',
+          'icon': Icons.headphones_rounded,
+          'colors': [Color(0xFF7A4FD4), Color(0xFF3D235F)],
+        },
+        {
+          'name': 'Foodies',
+          'icon': Icons.restaurant_rounded,
+          'colors': [Color(0xFFD83C63), Color(0xFF68172C)],
+        },
+        {
+          'name': 'Sporty',
+          'icon': Icons.sports_basketball_rounded,
+          'colors': [Color(0xFFE35A3B), Color(0xFF741D18)],
+        },
+        {
+          'name': 'Coffee Date',
+          'icon': Icons.coffee_rounded,
+          'colors': [Color(0xFFD8A224), Color(0xFF735014)],
+        },
+        {
+          'name': 'K-pop',
+          'icon': Icons.music_note_rounded,
+          'colors': [Color(0xFFDD4FA3), Color(0xFF65235C)],
+        },
+        {
+          'name': 'Anime',
+          'icon': Icons.auto_awesome_rounded,
+          'colors': [Color(0xFF2E9BC5), Color(0xFF17405F)],
+        },
+      ];
+
+  Widget _hiveTab(String uid) {
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _community.watchRooms(includePrivate: false),
+      builder: (context, snap) {
+        final rooms = (snap.data?.docs ?? const [])
+            .map((doc) => doc.data())
+            .where((room) => room['type'] == 'hive')
+            .where((room) => room['status'] != 'ended')
+            .toList();
+        return ListView(
+          padding: EdgeInsets.fromLTRB(5.w, 1.2.h, 5.w, 11.h),
+          children: [
+            const TextWidget(
+              text: 'Explore Hives',
+              size: 20,
+              weight: FontWeight.w800,
+            ),
+            SizedBox(height: 0.4.h),
+            TextWidget(
+              text: 'Live rooms for shared interests and hobbies',
+              size: 13.2,
+              color: CupidColors.textSecondary(context),
+            ),
+            SizedBox(height: 1.7.h),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.83,
+              ),
+              itemCount: _hiveCategories.length,
+              itemBuilder: (_, index) {
+                final category = _hiveCategories[index];
+                final name = category['name'] as String;
+                final categoryRooms =
+                    rooms.where((room) => room['category'] == name).toList();
+                final people = categoryRooms.fold<int>(0, (total, room) {
+                  final speakers = (room['speakers'] as List?)?.length ?? 0;
+                  final listeners = (room['listeners'] as List?)?.length ?? 0;
+                  return total + speakers + listeners;
+                });
+                return InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () => _showHiveRooms(name, categoryRooms),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: category['colors'] as List<Color>,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide:
-                          BorderSide(color: CupidColors.border(context)),
+                    child: Padding(
+                      padding: EdgeInsets.all(4.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(category['icon'] as IconData,
+                                  color: Colors.white, size: 28),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.24),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: TextWidget(
+                                  text: '$people',
+                                  size: 11,
+                                  weight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          TextWidget(
+                            text: name,
+                            size: 17,
+                            weight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(height: 4),
+                          TextWidget(
+                            text: categoryRooms.isEmpty
+                                ? 'Start the first room'
+                                : '${categoryRooms.length} live ${categoryRooms.length == 1 ? 'room' : 'rooms'}',
+                            size: 11.5,
+                            color: Colors.white.withValues(alpha: 0.82),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              SizedBox(width: 2.w),
-              IconButton(
-                onPressed: _sendPost,
-                icon: const Icon(Icons.send_rounded, color: Color(0xFFFF6F7D)),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: _community.watchFeedPosts(),
-            builder: (context, snap) {
-              final posts = snap.data?.docs ?? const [];
-              if (posts.isEmpty) {
-                return ListView(
-                  padding: EdgeInsets.fromLTRB(5.w, 1.h, 5.w, 10.h),
-                  children: [
-                    _infoTile(
-                        'Cupid Hive is empty. Post the first story, thought, or date tip.'),
-                  ],
                 );
-              }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-              return ListView.builder(
-                padding: EdgeInsets.fromLTRB(5.w, 0.5.h, 5.w, 10.h),
-                itemCount: posts.length,
-                itemBuilder: (_, i) {
-                  final data = posts[i].data();
-                  final postId = (data['id'] as String? ?? posts[i].id).trim();
-                  final text = (data['text'] as String? ?? '').trim();
-                  final likes = (data['likesCount'] as num?)?.toInt() ?? 0;
-                  final comments =
-                      (data['commentsCount'] as num?)?.toInt() ?? 0;
-                  final createdAt = data['createdAt'];
-                  final time = createdAt is Timestamp
-                      ? _timeAgo(createdAt.toDate())
-                      : 'now';
-
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 1.2.h),
-                    padding: EdgeInsets.all(4.w),
-                    decoration: BoxDecoration(
-                      color: CupidColors.surface(context),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: CupidColors.border(context)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        TextWidget(
-                            text: text, size: 14.5, weight: FontWeight.w600),
-                        SizedBox(height: 0.9.h),
-                        Row(
-                          children: [
-                            TextWidget(
-                              text: 'Posted $time',
-                              size: 12,
-                              color: CupidColors.textSecondary(context),
-                            ),
-                            const Spacer(),
-                            TextButton.icon(
-                              onPressed: () => _community.toggleLike(
-                                  postId: postId, uid: uid),
-                              icon: const Icon(Icons.favorite_border_rounded,
-                                  size: 18),
-                              label: Text('$likes'),
-                            ),
-                            TextButton.icon(
-                              onPressed: () => _commentOnPost(postId),
-                              icon: const Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                  size: 17),
-                              label: Text('$comments'),
-                            ),
-                          ],
+  Future<void> _showHiveRooms(
+    String category,
+    List<Map<String, dynamic>> rooms,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: CupidColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60.h,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(5.w, 2.h, 5.w, 2.5.h),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextWidget(
+                  text: category,
+                  size: 20,
+                  weight: FontWeight.w800,
+                ),
+                SizedBox(height: 0.4.h),
+                TextWidget(
+                  text: 'Join a live conversation or host your own.',
+                  size: 13,
+                  color: CupidColors.textSecondary(context),
+                ),
+                SizedBox(height: 1.5.h),
+                Expanded(
+                  child: rooms.isEmpty
+                      ? Center(
+                          child: TextWidget(
+                            text: 'No rooms live yet—be the first host.',
+                            size: 14,
+                            color: CupidColors.textSecondary(context),
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: rooms.length,
+                          separatorBuilder: (_, __) => SizedBox(height: 0.8.h),
+                          itemBuilder: (_, index) {
+                            final room = rooms[index];
+                            return ListTile(
+                              tileColor: CupidColors.surfaceMuted(context),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              title: TextWidget(
+                                text: (room['title'] as String? ?? category)
+                                    .trim(),
+                                size: 14,
+                                weight: FontWeight.w700,
+                              ),
+                              subtitle: const TextWidget(
+                                text: 'Live now',
+                                size: 12,
+                                color: Color(0xFFFF6F7D),
+                              ),
+                              trailing: const Icon(Icons.arrow_forward_rounded),
+                              onTap: () {
+                                Navigator.pop(sheetContext);
+                                _joinRoom(room);
+                              },
+                            );
+                          },
                         ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
+                ),
+                ButtonWidget(
+                  text: '+  Host a $category room',
+                  height: 5.8,
+                  radius: 28,
+                  variant: ButtonVariant.gradient,
+                  gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _createRoom(
+                      type: 'hive',
+                      category: category,
+                      premiumOnly: false,
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-      ],
+      ),
     );
   }
 
@@ -1077,12 +1440,30 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const TextWidget(
-                  text: 'Cupid Fun Zone: Hotpot or Not',
-                  size: 16,
-                  weight: FontWeight.w700),
+                  text: 'Cupid Fun Zone', size: 16, weight: FontWeight.w700),
               SizedBox(height: 0.8.h),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _gamePrompts.keys.map((mode) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(mode),
+                        selected: _gameMode == mode,
+                        onSelected: (_) => setState(() {
+                          _gameMode = mode;
+                          _gameIndex = 0;
+                          _gameResult = null;
+                        }),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              SizedBox(height: 1.2.h),
               TextWidget(
-                text: _gamePrompts[_gameIndex],
+                text: _currentGamePrompts[_gameIndex],
                 size: 14,
                 color: CupidColors.textPrimary(context),
               ),
@@ -1091,7 +1472,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                 children: [
                   Expanded(
                     child: ButtonWidget(
-                      text: 'Hotpot',
+                      text: _currentGameOptions.first,
                       height: 5.2,
                       radius: 26,
                       variant: ButtonVariant.solid,
@@ -1103,7 +1484,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                   SizedBox(width: 2.w),
                   Expanded(
                     child: ButtonWidget(
-                      text: 'Not',
+                      text: _currentGameOptions.last,
                       height: 5.2,
                       radius: 26,
                       variant: ButtonVariant.solid,
@@ -1140,94 +1521,49 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const TextWidget(
-                text: 'Cupid Coins Store',
+                text: 'Cupid Coins',
                 size: 16,
                 weight: FontWeight.w700,
               ),
-              SizedBox(height: 1.h),
-              _coinsPriceRow(
-                title: '100 Coins',
-                price: '\$1.99',
-                bestFor: 'Try flirty animations',
+              SizedBox(height: 0.5.h),
+              TextWidget(
+                text:
+                    'Choose one pack. You will review the purchase before payment.',
+                size: 12.5,
+                color: CupidColors.textSecondary(context),
               ),
-              _coinsPriceRow(
-                title: '500 Coins',
-                price: '\$7.99',
-                bestFor: 'Boost + 3 gifts',
+              SizedBox(height: 1.2.h),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: const [100, 500, 1200, 2500].map((coins) {
+                  final price = switch (coins) {
+                    100 => '\$1.99',
+                    500 => '\$7.99',
+                    1200 => '\$14.99',
+                    _ => '\$24.99',
+                  };
+                  return ChoiceChip(
+                    label: Text('$coins • $price'),
+                    selected: _selectedCoinPackage == coins,
+                    onSelected: (_) =>
+                        setState(() => _selectedCoinPackage = coins),
+                  );
+                }).toList(),
               ),
-              _coinsPriceRow(
-                title: '1,200 Coins',
-                price: '\$14.99',
-                bestFor: 'VIP chats & mystery match',
+              SizedBox(height: 1.3.h),
+              ButtonWidget(
+                text: 'Continue with $_selectedCoinPackage Coins',
+                height: 5.4,
+                radius: 26,
+                variant: ButtonVariant.gradient,
+                gradient: const [Color(0xFFFF6F7D), Color(0xFFD86BCF)],
+                onTap: () => _purchaseCoins(_selectedCoinPackage),
               ),
-              _coinsPriceRow(
-                title: '2,500 Coins',
-                price: '\$24.99',
-                bestFor: 'Heavy users (Cupid Elite)',
-              ),
-              SizedBox(height: 1.h),
-              _storeButton('Buy 100 Coins', () => _purchaseCoins(100)),
-              _storeButton('Buy 500 Coins', () => _purchaseCoins(500)),
-              _storeButton('Buy 1,200 Coins', () => _purchaseCoins(1200)),
-              _storeButton('Buy 2,500 Coins', () => _purchaseCoins(2500)),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _coinsPriceRow({
-    required String title,
-    required String price,
-    required String bestFor,
-  }) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 0.8.h),
-      padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: CupidColors.surfaceMuted(context),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: TextWidget(text: title, size: 13.8, weight: FontWeight.w700),
-          ),
-          SizedBox(width: 2.w),
-          TextWidget(
-            text: price,
-            size: 13.8,
-            weight: FontWeight.w700,
-            color: const Color(0xFFFF6F7D),
-          ),
-          SizedBox(width: 2.5.w),
-          Expanded(
-            child: TextWidget(
-              text: bestFor,
-              size: 12.4,
-              color: CupidColors.textSecondary(context),
-              textAlign: TextAlign.right,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _storeButton(String label, VoidCallback onTap) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 0.8.h),
-      child: ButtonWidget(
-        text: label,
-        height: 5,
-        radius: 24,
-        variant: ButtonVariant.solid,
-        backgroundColor: CupidColors.surfaceMuted(context),
-        textColor: CupidColors.textPrimary(context),
-        onTap: onTap,
-      ),
     );
   }
 
@@ -1245,11 +1581,4 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     );
   }
 
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return '${diff.inDays}d ago';
-  }
 }

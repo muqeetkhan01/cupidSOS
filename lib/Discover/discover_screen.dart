@@ -7,6 +7,7 @@ import 'package:cupid_app/config/app_theme.dart';
 import 'package:cupid_app/config/colors.dart';
 import 'package:cupid_app/profile/user_profile.dart';
 import 'package:cupid_app/services/auth_service.dart';
+import 'package:cupid_app/services/community_service.dart';
 import 'package:cupid_app/services/profile_display.dart';
 import 'package:cupid_app/services/premium_service.dart';
 import 'package:cupid_app/services/safety_service.dart';
@@ -43,11 +44,16 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   late final MatchService _matchService = MatchService(_db);
   final PremiumService _premiumService = PremiumService.instance;
+  final CommunityService _communityService = CommunityService.instance;
 
   final List<DiscoverUser> _profiles = [];
   int _currentIndex = 0;
 
   bool _fetchingMore = false;
+  bool _loadingFortune = true;
+  bool _cookieOpened = false;
+  Map<String, dynamic>? _dailyFortune;
+  String? _exclusiveMysteryUid;
 
   DocumentSnapshot<Map<String, dynamic>>? _lastDoc;
   static const int _pageSize = 20;
@@ -98,6 +104,35 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     final uid = _myUid;
     if (uid != null) {
       _premiumService.ensureDefaults(uid);
+      _loadDailyFortune(uid);
+    }
+  }
+
+  Future<void> _loadDailyFortune(String uid) async {
+    try {
+      final results = await Future.wait([
+        _communityService.getFortuneCookieSuggestion(uid),
+        _db
+            .collection('users_cupid')
+            .doc(uid)
+            .collection('daily_features')
+            .doc('mystery_match')
+            .get(),
+      ]);
+      if (!mounted) return;
+      final mystery = results[1] as DocumentSnapshot<Map<String, dynamic>>;
+      setState(() {
+        _dailyFortune = results[0] as Map<String, dynamic>?;
+        _exclusiveMysteryUid =
+            (mystery.data()?['targetUid'] as String? ?? '').trim();
+        _loadingFortune = false;
+      });
+      if ((_exclusiveMysteryUid ?? '').isNotEmpty) {
+        setState(() => _profiles
+            .removeWhere((profile) => profile.uid == _exclusiveMysteryUid));
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingFortune = false);
     }
   }
 
@@ -149,6 +184,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           .map((d) => DiscoverUser.fromDoc(d))
           .where((u) => myUid == null || u.uid != myUid)
           .where((u) => !blockedIds.contains(u.uid))
+          .where((u) => u.uid != _exclusiveMysteryUid)
           .where((u) => u.photoUrl.isNotEmpty || u.storyPhotoUrls.isNotEmpty)
           .toList();
 
@@ -244,8 +280,147 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           child: Column(
             children: [
               _buildPremiumHeader(),
+              _buildDailyFortuneCard(),
               Expanded(child: _buildCardStack()),
               _buildFloatingActions(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDailyFortuneCard() {
+    final fortune = _dailyFortune;
+    final text = (fortune?['fortuneText'] as String? ?? '').trim();
+    final name = (fortune?['targetName'] as String? ?? '').trim();
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(5.w, 0, 5.w, 1.1.h),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: fortune == null ? null : _revealDailyFortune,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          width: double.infinity,
+          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.25.h),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFFE8D2), Color(0xFFF4DEFF)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF6F7D).withOpacity(0.12),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.72),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _cookieOpened ? Icons.auto_awesome : Icons.cookie_rounded,
+                  color: const Color(0xFFFF6F7D),
+                ),
+              ),
+              SizedBox(width: 3.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextWidget(
+                      text: _loadingFortune
+                          ? 'Preparing your daily cookie…'
+                          : _cookieOpened && text.isNotEmpty
+                              ? text
+                              : 'Your daily fortune is ready',
+                      size: 13.6,
+                      weight: FontWeight.w700,
+                      color: const Color(0xFF4D3341),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (!_loadingFortune) ...[
+                      const SizedBox(height: 2),
+                      TextWidget(
+                        text: _cookieOpened && name.isNotEmpty
+                            ? 'Today’s suggested match: $name'
+                            : 'Tap to crack it open',
+                        size: 11.8,
+                        color: const Color(0xFF765F6B),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: Color(0xFF8D6475)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _revealDailyFortune() async {
+    final fortune = _dailyFortune;
+    if (fortune == null) return;
+    setState(() => _cookieOpened = true);
+    final text = (fortune['fortuneText'] as String? ?? '').trim();
+    final name = (fortune['targetName'] as String? ?? '').trim();
+    final reason = (fortune['message'] as String? ?? '').trim();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: CupidColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(6.w, 2.5.h, 6.w, 3.h),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cookie_rounded,
+                  size: 48, color: Color(0xFFFF6F7D)),
+              SizedBox(height: 1.2.h),
+              const TextWidget(
+                text: 'Today’s Fortune',
+                size: 18,
+                weight: FontWeight.w800,
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 1.h),
+              TextWidget(
+                text: text,
+                size: 16,
+                weight: FontWeight.w600,
+                textAlign: TextAlign.center,
+              ),
+              if (name.isNotEmpty) ...[
+                SizedBox(height: 1.8.h),
+                TextWidget(
+                  text: 'Suggested: $name',
+                  size: 14.5,
+                  weight: FontWeight.w800,
+                  color: const Color(0xFFFF6F7D),
+                ),
+                const SizedBox(height: 4),
+                TextWidget(
+                  text: reason,
+                  size: 13,
+                  color: CupidColors.textSecondary(context),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ],
           ),
         ),
