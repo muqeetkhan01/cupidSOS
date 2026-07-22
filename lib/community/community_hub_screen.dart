@@ -110,16 +110,22 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     required String type,
     required bool premiumOnly,
     String? category,
+    String? vibe,
+    String? focus,
+    List<String> vibeTags = const <String>[],
+    bool verifiedOnly = false,
   }) async {
     final uid = _uid;
     if (uid == null) return;
 
     final titleCtrl = TextEditingController(
-      text: type == 'academy'
-          ? 'Cupid Academy Live'
-          : type == 'circle'
-              ? 'Cupid Circle Room'
-              : 'Cupid Vows Blessing Room',
+      text: type == 'hive' && (category ?? '').trim().isNotEmpty
+          ? '$category Vibe Check'
+          : type == 'academy'
+              ? 'Cupid Academy Live'
+              : type == 'circle'
+                  ? 'Cupid Circle Room'
+                  : 'Cupid Vows Blessing Room',
     );
 
     await showDialog<void>(
@@ -151,6 +157,20 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                   }
                 }
 
+                if (verifiedOnly) {
+                  final profile = await FirebaseFirestore.instance
+                      .collection('users_cupid')
+                      .doc(uid)
+                      .get();
+                  final verified = profile.data()?['photoVerified'] == true;
+                  if (!verified) {
+                    if (!ctx.mounted) return;
+                    Navigator.pop(ctx);
+                    _showSnack('Photo verification is required for this Hive.');
+                    return;
+                  }
+                }
+
                 try {
                   final meetingId = await createMeeting();
                   final roomId = await _community.createRoom(
@@ -158,9 +178,13 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                     title: title,
                     type: type,
                     category: category,
+                    vibe: vibe,
+                    focus: focus,
+                    vibeTags: vibeTags,
                     meetingId: meetingId,
                     isPrivate: type == 'circle' || type == 'vows',
                     premiumOnly: premiumOnly,
+                    verifiedOnly: verifiedOnly,
                   );
                   if (!ctx.mounted) return;
                   Navigator.pop(ctx);
@@ -280,6 +304,18 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       final snap = await _premium.fetch(uid);
       if (!snap.isGoldOrHigher) {
         if (mounted) showSubscriptionReviewDialog(context);
+        return;
+      }
+    }
+
+    final verifiedOnly = room['verifiedOnly'] == true;
+    if (verifiedOnly) {
+      final profile = await FirebaseFirestore.instance
+          .collection('users_cupid')
+          .doc(uid)
+          .get();
+      if (profile.data()?['photoVerified'] != true) {
+        _showSnack('Photo verification is required for this Hive.');
         return;
       }
     }
@@ -1189,34 +1225,152 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
 
   List<Map<String, dynamic>> get _hiveCategories => const [
         {
-          'name': 'Music Lovers',
-          'icon': Icons.headphones_rounded,
+          'name': 'The Social',
+          'vibe': 'Social & Casual',
+          'focus': 'Making new friends & meeting people.',
+          'icon': Icons.people_alt_rounded,
+          'colors': [Color(0xFFFF7A8A), Color(0xFF8D3B72)],
+          'tags': [
+            '🎤 Karaoke',
+            '🎭 Theater',
+            '🎧 Music',
+            '☕ Coffee',
+            '🍵 Tea'
+          ],
+        },
+        {
+          'name': 'The Connection',
+          'vibe': 'Intentional',
+          'focus': 'Serious dating & meaningful matches.',
+          'icon': Icons.favorite_rounded,
+          'colors': [Color(0xFFFF5F7E), Color(0xFF9A2145)],
+          'tags': [
+            '🏠 Homebody',
+            '📖 Reading',
+            '☕ Coffee',
+            '🍵 Tea',
+            '🌿 Plants'
+          ],
+        },
+        {
+          'name': 'Taste',
+          'vibe': 'Foodie Aesthetic',
+          'focus': 'Boba, dining, coffee, & late-night cravings.',
+          'icon': Icons.restaurant_menu_rounded,
+          'colors': [Color(0xFFFFA24D), Color(0xFF8B3E12)],
+          'tags': [
+            '🧋 Boba',
+            '🍜 Ramen',
+            '🥟 Dumplings',
+            '🍣 Sushi',
+            '🍲 Hot Pot',
+            '🥡 Takeout',
+            '🍛 Curry',
+            '🍰 Desserts',
+            '☕ Coffee',
+            '🍵 Tea'
+          ],
+        },
+        {
+          'name': 'Culture',
+          'vibe': 'Fandom & Media',
+          'focus': 'K-pop, anime, music, & binge-watching.',
+          'icon': Icons.theater_comedy_rounded,
           'colors': [Color(0xFF7A4FD4), Color(0xFF3D235F)],
+          'tags': [
+            '📺 K-Drama',
+            '🎬 Anime',
+            '🎵 K-Pop',
+            '📚 Manga',
+            '🎧 Music'
+          ],
         },
         {
-          'name': 'Foodies',
-          'icon': Icons.restaurant_rounded,
-          'colors': [Color(0xFFD83C63), Color(0xFF68172C)],
+          'name': 'Play',
+          'vibe': 'Gaming & Fun',
+          'focus': 'Gaming, karaoke, & entertainment.',
+          'icon': Icons.sports_esports_rounded,
+          'colors': [Color(0xFF39A7FF), Color(0xFF174A8B)],
+          'tags': [
+            '🎮 Gaming',
+            '🎤 Karaoke',
+            '🀄 Mahjong',
+            '🏓 Ping Pong',
+            '🎬 Anime'
+          ],
         },
         {
-          'name': 'Sporty',
-          'icon': Icons.sports_basketball_rounded,
-          'colors': [Color(0xFFE35A3B), Color(0xFF741D18)],
+          'name': 'Active',
+          'vibe': 'Wellness & Glow',
+          'focus': 'Gym, sports, yoga, & fitness journeys.',
+          'icon': Icons.fitness_center_rounded,
+          'colors': [Color(0xFF37C48B), Color(0xFF176B4F)],
+          'tags': [
+            '🏸 Badminton',
+            '🏓 Ping Pong',
+            '🧘 Yoga',
+            '🏋️ Gym',
+            '🏃 Running',
+            '🚴 Cycling',
+            '🏊 Swimming'
+          ],
         },
         {
-          'name': 'Coffee Date',
-          'icon': Icons.coffee_rounded,
-          'colors': [Color(0xFFD8A224), Color(0xFF735014)],
-        },
-        {
-          'name': 'K-pop',
-          'icon': Icons.music_note_rounded,
-          'colors': [Color(0xFFDD4FA3), Color(0xFF65235C)],
-        },
-        {
-          'name': 'Anime',
-          'icon': Icons.auto_awesome_rounded,
+          'name': 'Escapade',
+          'vibe': 'Travel & Thrills',
+          'focus': 'Hiking, skiing, travel, & adventures.',
+          'icon': Icons.flight_takeoff_rounded,
           'colors': [Color(0xFF2E9BC5), Color(0xFF17405F)],
+          'tags': [
+            '✈️ Travel',
+            '🥾 Hiking',
+            '🎿 Skiing',
+            '🧗 Climbing',
+            '🏃 Running'
+          ],
+        },
+        {
+          'name': 'Studio',
+          'vibe': 'Aesthetic & Style',
+          'focus': 'Art, photography, fashion, & K-beauty.',
+          'icon': Icons.palette_rounded,
+          'colors': [Color(0xFFDD4FA3), Color(0xFF65235C)],
+          'tags': [
+            '🎨 Art',
+            '📸 Photography',
+            '👗 Fashion',
+            '✨ K-Beauty',
+            '🎭 Theater'
+          ],
+        },
+        {
+          'name': 'Verified',
+          'vibe': 'The VIP Room',
+          'focus': 'A safe space for photo-verified users only.',
+          'icon': Icons.verified_rounded,
+          'colors': [Color(0xFF111827), Color(0xFF4F46E5)],
+          'verifiedOnly': true,
+          'tags': [
+            '📸 Photography',
+            '☕ Coffee',
+            '🎧 Music',
+            '✈️ Travel',
+            '📖 Reading'
+          ],
+        },
+        {
+          'name': 'Sanctuary',
+          'vibe': 'Life & Comfort',
+          'focus': 'Animal parents, plants, comfort, & softer life moments.',
+          'icon': Icons.pets_rounded,
+          'colors': [Color(0xFF74B66B), Color(0xFF315F3C)],
+          'tags': [
+            '🐱 Cat Person',
+            '🐶 Dog Person',
+            '🌿 Plants',
+            '🏠 Homebody',
+            '📖 Reading'
+          ],
         },
       ];
 
@@ -1239,7 +1393,8 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
             ),
             SizedBox(height: 0.4.h),
             TextWidget(
-              text: 'Live rooms for shared interests and hobbies',
+              text:
+                  'Live rooms for shared interests and hobbies, matched by Vibe Check.',
               size: 13.2,
               color: CupidColors.textSecondary(context),
             ),
@@ -1257,6 +1412,9 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
               itemBuilder: (_, index) {
                 final category = _hiveCategories[index];
                 final name = category['name'] as String;
+                final vibe = category['vibe'] as String;
+                final focus = category['focus'] as String;
+                final tags = category['tags'] as List<String>;
                 final categoryRooms =
                     rooms.where((room) => room['category'] == name).toList();
                 final people = categoryRooms.fold<int>(0, (total, room) {
@@ -1266,7 +1424,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                 });
                 return InkWell(
                   borderRadius: BorderRadius.circular(24),
-                  onTap: () => _showHiveRooms(name, categoryRooms),
+                  onTap: () => _showHiveRooms(category, categoryRooms),
                   child: Ink(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -1311,6 +1469,27 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                           ),
                           const SizedBox(height: 4),
                           TextWidget(
+                            text: vibe,
+                            size: 12.2,
+                            weight: FontWeight.w700,
+                            color: Colors.white.withValues(alpha: 0.92),
+                          ),
+                          const SizedBox(height: 5),
+                          TextWidget(
+                            text: focus,
+                            size: 10.8,
+                            maxLines: 2,
+                            color: Colors.white.withValues(alpha: 0.78),
+                          ),
+                          const SizedBox(height: 7),
+                          TextWidget(
+                            text: _roomTagsPreview(tags),
+                            size: 10.2,
+                            maxLines: 1,
+                            color: Colors.white.withValues(alpha: 0.74),
+                          ),
+                          const SizedBox(height: 4),
+                          TextWidget(
                             text: categoryRooms.isEmpty
                                 ? 'Start the first room'
                                 : '${categoryRooms.length} live ${categoryRooms.length == 1 ? 'room' : 'rooms'}',
@@ -1330,10 +1509,25 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
     );
   }
 
+  String _roomTagsPreview(List<String> tags) {
+    return tags
+        .take(3)
+        .map((tag) => tag.split(' ').skip(1).join(' ').trim())
+        .where((tag) => tag.isNotEmpty)
+        .join(' • ');
+  }
+
   Future<void> _showHiveRooms(
-    String category,
+    Map<String, dynamic> category,
     List<Map<String, dynamic>> rooms,
   ) async {
+    final uid = _uid;
+    final name = category['name'] as String;
+    final vibe = category['vibe'] as String;
+    final focus = category['focus'] as String;
+    final tags = category['tags'] as List<String>;
+    final verifiedOnly = category['verifiedOnly'] == true;
+
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -1351,22 +1545,38 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 TextWidget(
-                  text: category,
+                  text: name,
                   size: 20,
                   weight: FontWeight.w800,
                 ),
                 SizedBox(height: 0.4.h),
                 TextWidget(
-                  text: 'Join a live conversation or host your own.',
+                  text: '$vibe • $focus',
                   size: 13,
                   color: CupidColors.textSecondary(context),
                 ),
+                SizedBox(height: 1.5.h),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: tags.take(5).map((tag) {
+                    return Chip(
+                      visualDensity: VisualDensity.compact,
+                      label: Text(tag),
+                      backgroundColor: CupidColors.surfaceMuted(context),
+                      side: BorderSide(color: CupidColors.border(context)),
+                    );
+                  }).toList(),
+                ),
+                SizedBox(height: 1.5.h),
+                _hiveMatchedUsers(uid, tags),
                 SizedBox(height: 1.5.h),
                 Expanded(
                   child: rooms.isEmpty
                       ? Center(
                           child: TextWidget(
-                            text: 'No rooms live yet—be the first host.',
+                            text:
+                                'No $name rooms live yet—host the first Vibe Check.',
                             size: 14,
                             color: CupidColors.textSecondary(context),
                             textAlign: TextAlign.center,
@@ -1383,13 +1593,13 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                                 borderRadius: BorderRadius.circular(18),
                               ),
                               title: TextWidget(
-                                text: (room['title'] as String? ?? category)
-                                    .trim(),
+                                text: (room['title'] as String? ?? name).trim(),
                                 size: 14,
                                 weight: FontWeight.w700,
                               ),
-                              subtitle: const TextWidget(
-                                text: 'Live now',
+                              subtitle: TextWidget(
+                                text:
+                                    '${(room['vibe'] as String? ?? vibe).trim()} • Live now',
                                 size: 12,
                                 color: Color(0xFFFF6F7D),
                               ),
@@ -1403,7 +1613,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                         ),
                 ),
                 ButtonWidget(
-                  text: '+  Host a $category room',
+                  text: '+  Host a $name room',
                   height: 5.8,
                   radius: 28,
                   variant: ButtonVariant.gradient,
@@ -1412,8 +1622,12 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
                     Navigator.pop(sheetContext);
                     _createRoom(
                       type: 'hive',
-                      category: category,
+                      category: name,
+                      vibe: vibe,
+                      focus: focus,
+                      vibeTags: tags,
                       premiumOnly: false,
+                      verifiedOnly: verifiedOnly,
                     );
                   },
                 ),
@@ -1422,6 +1636,88 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _hiveMatchedUsers(String? uid, List<String> tags) {
+    if (uid == null) return const SizedBox.shrink();
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _community.findHiveVibeUsers(
+        currentUid: uid,
+        vibeTags: tags,
+        limit: 8,
+      ),
+      builder: (context, snap) {
+        final users = snap.data ?? const <Map<String, dynamic>>[];
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const LinearProgressIndicator(minHeight: 2);
+        }
+        if (users.isEmpty) {
+          return TextWidget(
+            text:
+                'Vibe Check will surface people here as matching members join.',
+            size: 12.5,
+            color: CupidColors.textSecondary(context),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const TextWidget(
+              text: 'Vibe Check matches',
+              size: 13.5,
+              weight: FontWeight.w800,
+            ),
+            SizedBox(height: 0.8.h),
+            SizedBox(
+              height: 7.8.h,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: users.length,
+                separatorBuilder: (_, __) => SizedBox(width: 2.5.w),
+                itemBuilder: (_, index) {
+                  final user = users[index];
+                  final name =
+                      (user['displayName'] as String? ?? 'Cupid member').trim();
+                  final photoUrl = (user['photoUrl'] as String? ?? '').trim();
+                  final overlap = (user['overlap'] as List?)
+                          ?.whereType<String>()
+                          .toList() ??
+                      const <String>[];
+                  return SizedBox(
+                    width: 20.w,
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: CupidColors.surfaceMuted(context),
+                          backgroundImage:
+                              photoUrl.isEmpty ? null : NetworkImage(photoUrl),
+                          child: photoUrl.isEmpty
+                              ? const Icon(Icons.person_rounded)
+                              : null,
+                        ),
+                        const SizedBox(height: 4),
+                        TextWidget(
+                          text: name,
+                          size: 10.5,
+                          maxLines: 1,
+                          textAlign: TextAlign.center,
+                        ),
+                        TextWidget(
+                          text: '${overlap.length} shared',
+                          size: 9.5,
+                          color: CupidColors.textSecondary(context),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -1580,5 +1876,4 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
       child: TextWidget(text: text, size: 12.8),
     );
   }
-
 }

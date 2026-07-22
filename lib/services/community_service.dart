@@ -32,8 +32,12 @@ class CommunityService {
     required String type,
     String? meetingId,
     String? category,
+    String? vibe,
+    String? focus,
+    List<String> vibeTags = const <String>[],
     bool isPrivate = false,
     bool premiumOnly = false,
+    bool verifiedOnly = false,
   }) async {
     final doc = _rooms.doc();
     await doc.set({
@@ -43,8 +47,12 @@ class CommunityService {
       'type': type,
       if ((meetingId ?? '').trim().isNotEmpty) 'meetingId': meetingId!.trim(),
       if ((category ?? '').trim().isNotEmpty) 'category': category!.trim(),
+      if ((vibe ?? '').trim().isNotEmpty) 'vibe': vibe!.trim(),
+      if ((focus ?? '').trim().isNotEmpty) 'focus': focus!.trim(),
+      if (vibeTags.isNotEmpty) 'vibeTags': vibeTags,
       'isPrivate': isPrivate,
       'premiumOnly': premiumOnly,
+      'verifiedOnly': verifiedOnly,
       'status': 'live',
       'speakers': <String>[ownerUid],
       'listeners': <String>[],
@@ -53,6 +61,52 @@ class CommunityService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
     return doc.id;
+  }
+
+  Future<List<Map<String, dynamic>>> findHiveVibeUsers({
+    required String currentUid,
+    required List<String> vibeTags,
+    int limit = 12,
+  }) async {
+    final tags = vibeTags
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .take(10)
+        .toList(growable: false);
+    if (tags.isEmpty) return const <Map<String, dynamic>>[];
+
+    final snap = await _db
+        .collection('users_cupid')
+        .where('interests', arrayContainsAny: tags)
+        .limit(30)
+        .get();
+
+    final scored = snap.docs
+        .where((doc) => doc.id != currentUid)
+        .map((doc) {
+          final data = doc.data();
+          final interests =
+              (data['interests'] as List?)?.whereType<String>().toList() ??
+                  const <String>[];
+          final overlap =
+              interests.where((interest) => tags.contains(interest)).toList();
+          return <String, dynamic>{
+            'uid': doc.id,
+            'displayName':
+                ((data['displayName'] as String?) ?? (data['name'] as String?))
+                    ?.trim(),
+            'photoUrl': (data['photoUrl'] as String? ?? '').trim(),
+            'photoVerified': data['photoVerified'] == true,
+            'interests': interests,
+            'overlap': overlap,
+            'score': overlap.length,
+          };
+        })
+        .where((user) => (user['score'] as int) > 0)
+        .toList();
+
+    scored.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+    return scored.take(limit).toList(growable: false);
   }
 
   Future<void> joinAsListener(

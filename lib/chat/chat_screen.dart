@@ -13,8 +13,8 @@ import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:videosdk/videosdk.dart';
 
 import '../../profile/safety_center_screen.dart';
-import '../../widgets/text_widget.dart';
 import '../../widgets/safety_menu_button.dart';
+import '../../widgets/text_widget.dart';
 
 /// =======================================================
 /// VideoSDK API (kept in-file per your request)
@@ -449,6 +449,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _sendGift({
     required String giftName,
+    required String giftEmoji,
     required int costCoins,
   }) async {
     if (_sending) return;
@@ -466,7 +467,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       final msgRef = _messagesRef.doc();
       final now = FieldValue.serverTimestamp();
-      final preview = 'Sent a $giftName gift';
+      final preview = '$giftEmoji Sent a $giftName gift';
 
       final batch = _db.batch();
       batch.set(msgRef, {
@@ -476,6 +477,7 @@ class _ChatScreenState extends State<ChatScreen> {
         "to": widget.peerUid,
         "text": preview,
         "giftName": giftName,
+        "giftEmoji": giftEmoji,
         "giftCostCoins": costCoins,
         "createdAt": now,
         "type": "gift",
@@ -505,47 +507,111 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       builder: (sheetContext) {
         const gifts = <Map<String, dynamic>>[
+          {"name": "Bubble Tea", "cost": 15, "emoji": "🧋"},
+          {"name": "Finger Heart", "cost": 15, "emoji": "🫰"},
+          {"name": "Red Envelope", "cost": 25, "emoji": "🧧"},
+          {"name": "Ramen Bowl", "cost": 25, "emoji": "🍜"},
+          {"name": "Fortune Cookie", "cost": 20, "emoji": "🥠"},
+          {"name": "Cherry Blossom", "cost": 20, "emoji": "🌸"},
+          {"name": "Sriracha", "cost": 25, "emoji": "🌶️"},
+          {"name": "Karaoke", "cost": 30, "emoji": "🎤"},
+          {"name": "Mahjong Tile", "cost": 30, "emoji": "🀄"},
           {"name": "Rose", "cost": 20, "emoji": "🌹"},
+          {"name": "Heart", "cost": 10, "emoji": "❤️"},
+          {"name": "Cute", "cost": 15, "emoji": "🥰"},
           {"name": "Chocolate", "cost": 35, "emoji": "🍫"},
+          {"name": "Champagne", "cost": 60, "emoji": "🥂"},
+          {"name": "Lotus Flower", "cost": 35, "emoji": "🪷"},
           {"name": "Teddy", "cost": 60, "emoji": "🧸"},
+          {"name": "SOS", "cost": 80, "emoji": "🆘"},
+          {"name": "Chopsticks", "cost": 20, "emoji": "🥢"},
+          {"name": "Candy", "cost": 15, "emoji": "🍬"},
           {"name": "Diamond Ring", "cost": 150, "emoji": "💍"},
         ];
 
-        return Padding(
-          padding: EdgeInsets.fromLTRB(6.w, 2.h, 6.w, 2.5.h),
+        return SizedBox(
+          height: 72.h,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const TextWidget(
-                text: 'Send Virtual Gift',
-                size: 17,
-                weight: FontWeight.w700,
-              ),
-              SizedBox(height: 1.2.h),
-              for (final gift in gifts)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Text(
-                    gift["emoji"] as String,
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                  title: Text(gift["name"] as String),
-                  subtitle: Text('${gift["cost"]} coins'),
-                  trailing: FilledButton.tonal(
-                    onPressed: _sending
-                        ? null
-                        : () async {
-                            await _sendGift(
-                              giftName: gift["name"] as String,
-                              costCoins: gift["cost"] as int,
-                            );
-                            if (!sheetContext.mounted) return;
-                            Navigator.pop(sheetContext);
-                          },
-                    child: const Text('Send'),
-                  ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(6.w, 2.h, 6.w, 0.7.h),
+                child: const TextWidget(
+                  text: 'Send Virtual Gift',
+                  size: 17,
+                  weight: FontWeight.w700,
                 ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6.w),
+                child: TextWidget(
+                  text: '20 gifts for quick, playful signals.',
+                  size: 12.5,
+                  color: CupidColors.textSecondary(context),
+                ),
+              ),
+              SizedBox(height: 1.h),
+              Expanded(
+                child: GridView.builder(
+                  padding: EdgeInsets.fromLTRB(6.w, 0, 6.w, 2.5.h),
+                  itemCount: gifts.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.62,
+                  ),
+                  itemBuilder: (_, index) {
+                    final gift = gifts[index];
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: _sending
+                          ? null
+                          : () async {
+                              await _sendGift(
+                                giftName: gift["name"] as String,
+                                giftEmoji: gift["emoji"] as String,
+                                costCoins: gift["cost"] as int,
+                              );
+                              if (!sheetContext.mounted) return;
+                              Navigator.pop(sheetContext);
+                            },
+                      child: Ink(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: CupidColors.surfaceMuted(context),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: CupidColors.border(context),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              gift["emoji"] as String,
+                              style: const TextStyle(fontSize: 26),
+                            ),
+                            const Spacer(),
+                            TextWidget(
+                              text: gift["name"] as String,
+                              size: 12,
+                              weight: FontWeight.w700,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            TextWidget(
+                              text: '${gift["cost"]} coins',
+                              size: 10.5,
+                              color: CupidColors.textSecondary(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         );
