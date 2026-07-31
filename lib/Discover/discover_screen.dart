@@ -158,7 +158,42 @@ class _DiscoverScreenState extends State<DiscoverScreen>
       _lastDoc = null;
     });
 
+    await _fetchActiveBoosts();
     await _fetchNextPage();
+  }
+
+  Future<void> _fetchActiveBoosts() async {
+    final myUid = _myUid;
+    if (myUid == null) return;
+
+    final blockedIds = await SafetyService.instance.blockedUserIds(myUid);
+    final now = Timestamp.fromDate(DateTime.now());
+    final snap = await _db
+        .collection("users_cupid")
+        .where("onboardingDone", isEqualTo: true)
+        .where("activeBoostUntil", isGreaterThan: now)
+        .orderBy("activeBoostUntil", descending: true)
+        .limit(20)
+        .get();
+
+    final boosted = snap.docs
+        .map((d) => DiscoverUser.fromDoc(d))
+        .where((u) => u.uid != myUid)
+        .where((u) => !blockedIds.contains(u.uid))
+        .where((u) => u.uid != _exclusiveMysteryUid)
+        .where((u) => u.photoUrl.isNotEmpty || u.storyPhotoUrls.isNotEmpty)
+        .toList();
+
+    boosted.sort((a, b) {
+      final aUntil =
+          a.activeBoostUntil ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final bUntil =
+          b.activeBoostUntil ?? DateTime.fromMillisecondsSinceEpoch(0);
+      return bUntil.compareTo(aUntil);
+    });
+
+    if (!mounted || boosted.isEmpty) return;
+    setState(() => _profiles.addAll(boosted));
   }
 
   Future<void> _fetchNextPage() async {
@@ -185,6 +220,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
           .where((u) => myUid == null || u.uid != myUid)
           .where((u) => !blockedIds.contains(u.uid))
           .where((u) => u.uid != _exclusiveMysteryUid)
+          .where((u) => !_profiles.any((existing) => existing.uid == u.uid))
           .where((u) => u.photoUrl.isNotEmpty || u.storyPhotoUrls.isNotEmpty)
           .toList();
 
@@ -908,6 +944,47 @@ class _DiscoverScreenState extends State<DiscoverScreen>
               ),
             ),
             Positioned(
+              top: 18,
+              left: 18,
+              child: u.isCupidRushActive
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFC857), Color(0xFFFF6F7D)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.bolt_rounded,
+                              size: 16, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'Cupid Rush',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            Positioned(
               bottom: 0,
               left: 0,
               right: 0,
@@ -1068,6 +1145,7 @@ class DiscoverUser {
   final String educationLevel;
   final String educationSchool;
   final String hometown;
+  final DateTime? activeBoostUntil;
 
   DiscoverUser({
     required this.uid,
@@ -1092,9 +1170,11 @@ class DiscoverUser {
     required this.educationLevel,
     required this.educationSchool,
     required this.hometown,
+    required this.activeBoostUntil,
   });
 
   static DateTime? _parseDate(dynamic v) {
+    if (v is Timestamp) return v.toDate();
     if (v is String && v.isNotEmpty) {
       try {
         return DateTime.parse(v);
@@ -1154,6 +1234,7 @@ class DiscoverUser {
       educationLevel: _asTrimmedString(d["educationLevel"]),
       educationSchool: _asTrimmedString(d["educationSchool"]),
       hometown: _asTrimmedString(d["hometown"]),
+      activeBoostUntil: _parseDate(d["activeBoostUntil"]),
     );
   }
 
@@ -1168,6 +1249,9 @@ class DiscoverUser {
     if (age == null) return name;
     return "$name, $age";
   }
+
+  bool get isCupidRushActive =>
+      activeBoostUntil != null && activeBoostUntil!.isAfter(DateTime.now());
 
   String get bioText {
     if (storyText.isNotEmpty) return storyText;

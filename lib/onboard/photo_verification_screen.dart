@@ -394,7 +394,9 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen>
                         ? Colors.white
                         : CupidColors.textSecondary(context),
                     enableShadow: isValid,
-                    onTap: isValid ? _uploadAndFinish : () {},
+                    onTap: isValid ? _uploadAndFinish : () {
+                      
+                    },
                   ),
                   0.75,
                   1,

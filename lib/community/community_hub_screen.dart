@@ -709,6 +709,8 @@ class _CommunityHubScreenState extends State<CommunityHubScreen>
               coins: 0,
               sosArrowFreeRemaining: 1,
               sosCallFreeRemaining: 1,
+              cupidRushFreeRemaining: 0,
+              cupidRushUntil: null,
             );
 
         return Scaffold(

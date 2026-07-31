@@ -42,6 +42,8 @@ class MatchesScreen extends StatelessWidget {
                         coins: 0,
                         sosArrowFreeRemaining: 1,
                         sosCallFreeRemaining: 1,
+                        cupidRushFreeRemaining: 0,
+                        cupidRushUntil: null,
                       );
                   return FutureBuilder<Set<String>>(
                     future: SafetyService.instance.blockedUserIds(myUid),
